@@ -405,7 +405,7 @@ D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{});
 /* ── 同期設定のプリセット ──
    ここに書いておけば、どの端末で開いても入力不要（ファイル自体に埋め込み）。
    例: const PRESET_SYNC={url:'https://script.google.com/macros/s/xxxx/exec',key:'anchan-0721',auto:true}; */
-const PRESET_SYNC={url:'https://script.google.com/macros/s/AKfycbxatFVReQMHQ82U_GWCVR4AtOW10bjUlydxG5NBG1J_Sgwr9BhqY-TBiU40Sxhs_Pq4Tg/exec',key:'はる',auto:true};
+const PRESET_SYNC={url:'https://script.google.com/macros/s/AKfycbxatFVReQMHQ82U_GWCVR4AtOW10bjUlydxG5NBG1J_Sgwr9BhqY-TBiU40Sxhs_Pq4Tg/exec',key:''  /* 公開リポジトリのため合言葉は埋め込まない。初回だけURL #sync=...|はる で設定 */,auto:true};
 if(PRESET_SYNC.url&&!(D.settings.syncUrl||'').trim()){
   D.settings.syncUrl=PRESET_SYNC.url;D.settings.syncKey=PRESET_SYNC.key;D.settings.autoSync=PRESET_SYNC.auto;
 }
