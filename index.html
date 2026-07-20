@@ -122,6 +122,9 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .xppop{position:fixed;left:50%;top:38%;transform:translateX(-50%);font-family:'DotGothic16',monospace;font-size:36px;font-weight:800;color:var(--gold);text-shadow:0 0 16px rgba(255,201,60,.9);pointer-events:none;z-index:310;animation:xppop .7s ease-out forwards}
 @keyframes xppop{0%{transform:translateX(-50%) translateY(0) scale(.5);opacity:0}20%{transform:translateX(-50%) translateY(-10px) scale(1.3);opacity:1}100%{transform:translateX(-50%) translateY(-70px) scale(1);opacity:0}}
 .shake{animation:shake .25s}
+.shock{position:fixed;left:50%;top:44%;width:24px;height:24px;border-radius:50%;border:3px solid var(--cyan);pointer-events:none;z-index:300;animation:shock .38s ease-out forwards;box-shadow:0 0 22px rgba(53,224,255,.85)}
+.shock.big{border-color:var(--gold);border-width:4px;box-shadow:0 0 30px rgba(255,201,60,.9);animation-duration:.46s}
+@keyframes shock{0%{transform:translate(-50%,-50%) scale(.35);opacity:1}100%{transform:translate(-50%,-50%) scale(15);opacity:0}}
 @keyframes shake{0%,100%{transform:none}25%{transform:translate(3px,-2px)}50%{transform:translate(-3px,2px)}75%{transform:translate(2px,1px)}}
 /* drag & drop */
 .draghandle{cursor:grab;touch-action:none;user-select:none;color:var(--dim);font-size:18px;padding:4px 8px;flex-shrink:0}
@@ -155,6 +158,16 @@ textarea{resize:vertical;min-height:36px}
 .secbtns button:active{transform:scale(.9)}
 .secbtns .secshow{font-family:'DotGothic16',monospace;color:var(--cyan);font-size:12px;min-width:46px;text-align:center;flex-shrink:0}
 .sharebadge{background:rgba(53,224,255,.12);border:1px solid var(--cyan);border-radius:8px;color:var(--cyan);font-size:12px;padding:4px 6px;cursor:pointer;flex-shrink:0}
+/* リザルト画面 */
+#result{position:fixed;inset:0;background:rgba(18,16,42,.93);backdrop-filter:blur(8px);z-index:120;display:none;align-items:center;justify-content:center;padding:20px}
+#result.show{display:flex}
+.rescard{background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid #453f95;border-radius:22px;padding:24px 20px;width:100%;max-width:400px;text-align:center;animation:jppop .45s cubic-bezier(.2,1.6,.4,1);box-shadow:0 0 40px rgba(255,77,141,.25)}
+.restitle{font-size:42px;color:var(--gold);text-shadow:0 0 20px rgba(255,201,60,.85),0 0 50px rgba(255,77,141,.5)}
+.resname{font-weight:800;font-size:16px;margin-top:4px}
+.resgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.resgrid .rv{font-size:22px;font-weight:800;color:var(--cyan);font-family:'DotGothic16',monospace}
+.resgrid .rl{font-size:10px;color:var(--dim);font-weight:700;margin-top:2px}
+.ressub{color:var(--mint);font-size:13px;font-weight:700;margin-top:12px;min-height:18px}
 /* ライブラリモーダル */
 #libModal{position:fixed;inset:0;background:rgba(18,16,42,.85);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center}
 #libModal.show{display:flex}
@@ -393,6 +406,26 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 </div>
 <div id="flash"></div>
 
+<div id="result">
+  <div class="rescard">
+    <div class="restitle dot" id="resTitle">CLEAR!!</div>
+    <div class="resname" id="resName"></div>
+    <div class="resgrid">
+      <div><div class="rv" id="resSteps">-</div><div class="rl">ステップ</div></div>
+      <div><div class="rv" id="resXp">-</div><div class="rl">獲得XP</div></div>
+      <div><div class="rv" id="resTime">-</div><div class="rl">かかった時間</div></div>
+    </div>
+    <div class="resgrid" style="margin-top:8px">
+      <div><div class="rv" id="resLevel">-</div><div class="rl">レベル</div></div>
+      <div><div class="rv" id="resStreak">-</div><div class="rl">連続日数🔥</div></div>
+      <div><div class="rv" id="resTotal">-</div><div class="rl">通算完了</div></div>
+    </div>
+    <div class="ressub" id="resSub"></div>
+    <button class="btn btn-p btn-full" style="margin-top:16px" onclick="closeResult()">🏠 ホームへ</button>
+    <p class="muted" style="text-align:center;margin-top:10px"><span id="resCount">60</span>秒後に自動でホームに戻ります</p>
+  </div>
+</div>
+
 <div id="libModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="sheet">
     <h2>📚 ステップライブラリ</h2>
@@ -525,6 +558,13 @@ const sfxTick=()=>beep(880,.06,'sine',.05);
 /* ============ confetti ============ */
 const fx=document.getElementById('fx'),ctx=fx.getContext('2d');let parts=[];
 function sizeFx(){fx.width=innerWidth;fx.height=innerHeight;}sizeFx();addEventListener('resize',sizeFx);
+/* 瞬発演出：フラッシュ＋ショックウェーブ（0.4秒で完結、余韻なし） */
+function burst(big){
+  const f=document.getElementById('flash');
+  if(f){f.classList.remove('hit');void f.offsetWidth;f.classList.add('hit');}
+  const s=document.createElement('div');s.className='shock'+(big?' big':'');
+  document.body.appendChild(s);setTimeout(()=>s.remove(),big?520:420);
+}
 function confetti(n=80,big=false){
   const colors=['#ff4d8d','#35e0ff','#ffc93c','#3dffa8','#9d7bff','#ffffff'];
   for(let i=0;i<n;i++)parts.push({
@@ -610,7 +650,7 @@ async function aiStepTexts(btn,routineName,step){
 条件: 各40〜70文字程度。絵文字なし。読み上げて自然な日本語。
 出力はJSON配列のみ（例: ["...","...","..."]）。他の文字は一切出力しない。`);
     let n=0;for(const t of arr)if(typeof t==='string'&&!step.texts.includes(t)){step.texts.push(t);n++;}
-    syncShared(step);save();renderSteps();toast(`🤖 ${n}件追加しました`);sfxDone();confetti(40);
+    syncShared(step);save();renderSteps();toast(`🤖 ${n}件追加しました`);sfxDone();burst();
   }catch(e){if(e.message!=='nokey')toast('⚠️ AI生成に失敗しました（APIキー/通信を確認）');}
   btn.classList.remove('busy');btn.textContent='🤖 AI生成';
 }
@@ -623,7 +663,7 @@ async function aiHitokoto(btn){
 条件: 各30〜60文字。既存と重複しない。豆知識・励まし・行動科学ネタなど。読み上げて自然な日本語。絵文字なし。
 出力はJSON配列のみ。他の文字は一切出力しない。`);
     let n=0;for(const t of arr)if(typeof t==='string'&&!D.hitokoto.includes(t)){D.hitokoto.push(t);n++;}
-    save();renderHome();toast(`🤖 ${n}件追加しました`);sfxDone();confetti(40);
+    save();renderHome();toast(`🤖 ${n}件追加しました`);sfxDone();burst();
   }catch(e){if(e.message!=='nokey')toast('⚠️ AI生成に失敗しました（APIキー/通信を確認）');}
   btn.classList.remove('busy');btn.textContent='🤖 AIで追加';
 }
@@ -647,7 +687,7 @@ function grantBadges(extra=[]){
     if(D.badges.includes(b.id))continue;
     if(b.test()||extra.includes(b.id)){D.badges.push(b.id);got.push(b);}
   }
-  if(got.length){save();got.forEach((b,i)=>setTimeout(()=>{toast(`🏅 バッジ獲得：${b.icon} ${b.name}`);sfxJackpot();confetti(60);},i*1200));}
+  if(got.length){save();got.forEach((b,i)=>setTimeout(()=>{toast(`🏅 バッジ獲得：${b.icon} ${b.name}`);sfxJackpot();burst();},i*1200));}
 }
 
 /* ============ UI helpers ============ */
@@ -976,7 +1016,7 @@ function renderRunCk(s){
         if(run.ckDone.has(k)){run.ckDone.delete(k);beep(523,.05,'sine',.08);}
         else{
           run.ckDone.add(k);beep(1047,.07,'square',.12);hitNoise(.15);
-          if(run.ckDone.size===s.checklist.length){sfxDone();confetti(40);toast('☑ 全部チェック完了！');}
+          if(run.ckDone.size===s.checklist.length){sfxDone();burst();toast('☑ 全部チェック完了！');}
         }
         draw();
       };
@@ -1113,20 +1153,23 @@ function skipStep(){
   run.skips++;D.combo=0;renderCombo();
   nextStep(false);
 }
-function xpPop(gain){
-  const p=document.createElement('div');p.className='xppop';p.textContent=`+${gain}XP!!`;
+function xpPop(gain,label){
+  const p=document.createElement('div');p.className='xppop';
+  p.textContent=(label?label+' ':'')+`+${gain}XP!!`;
   document.body.appendChild(p);setTimeout(()=>p.remove(),700);
 }
 function doneStep(auto=false){
   D.combo=(D.combo||0)+1;
   const base=10,comboBonus=Math.min(D.combo-1,5)*2;
   let gain=base+comboBonus;
-  sfxDone();confetti(50);
-  // variable-ratio jackpot!
+  sfxDone();burst();
+  // 可変比率ボーナス（画面は挟まずXPポップで即表示）
   const roll=Math.random();
-  if(roll<0.08){gain*=5;jackpot('🎰 JACKPOT!!',`XP 5倍！ +${gain}XP`);}
-  else if(roll<0.20){gain*=2;jackpot('✨ LUCKY! ✨',`XP 2倍！ +${gain}XP`);}
-  D.xp+=gain;renderCombo(gain);xpPop(gain);
+  let label='';
+  if(roll<0.08){gain*=5;label='🎰×5';sfxJackpot();}
+  else if(roll<0.20){gain*=2;label='✨×2';beep(1319,.12,'square',.13);}
+  D.xp+=gain;run.xp=(run.xp||0)+gain;
+  renderCombo(gain);xpPop(gain,label);
   save();
   nextStep(true); // 待たずに即スパーン！
 }
@@ -1140,8 +1183,8 @@ function renderCombo(gain){
   const c=document.getElementById('combo');
   c.textContent=(D.combo>1?`🔥 ${D.combo} COMBO! `:'')+(gain?`+${gain}XP`:'');
 }
-function jackpot(t,sub){
-  sfxJackpot();confetti(160,true);
+function jackpot(t,sub){ // ※現在未使用（ボーナス画面廃止）
+  sfxJackpot();burst(true);
   document.getElementById('jpText').textContent=t;
   document.getElementById('jpSub').textContent=sub;
   const j=document.getElementById('jackpot');j.classList.add('show');
@@ -1173,17 +1216,46 @@ function finishRun(){
   sendNotion(log);
   const mode=D.settings.calLog||'off';
   if(mode==='auto')calAddEvent(log,run.startedAt,Date.now());
-  else if(mode==='ask'){const st=run.startedAt;setTimeout(()=>askCalLog(log,st,Date.now()),1600);}
-  confetti(140,true);sfxJackpot();
+  else if(mode==='ask'){const st=run.startedAt;setTimeout(()=>askCalLog(log,st,Date.now()),1200);}
+  sfxJackpot();burst(true);
   speak(perfect?`${r.name}、パーフェクト完走！すごい！ボーナス30XPです！`:`${r.name}、完了！おつかれさま！`);
-  jackpot(perfect?'💎 PERFECT!!':'🎉 CLEAR!!',perfect?`ノースキップ完走！ +${bonus}XPボーナス`:`${doneCount}/${r.steps.length} ステップ完了`);
   const extra=[];
   if(perfect)extra.push('perfect');
   if(new Date().getHours()<6)extra.push('early');
-  setTimeout(()=>{
-    document.getElementById('run').classList.remove('active');
-    run=null;renderHome();grantBadges(extra);
-  },1400);
+  const xpGained=(run.xp||0)+bonus;
+  const durSec=Math.round((Date.now()-run.startedAt)/1000);
+  showResult({log,perfect,bonus,xpGained,durSec,extra});
+}
+
+let resCountTimer=null;
+function showResult({log,perfect,bonus,xpGained,durSec,extra}){
+  document.getElementById('run').classList.remove('active');
+  run=null;
+  document.getElementById('resTitle').textContent=perfect?'💎 PERFECT!!':'🎉 CLEAR!!';
+  document.getElementById('resName').textContent=`${log.routine}`;
+  document.getElementById('resSteps').textContent=`${log.done}/${log.total}`;
+  document.getElementById('resXp').textContent=`+${xpGained}`;
+  document.getElementById('resTime').textContent=durSec<60?`${durSec}秒`:`${Math.round(durSec/60)}分`;
+  document.getElementById('resLevel').textContent=levelInfo().level;
+  document.getElementById('resStreak').textContent=streak();
+  document.getElementById('resTotal').textContent=D.logs.length;
+  document.getElementById('resSub').textContent=perfect?`ノースキップ完走ボーナス +${bonus}XP！`:(log.skips?`⏭ スキップ ${log.skips}件`:'');
+  document.getElementById('result').classList.add('show');
+  grantBadges(extra);
+  // 60秒カウントダウンで自動ホーム
+  let left=60;
+  document.getElementById('resCount').textContent=left;
+  clearInterval(resCountTimer);
+  resCountTimer=setInterval(()=>{
+    left--;
+    document.getElementById('resCount').textContent=left;
+    if(left<=0)closeResult();
+  },1000);
+}
+function closeResult(){
+  clearInterval(resCountTimer);resCountTimer=null;
+  document.getElementById('result').classList.remove('show');
+  renderHome();
 }
 function endRun(){
   clearInterval(timer);timer=null;speechSynthesis.cancel();
