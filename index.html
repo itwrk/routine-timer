@@ -49,9 +49,12 @@ h1{font-size:14px;letter-spacing:.06em;white-space:nowrap}
 .rcard .go{background:linear-gradient(135deg,var(--pink),var(--purple));border:none;color:#fff;font-weight:800;font-family:inherit;border-radius:11px;padding:9px 13px;font-size:13px;cursor:pointer;box-shadow:0 0 14px rgba(255,77,141,.4);white-space:nowrap;flex-shrink:0}
 .rcard .edit-btn{background:none;border:none;color:var(--dim);font-size:15px;cursor:pointer;padding:6px;flex-shrink:0}
 
-button{font-family:inherit}
+button{font-family:inherit;transition:transform .07s,filter .07s}
+button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
+.tapfx{position:fixed;width:16px;height:16px;border-radius:50%;pointer-events:none;z-index:500;background:radial-gradient(circle,#fff 0%,rgba(53,224,255,.85) 35%,rgba(255,77,141,.5) 60%,transparent 75%);animation:tapfx .32s ease-out forwards;mix-blend-mode:screen}
+@keyframes tapfx{0%{opacity:.95;transform:translate(-50%,-50%) scale(.5)}100%{opacity:0;transform:translate(-50%,-50%) scale(4.5)}}
 .btn{border:none;border-radius:16px;padding:14px 20px;font-size:16px;font-weight:800;cursor:pointer;color:#fff;transition:transform .1s}
-.btn:active{transform:scale(.95)}
+.btn:active{transform:scale(.92);filter:brightness(1.3) saturate(1.2)}
 .btn-p{background:linear-gradient(135deg,var(--pink),var(--purple));box-shadow:0 0 20px rgba(255,77,141,.4)}
 .btn-c{background:linear-gradient(135deg,#1fb8d8,#1d6de0)}
 .btn-g{background:var(--card2);border:1px solid #453f95;color:var(--text)}
@@ -80,7 +83,8 @@ button{font-family:inherit}
 .ringcenter .stepname{font-size:14px;font-weight:800;margin-top:3px}
 .ringcenter .time{font-size:28px;font-weight:800;letter-spacing:.04em;margin-top:1px;font-family:'DotGothic16',monospace;color:var(--cyan);text-shadow:0 0 12px rgba(53,224,255,.7)}
 .stepprog{color:var(--dim);font-size:13px;margin-bottom:4px}
-.moti{max-width:460px;background:rgba(43,38,100,.7);border:1px solid #453f95;border-radius:14px;padding:9px 14px;font-size:13px;line-height:1.6;min-height:38px;text-align:center;margin:6px 0}
+.moti{max-width:460px;background:rgba(43,38,100,.7);border:1px solid #453f95;border-radius:14px;padding:9px 14px 9px 34px;font-size:13px;line-height:1.6;min-height:38px;text-align:left;margin:6px 0;position:relative}
+.moti::before{content:'💬';position:absolute;left:10px;top:8px;font-size:14px}
 /* 実行中インライン編集 */
 .upedit{background:var(--bg2);border:1px solid #453f95;border-radius:12px;padding:10px;margin:-2px 0 8px;animation:fadein .15s}
 .upedit input[type=text],.upedit textarea{font-size:13px;padding:8px 10px;margin-bottom:6px}
@@ -89,8 +93,18 @@ button{font-family:inherit}
 .runbtns{display:flex;gap:8px;margin-top:8px;width:100%;max-width:460px}
 .runbtns .btn{flex:1;white-space:nowrap;font-size:14px;padding:13px 6px;letter-spacing:0}
 .nextstep{color:var(--dim);font-size:13px;margin-top:10px}
-.runinfo{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;justify-content:center}
-.runinfo .pill{font-size:12px;padding:5px 11px}
+.runstats{display:flex;gap:20px;margin-top:5px;justify-content:center;color:var(--dim);font-size:13px;font-weight:700}
+.runstats b{color:var(--gold);font-family:'DotGothic16',monospace}
+.runck{max-width:460px;width:100%;background:rgba(43,38,100,.5);border:1px solid #3a3480;border-radius:14px;padding:10px 12px;margin-top:8px}
+.runck h4{font-size:12px;color:var(--cyan);margin-bottom:6px;letter-spacing:.06em}
+.ckrow{display:flex;align-items:center;gap:9px;padding:6px 2px;font-size:14px;cursor:pointer;user-select:none}
+.ckrow .box{width:22px;height:22px;border:2px solid #5a53b0;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .15s;color:transparent}
+.ckrow.on .box{background:linear-gradient(135deg,var(--mint),var(--cyan));border-color:var(--mint);color:#0a2a1c;box-shadow:0 0 10px rgba(61,255,168,.6)}
+.ckrow.on .ckt{color:var(--dim);text-decoration:line-through}
+.ckrow .ckt{flex:1;min-width:0}
+.ckrow .ckdel{background:none;border:none;color:var(--dim);font-size:13px;cursor:pointer;padding:4px}
+.ckaddrow{display:flex;gap:6px;margin-top:6px}
+.ckaddrow input{flex:1;font-size:13px;padding:7px 9px}
 .upcoming{width:100%;max-width:460px;margin-top:12px}
 .upcoming h3{font-size:12px;color:var(--dim);font-weight:700;margin-bottom:6px;letter-spacing:.1em}
 .uprow{display:flex;align-items:center;gap:6px;background:rgba(43,38,100,.55);border:1px solid #3a3480;border-radius:12px;padding:8px 8px;margin-bottom:6px;font-size:13px;animation:fadein .15s}
@@ -356,17 +370,18 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div class="time" id="runTime">0:00</div>
     </div>
   </div>
-  <div class="runinfo">
-    <span class="pill">⏱ 残り <b id="runRemain">-</b></span>
-    <span class="pill">🏁 終了予定 <b id="runFinish">-</b></span>
+  <div class="runstats">
+    <span>⏱ 残り <b id="runRemain">-</b></span>
+    <span>🏁 終了予定 <b id="runFinish">-</b></span>
   </div>
-  <div class="moti" id="runMoti">…</div>
-  <div class="runmemo" id="runMemo" style="display:none"></div>
   <div class="runbtns">
     <button class="btn btn-g" id="btnPause" onclick="togglePause()">⏸ 一時停止</button>
     <button class="btn btn-g" onclick="skipStep()">⏭ スキップ</button>
     <button class="btn btn-p" onclick="doneStep()">✅ できた！</button>
   </div>
+  <div class="moti" id="runMoti">…</div>
+  <div class="runmemo" id="runMemo" style="display:none"></div>
+  <div class="runck" id="runCk" style="display:none"></div>
   <div class="upcoming" id="upcomingWrap">
     <h3>▼ このあとのステップ（≡ドラッグ・✏️で編集）</h3>
     <div id="upcoming"></div>
@@ -424,6 +439,23 @@ D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{});
 const PRESET_SYNC={url:'https://script.google.com/macros/s/AKfycbxatFVReQMHQ82U_GWCVR4AtOW10bjUlydxG5NBG1J_Sgwr9BhqY-TBiU40Sxhs_Pq4Tg/exec',key:''  /* 公開リポジトリのため合言葉は埋め込まない。初回だけURL #sync=...|はる で設定 */,auto:true};
 if(PRESET_SYNC.url&&!(D.settings.syncUrl||'').trim()){
   D.settings.syncUrl=PRESET_SYNC.url;D.settings.syncKey=PRESET_SYNC.key;D.settings.autoSync=PRESET_SYNC.auto;
+}
+/* 完了主義ひとこと（v2追加分・初回のみ既存プールへ合流） */
+const HITOKOTO_V2=[
+  '終わらせた60点は、出さなかった100点に勝つ。',
+  '完璧主義は明日の自分に丸投げ、完了主義は今の自分にごほうび。',
+  '雑でもいい。今日のぶんを閉じよう。',
+  '「とりあえず完了」と言える人がいちばん遠くまで行く。',
+  '直すのは出したあとでいい。まず完了！',
+  '80点で世界は十分まわる。',
+  '完了の数だけ、自信は増える。',
+  '始める前の10分より、終わらせる1分。',
+  '今日の合格ラインは「やった」それだけ。'
+];
+if(!D.hitokotoV2){
+  D.hitokoto=D.hitokoto||[];
+  for(const t of HITOKOTO_V2)if(!D.hitokoto.includes(t))D.hitokoto.push(t);
+  D.hitokotoV2=1;localStorage.setItem(KEY,JSON.stringify(D));
 }
 /* URLハッシュからの取り込み: index.html#sync=<GAS URL>|<合言葉> で開くと自動保存 */
 try{
@@ -684,7 +716,7 @@ function syncShared(s){
   if(!s.sharedId)return;
   for(const rt of D.routines)for(const t of rt.steps){
     if(t.sharedId===s.sharedId&&t.id!==s.id){
-      t.name=s.name;t.emoji=s.emoji;t.sec=s.sec;t.memo=s.memo||'';t.texts=[...s.texts];
+      t.name=s.name;t.emoji=s.emoji;t.sec=s.sec;t.memo=s.memo||'';t.texts=[...s.texts];t.checklist=(s.checklist||[]).map(c=>({t:c.t}));
     }
   }
 }
@@ -723,7 +755,9 @@ function renderSteps(){
         <button class="btn btn-g btn-sm del">🗑 削除</button>
         <button class="btn btn-c btn-sm addtxt">💬 手動追加</button>
         <button class="btn btn-sm aibtn ait">🤖 AI生成</button>
+        <button class="btn btn-g btn-sm ckbtn">☑ リスト</button>
       </div>
+      <div class="ckwrap" style="display:none;margin-top:6px"></div>
       <div class="txtform" style="display:none;margin-top:6px;gap:6px">
         <input type="text" class="txtin" placeholder="読み上げテキスト（コツ・励ましなど）">
         <button class="btn btn-c btn-sm txtok">追加</button>
@@ -747,6 +781,32 @@ function renderSteps(){
     d.querySelector('.txtok').onclick=commitTxt;
     ti.onkeydown=e=>{if(e.key==='Enter')commitTxt();};
     d.querySelector('.ait').onclick=e=>aiStepTexts(e.target,r.name||document.getElementById('eName').value,s);
+    // チェックリスト編集
+    const ckwrap=d.querySelector('.ckwrap');
+    const ckbtn=d.querySelector('.ckbtn');
+    s.checklist=s.checklist||[];
+    ckbtn.textContent=`☑ リスト${s.checklist.length?`(${s.checklist.length})`:''}`;
+    function renderCkEdit(){
+      ckwrap.innerHTML='';
+      s.checklist.forEach((c,k)=>{
+        const row=document.createElement('div');row.className='ckrow';
+        row.innerHTML=`<span class="box">✓</span><span class="ckt">${esc(c.t)}</span><button class="ckdel">✕</button>`;
+        row.querySelector('.ckdel').onclick=()=>{s.checklist.splice(k,1);syncShared(s);save();renderCkEdit();ckbtn.textContent=`☑ リスト${s.checklist.length?`(${s.checklist.length})`:''}`;};
+        ckwrap.appendChild(row);
+      });
+      const addr=document.createElement('div');addr.className='ckaddrow';
+      addr.innerHTML=`<input type="text" placeholder="チェック項目（例：財布）"><button class="btn btn-c btn-sm">追加</button>`;
+      const inp=addr.querySelector('input');
+      const commit=()=>{const v=inp.value.trim();if(!v)return;s.checklist.push({t:v});syncShared(s);save();renderCkEdit();ckbtn.textContent=`☑ リスト(${s.checklist.length})`;ckwrap.querySelector('.ckaddrow input').focus();};
+      addr.querySelector('button').onclick=commit;
+      inp.onkeydown=e=>{if(e.key==='Enter')commit();};
+      ckwrap.appendChild(addr);
+    }
+    ckbtn.onclick=()=>{
+      const open=ckwrap.style.display!=='none';
+      ckwrap.style.display=open?'none':'block';
+      if(!open)renderCkEdit();
+    };
     const chips=d.querySelector('.chips');
     s.texts.forEach((t,j)=>{
       const c=document.createElement('span');c.className='txtchip';
@@ -766,6 +826,24 @@ function addStep(){
   r.steps.push({id:uid(),name:'',emoji:'✅',sec:60,texts:[]});
   save();renderSteps();
 }
+const PRESET_STEPS=[
+ {name:'水を一杯飲む',emoji:'💧',sec:60,texts:['起き抜けの一杯は脳のスターターキー。']},
+ {name:'歯みがき',emoji:'🪥',sec:180,texts:['3分の歯みがきは未来の自分への投資。奥歯までていねいに！']},
+ {name:'洗顔・スキンケア',emoji:'🧼',sec:180,texts:['顔を洗うとスイッチが入る。今日も始めよう！']},
+ {name:'薬・サプリを飲む',emoji:'💊',sec:60,texts:['飲んだ？よし、未来の自分が感謝してる。']},
+ {name:'ストレッチ',emoji:'🧘',sec:180,texts:['体をほぐすと頭もほぐれる。呼吸を忘れずに。']},
+ {name:'スクワット',emoji:'🏋️',sec:120,texts:['今日の1回が明日の脚をつくる！']},
+ {name:'食器洗い',emoji:'🍽️',sec:300,texts:['シンクが空だと心も軽い。音楽でも聴きながらどうぞ。']},
+ {name:'洗濯物を回す',emoji:'🧺',sec:120,texts:['ボタンを押すだけで家事が進む。機械に働いてもらおう！']},
+ {name:'洗濯物を干す・たたむ',emoji:'👕',sec:420,texts:['たたみながら今日のことを整理するのもアリ。']},
+ {name:'部屋の片付け5分',emoji:'🧹',sec:300,texts:['5分だけ。全部やらなくていい、目の前の1つから。']},
+ {name:'ゴミをまとめる',emoji:'🗑️',sec:180,texts:['ゴミが出ていくと運気も回る、気がする！']},
+ {name:'持ち物チェック',emoji:'🎒',sec:120,texts:['忘れ物ゼロで出発できたら今日はもう勝ち。'],checklist:['財布','スマホ','鍵','イヤホン']},
+ {name:'今日の予定を確認',emoji:'📅',sec:120,texts:['予定を先に見た人は、一日を運転する側に回れる。']},
+ {name:'日記・振り返り3分',emoji:'📓',sec:180,texts:['3行でいい。今日の自分に一言残そう。']},
+ {name:'水分補給',emoji:'🥤',sec:30,texts:['脳の8割は水分。補給、補給！']},
+ {name:'アンちゃんのお世話',emoji:'🦜',sec:300,texts:['アンちゃんが待ってるよ。小鳥の世話は最高のマインドフルネス。']},
+];
 function openLib(){
   const r=D.routines.find(x=>x.id===editId);
   const el=document.getElementById('libList');el.innerHTML='';
@@ -781,16 +859,31 @@ function openLib(){
       <span class="lr">${esc(from.emoji)}${esc(from.name)}${inCurrent?'（このルーチン）':''} / ${secLabel} / 💬${step.texts.length}</span>
       <button class="add">複製</button><button class="add lk">🔗共有</button>`;
     d.querySelector('.add:not(.lk)').onclick=()=>{
-      r.steps.push({id:uid(),name:step.name,emoji:step.emoji,sec:step.sec,memo:step.memo||'',texts:[...step.texts]});
+      r.steps.push({id:uid(),name:step.name,emoji:step.emoji,sec:step.sec,memo:step.memo||'',texts:[...step.texts],checklist:(step.checklist||[]).map(c=>({t:c.t}))});
       save();renderSteps();sfxDone();toast(`📚 「${step.name}」を複製しました（独立コピー）`);
     };
     d.querySelector('.lk').onclick=()=>{
       if(!step.sharedId)step.sharedId=uid();
-      r.steps.push({id:uid(),sharedId:step.sharedId,name:step.name,emoji:step.emoji,sec:step.sec,memo:step.memo||'',texts:[...step.texts]});
+      r.steps.push({id:uid(),sharedId:step.sharedId,name:step.name,emoji:step.emoji,sec:step.sec,memo:step.memo||'',texts:[...step.texts],checklist:(step.checklist||[]).map(c=>({t:c.t}))});
       save();renderSteps();sfxDone();toast(`🔗 「${step.name}」を共有で追加（編集が連動します）`);
     };
     el.appendChild(d);
   });
+  // プリセット（日常ステップ）
+  const ph=document.createElement('h2');ph.textContent='🧰 プリセット（日常ステップ）';ph.style.marginTop='14px';
+  el.appendChild(ph);
+  for(const p of PRESET_STEPS){
+    const secLabel=p.sec>=60?`${Math.floor(p.sec/60)}分${p.sec%60?p.sec%60+'秒':''}`:`${p.sec}秒`;
+    const d=document.createElement('div');d.className='librow';
+    d.innerHTML=`<span>${p.emoji}</span><span class="ln">${esc(p.name)}</span>
+      <span class="lr">${secLabel}${p.checklist?' / ☑'+p.checklist.length:''}</span>
+      <button class="add">＋追加</button>`;
+    d.querySelector('.add').onclick=()=>{
+      r.steps.push({id:uid(),name:p.name,emoji:p.emoji,sec:p.sec,memo:'',texts:[...p.texts],checklist:(p.checklist||[]).map(t=>({t}))});
+      save();renderSteps();sfxDone();toast(`🧰 「${p.name}」を追加しました`);
+    };
+    el.appendChild(d);
+  }
   document.getElementById('libModal').classList.add('show');
 }
 function saveRoutine(){
@@ -860,10 +953,66 @@ function loadStep(speakIt){
     };
   };
   renderMemo();
+  run.ckDone=new Set();
+  renderRunCk(s);
   if(speakIt){
     const dur=s.sec>=60?`${Math.round(s.sec/60)}分`:`${s.sec}秒`;
     speak(`${s.name}、${dur}です。`,()=>{ if(D.settings.moti&&moti&&run)speak(moti); });
   }
+}
+function renderRunCk(s){
+  const el=document.getElementById('runCk');
+  s.checklist=s.checklist||[];
+  const draw=()=>{
+    if(!s.checklist.length){el.style.display='none';return;}
+    el.style.display='block';
+    el.innerHTML='<h4>☑ チェックリスト</h4>';
+    s.checklist.forEach((c,k)=>{
+      const row=document.createElement('div');
+      row.className='ckrow'+(run.ckDone.has(k)?' on':'');
+      row.innerHTML=`<span class="box">✓</span><span class="ckt">${esc(c.t)}</span><button class="ckdel">✕</button>`;
+      row.onclick=e=>{
+        if(e.target.classList.contains('ckdel'))return;
+        if(run.ckDone.has(k)){run.ckDone.delete(k);beep(523,.05,'sine',.08);}
+        else{
+          run.ckDone.add(k);beep(1047,.07,'square',.12);hitNoise(.15);
+          if(run.ckDone.size===s.checklist.length){sfxDone();confetti(40);toast('☑ 全部チェック完了！');}
+        }
+        draw();
+      };
+      row.querySelector('.ckdel').onclick=ev=>{ev.stopPropagation();
+        s.checklist.splice(k,1);run.ckDone.delete(k);syncShared(s);save();draw();
+      };
+      el.appendChild(row);
+    });
+    const addr=document.createElement('div');addr.className='ckaddrow';
+    addr.innerHTML=`<input type="text" placeholder="＋ 項目を追加"><button class="btn btn-c btn-sm">追加</button>`;
+    const inp=addr.querySelector('input');
+    const commit=()=>{const v=inp.value.trim();if(!v)return;s.checklist.push({t:v});syncShared(s);save();draw();el.querySelector('.ckaddrow input').focus();};
+    addr.querySelector('button').onclick=commit;
+    inp.onkeydown=e=>{if(e.key==='Enter')commit();};
+    el.appendChild(addr);
+  };
+  // 空でも追加できる入口を出す（未使用ステップでは折りたたみ表示）
+  if(!s.checklist.length){
+    el.style.display='block';
+    el.innerHTML='';
+    const b=document.createElement('button');
+    b.className='memoedit-btn';b.textContent='☑ チェックリスト追加';
+    b.onclick=()=>{s.checklist=[];run.ckDone=new Set();
+      el.innerHTML='<h4>☑ チェックリスト</h4>';
+      const addr=document.createElement('div');addr.className='ckaddrow';
+      addr.innerHTML=`<input type="text" placeholder="項目（例：財布）"><button class="btn btn-c btn-sm">追加</button>`;
+      const inp=addr.querySelector('input');
+      const commit=()=>{const v=inp.value.trim();if(!v)return;s.checklist.push({t:v});syncShared(s);save();draw();};
+      addr.querySelector('button').onclick=commit;
+      inp.onkeydown=e=>{if(e.key==='Enter')commit();};
+      el.appendChild(addr);inp.focus();
+    };
+    el.appendChild(b);
+    return;
+  }
+  draw();
 }
 function renderUpcoming(){
   const el=document.getElementById('upcoming');el.innerHTML='';
@@ -1264,6 +1413,16 @@ function restoreAll(input){
 function resetAll(){
   D=seed();save();renderHome();toast('🧹 初期化しました');
 }
+
+// ボタン押下のポップ音（快感強化）
+document.addEventListener('pointerdown',e=>{
+  if(!e.target.closest('button'))return;
+  beep(1568,.03,'sine',.06);
+  // 音ゲー風タップフラッシュ（押した位置でパンっと光る）
+  const fx=document.createElement('div');fx.className='tapfx';
+  fx.style.left=e.clientX+'px';fx.style.top=e.clientY+'px';
+  document.body.appendChild(fx);setTimeout(()=>fx.remove(),350);
+},true);
 
 renderHome();
 if(D.settings.autoSync&&(D.settings.syncUrl||'').trim())syncPull(true);
