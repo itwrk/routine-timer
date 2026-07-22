@@ -61,6 +61,23 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .btn-sm{padding:9px 14px;font-size:13px;border-radius:12px}
 .btn-full{width:100%;display:block}
 
+/* personal memo composer */
+.memo-composer{padding:11px 12px}
+.memo-composer h2{margin-bottom:7px}
+.memo-inputrow{display:flex;gap:7px;align-items:stretch}
+.memo-inputrow textarea{flex:1;min-width:0;height:58px;min-height:58px;resize:none;line-height:1.45}
+.memo-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.memo-actions button{width:60px;flex:1;padding:4px 6px;font-size:12px;white-space:nowrap;border-radius:10px}
+.memo-mic.listening{background:linear-gradient(135deg,var(--pink),#ff7854);box-shadow:0 0 18px rgba(255,77,141,.65);animation:micpulse .85s ease-in-out infinite alternate}
+@keyframes micpulse{to{filter:brightness(1.35);transform:scale(1.04)}}
+.memo-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px;color:var(--dim);font-size:10px}
+.memo-feed{margin-top:8px}
+.memo-post{display:flex;gap:7px;padding:7px 0;border-top:1px dashed #3a3480;font-size:13px;line-height:1.5}
+.memo-post:first-child{border-top:none}
+.memo-post .memo-body{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.memo-post time{display:block;color:var(--dim);font-size:9px;margin-top:2px}
+.memo-post .memo-del{align-self:flex-start;background:none;border:none;color:var(--dim);padding:3px;font-size:12px;cursor:pointer;flex-shrink:0}
+
 /* tab bar */
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:4px;background:rgba(18,16,42,.92);backdrop-filter:blur(10px);border-top:1px solid #322c6e;padding:8px max(8px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-bottom));z-index:50}
 .tabbar button{flex:1;max-width:130px;background:none;border:none;color:var(--dim);font-size:11px;font-weight:700;cursor:pointer;padding:6px 4px;border-radius:12px}
@@ -221,6 +238,18 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 
   <!-- HOME -->
   <div class="screen active" id="scr-home">
+    <div class="card memo-composer">
+      <h2>📝 ひとことメモ</h2>
+      <div class="memo-inputrow">
+        <textarea id="personalMemoInput" rows="2" maxlength="280" placeholder="いま思ったことをメモ…" oninput="updateMemoCount()"></textarea>
+        <div class="memo-actions">
+          <button id="memoMicBtn" class="btn btn-g memo-mic" type="button" onclick="toggleMemoVoice()">🎙️ 音声</button>
+          <button class="btn btn-c" type="button" onclick="addPersonalNote()">送る</button>
+        </div>
+      </div>
+      <div class="memo-meta"><span id="memoVoiceStatus">マイクで音声入力できます</span><span><b id="memoCharCount">0</b>/280</span></div>
+      <div id="personalMemoFeed" class="memo-feed"></div>
+    </div>
     <div id="routineList"></div>
     <button class="btn btn-p btn-full btn-sm" onclick="newRoutine()" style="padding:11px">＋ 新しいルーチンを作る</button>
     <div class="sect card" id="calCard">
@@ -461,11 +490,13 @@ const seed=()=>({
     ]
   }],
   hitokoto:['始めた時点で50点、続いてる今は80点！','完璧じゃなくていい、進んでいればいい。','ドーパミンは行動の後からやってくる。まず動こう！'],
+  personalNotes:[],
   logs:[], xp:0, badges:[], combo:0,
   settings:{rate:1.0,moti:true,sound:true}
 });
 let D; try{D=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){D=seed();}
 D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{});
+D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];
 /* ── 同期設定のプリセット ──
    ここに書いておけば、どの端末で開いても入力不要（ファイル自体に埋め込み）。
    例: const PRESET_SYNC={url:'https://script.google.com/macros/s/xxxx/exec',key:'anchan-0721',auto:true}; */
@@ -713,6 +744,7 @@ function renderHome(){
   document.getElementById('hStreak').textContent=streak();
   document.getElementById('hLevel').textContent=levelInfo().level;
   const el=document.getElementById('routineList');el.innerHTML='';
+  renderPersonalNotes();
   if(!D.routines.length)el.innerHTML='<div class="card muted">まだルーチンがありません。下のボタンから作ってみよう！</div>';
   const sorted=[...D.routines].sort((a,b)=>(b.lastRun||0)-(a.lastRun||0));
   for(const r of sorted){
@@ -736,6 +768,59 @@ function renderHome(){
     c.querySelector('button').onclick=()=>{D.hitokoto.splice(i,1);save();renderHome();};
     hc.appendChild(c);
   });
+}
+function renderPersonalNotes(){
+  const feed=document.getElementById('personalMemoFeed');
+  if(!feed)return;
+  feed.innerHTML='';
+  const notes=[...D.personalNotes].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,5);
+  for(const note of notes){
+    const row=document.createElement('div');row.className='memo-post';
+    const dt=new Date(note.createdAt||Date.now());
+    const stamp=`${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    row.innerHTML=`<div class="memo-body">${esc(note.text)}<time>${stamp}</time></div><button class="memo-del" title="削除">✕</button>`;
+    row.querySelector('.memo-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
+      D.personalNotes=D.personalNotes.filter(n=>n.id!==note.id);save();renderPersonalNotes();toast('🗑 メモを削除しました');
+    });
+    feed.appendChild(row);
+  }
+}
+function updateMemoCount(){
+  const input=document.getElementById('personalMemoInput');
+  const count=document.getElementById('memoCharCount');
+  if(input&&count)count.textContent=input.value.length;
+}
+function addPersonalNote(){
+  const input=document.getElementById('personalMemoInput');
+  const text=input.value.trim();
+  if(!text){toast('📝 メモを入力してください');return;}
+  D.personalNotes.push({id:uid(),text,createdAt:Date.now()});
+  input.value='';updateMemoCount();save();renderPersonalNotes();toast('📮 メモしました');sfxDone();
+}
+let memoRecognition=null,memoListening=false;
+function toggleMemoVoice(){
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){toast('⚠️ このブラウザは音声入力に対応していません');return;}
+  if(memoListening){memoRecognition.stop();return;}
+  const input=document.getElementById('personalMemoInput');
+  const btn=document.getElementById('memoMicBtn');
+  const status=document.getElementById('memoVoiceStatus');
+  memoRecognition=new SpeechRecognition();
+  memoRecognition.lang='ja-JP';memoRecognition.interimResults=true;memoRecognition.continuous=false;
+  const before=input.value.trim();
+  memoRecognition.onstart=()=>{memoListening=true;btn.classList.add('listening');btn.textContent='⏹ 停止';status.textContent='聞いています…';};
+  memoRecognition.onresult=e=>{
+    let finalText='',interimText='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal)finalText+=t;else interimText+=t;
+    }
+    input.value=(before+(before&&finalText+interimText?' ':'')+finalText+interimText).slice(0,280);
+    updateMemoCount();
+  };
+  memoRecognition.onerror=e=>{if(e.error!=='aborted')toast(e.error==='not-allowed'?'⚠️ マイクの使用を許可してください':'⚠️ 音声を認識できませんでした');};
+  memoRecognition.onend=()=>{memoListening=false;btn.classList.remove('listening');btn.textContent='🎙️ 音声';status.textContent='マイクで音声入力できます';};
+  try{memoRecognition.start();}catch(e){toast('⚠️ 音声入力を開始できませんでした');}
 }
 function addHitokoto(){
   const v=document.getElementById('hitokotoInput').value.trim();
