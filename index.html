@@ -68,7 +68,7 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .memo-section-head h2{margin:0}
 .text-link{background:none;border:none;color:var(--cyan);font-size:11px;font-weight:700;padding:3px 2px;cursor:pointer;white-space:nowrap}
 .memo-inputrow{display:flex;gap:7px;align-items:stretch}
-.memo-inputrow textarea{flex:1;min-width:0;height:48px;min-height:48px;resize:none;line-height:1.35;padding:6px 8px}
+.memo-inputrow textarea{flex:1;min-width:0;height:48px;min-height:48px;resize:none;line-height:1.35;padding:6px 8px;font-size:12px}
 .memo-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
 .memo-actions button{width:56px;flex:1;padding:3px 4px;font-size:11px;white-space:nowrap;border-radius:9px}
 .memo-mic.listening{background:linear-gradient(135deg,var(--pink),#ff7854);box-shadow:0 0 18px rgba(255,77,141,.65);animation:micpulse .85s ease-in-out infinite alternate}
@@ -301,19 +301,6 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <h2>📅 今後の予定 <button class="btn btn-g btn-sm" style="float:right;padding:4px 10px;font-size:11px" onclick="loadCalEvents(true)">🔄 更新</button></h2>
       <div id="calList" class="muted">読み込み中…</div>
     </div>
-    <div class="sect card">
-      <h2>💬 今日のひとことプール</h2>
-      <p class="muted">どのルーチンでもランダムに読み上げられる汎用テキスト（豆知識・励まし・自作ニュースなど）。</p>
-      <div id="hitokotoChips" style="margin-top:8px"></div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <input type="text" id="hitokotoInput" placeholder="例：水を一杯飲むと脳が起動するよ！">
-        <button class="btn btn-c btn-sm" onclick="addHitokoto()">追加</button>
-      </div>
-      <div class="field" style="margin-top:12px"><label>🤖 AIのトーン指示（ステップ用AI生成にも共通）</label>
-        <input type="text" id="aiToneInput" placeholder="例：熱血コーチ風／執事風に上品に／人狼のGM風に" onchange="D.settings.aiTone=this.value.trim();save();">
-      </div>
-      <button class="btn btn-sm aibtn btn-full" onclick="aiHitokoto(this)">🤖 AIで追加</button>
-    </div>
   </div>
 
   <!-- MANAGE / NOTES -->
@@ -381,6 +368,19 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 
   <!-- SETTINGS / CSV -->
   <div class="screen" id="scr-set">
+    <div class="card">
+      <h2>💬 今日のひとことプール</h2>
+      <p class="muted">どのルーチンでもランダムに読み上げられる汎用テキスト（豆知識・励まし・自作ニュースなど）。</p>
+      <div id="hitokotoChips" style="margin-top:8px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input type="text" id="hitokotoInput" placeholder="例：水を一杯飲むと脳が起動するよ！">
+        <button class="btn btn-c btn-sm" onclick="addHitokoto()">追加</button>
+      </div>
+      <div class="field" style="margin-top:12px"><label>🤖 AIのトーン指示（ステップ用AI生成にも共通）</label>
+        <input type="text" id="aiToneInput" placeholder="例：熱血コーチ風／執事風に上品に／人狼のGM風に" onchange="D.settings.aiTone=this.value.trim();save();">
+      </div>
+      <button class="btn btn-sm aibtn btn-full" onclick="aiHitokoto(this)">🤖 AIで追加</button>
+    </div>
     <div class="card">
       <h2>📤 CSV エクスポート / インポート</h2>
       <p class="muted">読み上げテキストCSV形式：<b>ルーチン名,ステップ名,テキスト</b>（ステップ名を <b>*</b> にするとひとことプールに入ります）</p>
@@ -855,29 +855,46 @@ function addPersonalNote(){
   if(document.getElementById('scr-manage').classList.contains('active'))renderAllNotes();
   toast('📮 メモしました');sfxDone();
 }
-let memoRecognition=null,memoListening=false;
+let memoRecognition=null,memoListening=false,memoVoiceIdleTm=null,memoVoiceKeepAlive=false,memoVoiceIdleUntil=0;
+function finishMemoVoiceUI(){
+  clearTimeout(memoVoiceIdleTm);memoListening=false;memoVoiceKeepAlive=false;
+  const btn=document.getElementById('memoMicBtn'),status=document.getElementById('memoVoiceStatus');
+  btn.classList.remove('listening');btn.textContent='🎙️ 音声';status.textContent='マイクで音声入力できます';
+}
+function scheduleMemoVoiceStop(){
+  clearTimeout(memoVoiceIdleTm);
+  memoVoiceIdleTm=setTimeout(()=>{memoVoiceKeepAlive=false;try{memoRecognition.stop();}catch(e){finishMemoVoiceUI();}},Math.max(0,memoVoiceIdleUntil-Date.now()));
+}
 function toggleMemoVoice(){
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SpeechRecognition){toast('⚠️ このブラウザは音声入力に対応していません');return;}
-  if(memoListening){memoRecognition.stop();return;}
+  if(memoListening){memoVoiceKeepAlive=false;try{memoRecognition.stop();}catch(e){finishMemoVoiceUI();}return;}
   const input=document.getElementById('personalMemoInput');
   const btn=document.getElementById('memoMicBtn');
   const status=document.getElementById('memoVoiceStatus');
   memoRecognition=new SpeechRecognition();
-  memoRecognition.lang='ja-JP';memoRecognition.interimResults=true;memoRecognition.continuous=false;
-  const before=input.value.trim();
-  memoRecognition.onstart=()=>{memoListening=true;btn.classList.add('listening');btn.textContent='⏹ 停止';status.textContent='聞いています…';};
-  memoRecognition.onresult=e=>{
-    let finalText='',interimText='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const t=e.results[i][0].transcript;
-      if(e.results[i].isFinal)finalText+=t;else interimText+=t;
-    }
-    input.value=(before+(before&&finalText+interimText?' ':'')+finalText+interimText).slice(0,280);
-    updateMemoCount();
+  memoRecognition.lang='ja-JP';memoRecognition.interimResults=true;memoRecognition.continuous=true;
+  let before=input.value.trim();
+  memoRecognition.onstart=()=>{
+    if(!memoListening){memoListening=true;memoVoiceKeepAlive=true;memoVoiceIdleUntil=Date.now()+8000;btn.classList.add('listening');btn.textContent='⏹ 停止';status.textContent='聞いています…（無音5秒で終了）';}
+    scheduleMemoVoiceStop();
   };
-  memoRecognition.onerror=e=>{if(e.error!=='aborted')toast(e.error==='not-allowed'?'⚠️ マイクの使用を許可してください':'⚠️ 音声を認識できませんでした');};
-  memoRecognition.onend=()=>{memoListening=false;btn.classList.remove('listening');btn.textContent='🎙️ 音声';status.textContent='マイクで音声入力できます';};
+  memoRecognition.onresult=e=>{
+    let heard='';
+    for(let i=0;i<e.results.length;i++)heard+=e.results[i][0].transcript;
+    input.value=(before+(before&&heard?' ':'')+heard).slice(0,280);
+    updateMemoCount();
+    memoVoiceIdleUntil=Date.now()+5500;scheduleMemoVoiceStop();
+  };
+  memoRecognition.onerror=e=>{
+    if(e.error==='not-allowed'){memoVoiceKeepAlive=false;toast('⚠️ マイクの使用を許可してください');}
+    else if(e.error!=='aborted'&&e.error!=='no-speech')toast('⚠️ 音声を認識できませんでした');
+  };
+  memoRecognition.onend=()=>{
+    clearTimeout(memoVoiceIdleTm);
+    if(memoVoiceKeepAlive&&Date.now()<memoVoiceIdleUntil){before=input.value.trim();setTimeout(()=>{if(!memoVoiceKeepAlive){finishMemoVoiceUI();return;}try{memoRecognition.start();}catch(e){finishMemoVoiceUI();}},200);return;}
+    finishMemoVoiceUI();
+  };
   try{memoRecognition.start();}catch(e){toast('⚠️ 音声入力を開始できませんでした');}
 }
 function habitLogForToday(id){return D.habitLogs.find(g=>g.habitId===id&&g.date===today());}
@@ -1609,7 +1626,7 @@ function renderCalEvents(){
   const el=document.getElementById('calList');if(!el)return;
   if(!calCache||!calCache.length){el.textContent='直近7日間の予定はありません🎉';return;}
   el.innerHTML='';
-  for(const ev of calCache.slice(0,8)){
+  for(const ev of calCache.slice(0,12)){
     const d=new Date(ev.start);
     const time=ev.allDay?'終日':`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
     const row=document.createElement('div');
