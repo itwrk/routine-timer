@@ -104,6 +104,11 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .habit-row .habit-time{color:var(--mint);font-size:10px;white-space:nowrap}
 .habit-row .today-badge{color:var(--gold);font-size:9px;border:1px solid rgba(255,201,60,.45);border-radius:999px;padding:1px 5px;white-space:nowrap}
 .habit-row .habit-del{background:none;border:none;color:var(--dim);font-size:12px;padding:5px;cursor:pointer;flex-shrink:0}
+.habit-row .habit-detail-btn,.habit-row .habit-link{background:none;border:none;color:var(--cyan);font:inherit;font-size:11px;padding:4px 2px;cursor:pointer;text-decoration:none;white-space:nowrap;flex-shrink:0}
+.habit-row .habit-link{color:var(--gold)}
+.habit-row .habit-window{color:var(--purple);font-size:9px;border:1px solid rgba(157,123,255,.45);border-radius:999px;padding:1px 5px;white-space:nowrap;flex-shrink:0}
+.habit-guide{display:none;margin:0 2px 6px 32px;padding:8px 10px;background:rgba(43,38,100,.55);border-left:3px solid var(--cyan);border-radius:8px;color:var(--text);font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.habit-guide.show{display:block}
 .habit-add{display:flex;gap:6px;margin-top:5px}
 .habit-add input{padding:6px 8px;font-size:13px}
 .habit-add input{flex:1;min-width:0}
@@ -111,8 +116,21 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .habit-log-row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed #3a3480;font-size:12px}
 .habit-log-row .when{color:var(--dim);white-space:nowrap}
 .manage-habit-row{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px dashed #3a3480}
-.manage-habit-row .manage-name{flex:1;min-width:0;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.manage-habit-row .manage-main{flex:1;min-width:0}
+.manage-habit-row .manage-name{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.manage-habit-row .manage-schedule{color:var(--dim);font-size:10px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.manage-habit-row .habit-edit-btn{background:none;border:none;color:var(--cyan);padding:5px;font-size:12px;cursor:pointer;white-space:nowrap}
 .manage-habit-row .habit-del{background:none;border:none;color:var(--dim);padding:5px;font-size:12px;cursor:pointer;white-space:nowrap}
+.habit-editor{background:rgba(27,24,64,.8);border:1px solid #453f95;border-radius:12px;padding:10px;margin:3px 0 9px}
+.habit-editor .field{margin-bottom:8px}
+.habit-editor textarea{min-height:88px;resize:vertical;line-height:1.5}
+.habit-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.habit-weekdays{display:flex;gap:4px;flex-wrap:wrap}
+.habit-weekdays label{display:flex;align-items:center;justify-content:center;gap:2px;background:var(--card2);border:1px solid #453f95;border-radius:8px;padding:5px 7px;font-size:11px;cursor:pointer}
+.habit-weekdays input{width:auto;margin:0}
+.habit-editor-actions{display:flex;gap:7px;margin-top:10px}
+.habit-editor-actions button{flex:1;white-space:nowrap;padding:8px 6px}
+@media(max-width:390px){.habit-editor-grid{grid-template-columns:1fr}.habit-row .habit-window{display:none}.habit-row{gap:5px}}
 
 /* Google Calendar */
 .cal-event{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px dashed #3a3480;font-size:13px;color:var(--text)}
@@ -313,11 +331,11 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   <!-- MANAGE / NOTES -->
   <div class="screen" id="scr-manage">
     <div class="card" id="habitManageCard">
-      <h2>🌱 毎日の習慣を管理</h2>
-      <p class="muted">ここで追加した項目は、毎日ホームのチェックリストに表示されます。</p>
+      <h2>🌱 チェックリスト項目を管理</h2>
+      <p class="muted">追加後の「✏️ 編集」から、手順メモ・リンク・表示する日付/曜日/時間帯を設定できます。</p>
       <div id="habitManageList" style="margin-top:6px"></div>
       <div class="habit-add">
-        <input type="text" id="habitInput" maxlength="60" placeholder="毎日続けたいことを追加" onkeydown="if(event.key==='Enter')addHabit()">
+        <input type="text" id="habitInput" maxlength="60" placeholder="チェック項目を追加（初期値は毎日）" onkeydown="if(event.key==='Enter')addHabit()">
         <button class="btn btn-c btn-sm" type="button" onclick="addHabit()">＋ 追加</button>
       </div>
     </div>
@@ -549,6 +567,11 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 const KEY='rvt_v1';
 const uid=()=>Math.random().toString(36).slice(2,9);
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+function normalizeHabit(h){
+  const normalized=Object.assign({guide:'',link:'',scheduleMode:'daily',weekdays:[0,1,2,3,4,5,6],showDate:'',startTime:'',endTime:''},h||{});
+  normalized.weekdays=Array.isArray(normalized.weekdays)?normalized.weekdays.map(Number).filter(n=>n>=0&&n<=6):[0,1,2,3,4,5,6];
+  return normalized;
+}
 
 const seed=()=>({
   routines:[{
@@ -570,7 +593,7 @@ const seed=()=>({
 let D; try{D=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){D=seed();}
 D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{});
 D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];
-D.habits=Array.isArray(D.habits)?D.habits:[];
+D.habits=(Array.isArray(D.habits)?D.habits:[]).map(normalizeHabit);
 D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];
 D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];
 D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];
@@ -906,23 +929,74 @@ function toggleMemoVoice(){
 }
 function habitLogForToday(id){return D.habitLogs.find(g=>g.habitId===id&&g.date===today());}
 function todayTaskLog(id){return D.todayTaskLogs.find(g=>g.taskId===id&&g.date===today());}
+const WEEKDAY_LABELS=['日','月','火','水','木','金','土'];
+function localDateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function timeMinutes(value){
+  const m=/^(\d{2}):(\d{2})$/.exec(value||'');
+  return m?Number(m[1])*60+Number(m[2]):null;
+}
+function habitVisibleAt(habit,now=new Date()){
+  const start=timeMinutes(habit.startTime),end=timeMinutes(habit.endTime);
+  const current=now.getHours()*60+now.getMinutes();
+  const overnight=start!==null&&end!==null&&start>end;
+  const anchor=new Date(now);
+  if(overnight&&current<end)anchor.setDate(anchor.getDate()-1);
+  if(start!==null&&end!==null){
+    if(start!==end){
+      const inWindow=overnight?(current>=start||current<end):(current>=start&&current<end);
+      if(!inWindow)return false;
+    }
+  }else{
+    if(start!==null&&current<start)return false;
+    if(end!==null&&current>=end)return false;
+  }
+  if(habit.scheduleMode==='date')return habit.showDate===localDateKey(anchor);
+  if(habit.scheduleMode==='weekdays')return (habit.weekdays||[]).includes(anchor.getDay());
+  return true;
+}
+function habitWindowLabel(habit){
+  if(habit.startTime&&habit.startTime===habit.endTime)return '';
+  if(habit.startTime&&habit.endTime)return `${habit.startTime}–${habit.endTime}`;
+  if(habit.startTime)return `${habit.startTime}〜`;
+  if(habit.endTime)return `〜${habit.endTime}`;
+  return '';
+}
+function habitScheduleLabel(habit){
+  let label='毎日';
+  if(habit.scheduleMode==='weekdays')label=(habit.weekdays||[]).map(d=>WEEKDAY_LABELS[d]).join('・')+'曜';
+  if(habit.scheduleMode==='date')label=habit.showDate?habit.showDate.replace(/-/g,'/'):'日付未設定';
+  const windowLabel=habitWindowLabel(habit);
+  return windowLabel?`${label} ${windowLabel}`:`${label} 終日`;
+}
+function safeHabitUrl(value){
+  const raw=String(value||'').trim();if(!raw)return '';
+  try{
+    const url=new URL(/^[a-z][a-z\d+.-]*:/i.test(raw)?raw:'https://'+raw);
+    return url.protocol==='http:'||url.protocol==='https:'?url.href:'';
+  }catch(e){return '';}
+}
 function renderHabits(){
   const list=document.getElementById('habitList');
   if(!list)return;
   list.innerHTML='';
   const taskList=document.getElementById('todayTaskList');taskList.innerHTML='';
+  const visibleHabits=D.habits.filter(h=>habitVisibleAt(h));
   const todays=D.todayTasks.filter(t=>t.date===today());
-  const done=D.habits.filter(h=>habitLogForToday(h.id)).length+todays.filter(t=>todayTaskLog(t.id)).length;
-  const total=D.habits.length+todays.length;
+  const done=visibleHabits.filter(h=>habitLogForToday(h.id)).length+todays.filter(t=>todayTaskLog(t.id)).length;
+  const total=visibleHabits.length+todays.length;
   document.getElementById('habitScore').textContent=`${done} / ${total}`;
   document.getElementById('habitBarFill').style.width=(total?done/total*100:0)+'%';
-  if(!D.habits.length&&!todays.length)list.innerHTML='<p class="muted" style="padding:5px 0">下から今日やることを追加できます。</p>';
-  for(const habit of D.habits){
+  if(!visibleHabits.length&&!todays.length)list.innerHTML=`<p class="muted" style="padding:5px 0">${D.habits.length?'今は表示条件に合う項目がありません。':'下から今日やることを追加できます。'}</p>`;
+  for(const habit of visibleHabits){
     const log=habitLogForToday(habit.id);
-    const row=document.createElement('div');row.className='habit-row'+(log?' done':'');
-    row.innerHTML=`<span class="habit-check">✓</span><span class="habit-name">${esc(habit.name)}</span>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}`;
-    row.onclick=()=>toggleHabit(habit);
-    list.appendChild(row);
+    const item=document.createElement('div');
+    const link=safeHabitUrl(habit.link),windowLabel=habitWindowLabel(habit);
+    item.innerHTML=`<div class="habit-row${log?' done':''}"><span class="habit-check">✓</span><span class="habit-name">${esc(habit.name)}</span>${windowLabel?`<span class="habit-window">${esc(windowLabel)}</span>`:''}${habit.guide?'<button class="habit-detail-btn" type="button" aria-label="手順を表示">📖</button>':''}${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="関連リンクを開く">🔗</a>`:''}${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>${habit.guide?`<div class="habit-guide">${esc(habit.guide)}</div>`:''}`;
+    const row=item.querySelector('.habit-row');
+    row.onclick=e=>{if(e.target.closest('button,a'))return;toggleHabit(habit);};
+    const detailBtn=item.querySelector('.habit-detail-btn');
+    if(detailBtn)detailBtn.onclick=()=>item.querySelector('.habit-guide').classList.toggle('show');
+    list.appendChild(item);
   }
   for(const task of todays){
     const log=todayTaskLog(task.id);
@@ -939,7 +1013,7 @@ function addHabit(){
   const input=document.getElementById('habitInput');
   const name=input.value.trim();
   if(!name){toast('✅ 習慣を入力してください');return;}
-  D.habits.push({id:uid(),name});input.value='';save();renderHabitManager();toast('🌱 毎日の習慣を追加しました');
+  const habit=normalizeHabit({id:uid(),name});D.habits.push(habit);input.value='';habitEditId=habit.id;save();renderHabitManager();toast('🌱 項目を追加しました');
 }
 function toggleHabit(habit){
   const old=habitLogForToday(habit.id);
@@ -971,18 +1045,51 @@ function toggleTodayTask(task){
   save();renderHabits();sfxDone();toast('✅ 今日の項目を記録しました！');
 }
 function renderManage(){renderHabitManager();renderAllNotes();}
+let habitEditId=null;
+function updateHabitScheduleFields(editor){
+  const mode=editor.querySelector('.habit-mode').value;
+  editor.querySelector('.habit-weekday-field').style.display=mode==='weekdays'?'block':'none';
+  editor.querySelector('.habit-date-field').style.display=mode==='date'?'block':'none';
+}
+function saveHabitEditor(habit,editor){
+  const name=editor.querySelector('.habit-edit-name').value.trim();
+  if(!name){toast('✅ 項目名を入力してください');return;}
+  const linkRaw=editor.querySelector('.habit-edit-link').value.trim();
+  const link=safeHabitUrl(linkRaw);
+  if(linkRaw&&!link){toast('⚠️ リンクは http:// または https:// のURLにしてください');return;}
+  const scheduleMode=editor.querySelector('.habit-mode').value;
+  const weekdays=[...editor.querySelectorAll('.habit-weekdays input:checked')].map(el=>Number(el.value));
+  const showDate=editor.querySelector('.habit-edit-date').value;
+  if(scheduleMode==='weekdays'&&!weekdays.length){toast('⚠️ 表示する曜日を1つ以上選んでください');return;}
+  if(scheduleMode==='date'&&!showDate){toast('⚠️ 表示する日付を選んでください');return;}
+  Object.assign(habit,{
+    name,guide:editor.querySelector('.habit-edit-guide').value.trim(),link,scheduleMode,weekdays,showDate,
+    startTime:editor.querySelector('.habit-start-time').value,endTime:editor.querySelector('.habit-end-time').value
+  });
+  habitEditId=null;save();renderHabitManager();renderHabits();toast('💾 チェック項目を保存しました');
+}
 function renderHabitManager(){
   const list=document.getElementById('habitManageList');
   if(!list)return;
   list.innerHTML='';
-  if(!D.habits.length)list.innerHTML='<p class="muted">毎日の習慣はまだありません。</p>';
+  if(!D.habits.length)list.innerHTML='<p class="muted">チェック項目はまだありません。</p>';
   for(const habit of D.habits){
     const row=document.createElement('div');row.className='manage-habit-row';
-    row.innerHTML=`<span>🔁</span><span class="manage-name">${esc(habit.name)}</span><button class="habit-del">✕ 削除</button>`;
-    row.querySelector('button').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
-      D.habits=D.habits.filter(h=>h.id!==habit.id);save();renderHabitManager();toast('🗑 習慣を削除しました（過去ログは残ります）');
+    row.innerHTML=`<span>☑️</span><div class="manage-main"><div class="manage-name">${esc(habit.name)}</div><div class="manage-schedule">${esc(habitScheduleLabel(habit))}${habit.guide?' ・ 📖手順':''}${habit.link?' ・ 🔗リンク':''}</div></div><button class="habit-edit-btn" type="button">✏️ 編集</button><button class="habit-del" type="button">✕</button>`;
+    row.querySelector('.habit-edit-btn').onclick=()=>{habitEditId=habitEditId===habit.id?null:habit.id;renderHabitManager();};
+    row.querySelector('.habit-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
+      D.habits=D.habits.filter(h=>h.id!==habit.id);if(habitEditId===habit.id)habitEditId=null;save();renderHabitManager();renderHabits();toast('🗑 項目を削除しました（過去ログは残ります）');
     });
     list.appendChild(row);
+    if(habitEditId===habit.id){
+      const editor=document.createElement('div');editor.className='habit-editor';
+      const days=WEEKDAY_LABELS.map((label,i)=>`<label><input type="checkbox" value="${i}" ${(habit.weekdays||[]).includes(i)?'checked':''}>${label}</label>`).join('');
+      editor.innerHTML=`<div class="field"><label>項目名</label><input class="habit-edit-name" type="text" maxlength="60" value="${esc(habit.name)}"></div><div class="field"><label>📖 手順メモ</label><textarea class="habit-edit-guide" maxlength="2000" rows="4" placeholder="作業の手順や注意点を書く">${esc(habit.guide)}</textarea></div><div class="field"><label>🔗 関連リンク</label><input class="habit-edit-link" type="url" maxlength="500" value="${esc(habit.link)}" placeholder="https://..."></div><div class="field"><label>ホームに表示する日</label><select class="habit-mode"><option value="daily" ${habit.scheduleMode==='daily'?'selected':''}>毎日</option><option value="weekdays" ${habit.scheduleMode==='weekdays'?'selected':''}>曜日指定</option><option value="date" ${habit.scheduleMode==='date'?'selected':''}>日付指定</option></select></div><div class="field habit-weekday-field"><label>表示する曜日</label><div class="habit-weekdays">${days}</div></div><div class="field habit-date-field"><label>表示する日付</label><input class="habit-edit-date" type="date" value="${esc(habit.showDate)}"></div><div class="habit-editor-grid"><div class="field"><label>表示開始（任意）</label><input class="habit-start-time" type="time" value="${esc(habit.startTime)}"></div><div class="field"><label>表示終了（任意）</label><input class="habit-end-time" type="time" value="${esc(habit.endTime)}"></div></div><p class="muted">例：毎日 18:00〜19:00。終了を翌日にする時間帯（22:00〜02:00）も設定できます。</p><div class="habit-editor-actions"><button class="btn btn-c btn-sm habit-save" type="button">💾 保存</button><button class="btn btn-g btn-sm habit-cancel" type="button">キャンセル</button></div>`;
+      list.appendChild(editor);updateHabitScheduleFields(editor);
+      editor.querySelector('.habit-mode').onchange=()=>updateHabitScheduleFields(editor);
+      editor.querySelector('.habit-save').onclick=()=>saveHabitEditor(habit,editor);
+      editor.querySelector('.habit-cancel').onclick=()=>{habitEditId=null;renderHabitManager();};
+    }
   }
 }
 function renderAllNotes(){
@@ -1595,7 +1702,7 @@ async function syncPull(auto){
     D=remote;
     D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{},localSync); // 同期設定とAPIキーは端末側を維持
     D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];
-    D.habits=Array.isArray(D.habits)?D.habits:[];
+    D.habits=(Array.isArray(D.habits)?D.habits:[]).map(normalizeHabit);
     D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];
     D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];
     D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];
@@ -1767,7 +1874,7 @@ function backupAll(){download('rvt_backup.json',JSON.stringify(D,null,1),'applic
 function restoreAll(input){
   const f=input.files[0];if(!f)return;
   const rd=new FileReader();
-  rd.onload=()=>{try{D=JSON.parse(rd.result);D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{});D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];D.habits=Array.isArray(D.habits)?D.habits:[];D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];delete D.badges;save();toast('✅ 復元しました');renderHome();}catch(e){toast('⚠️ 読み込みに失敗しました');}input.value='';};
+  rd.onload=()=>{try{D=JSON.parse(rd.result);D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{});D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];D.habits=(Array.isArray(D.habits)?D.habits:[]).map(normalizeHabit);D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];delete D.badges;save();toast('✅ 復元しました');renderHome();}catch(e){toast('⚠️ 読み込みに失敗しました');}input.value='';};
   rd.readAsText(f,'utf-8');
 }
 function resetAll(){
@@ -1785,6 +1892,10 @@ document.addEventListener('pointerdown',e=>{
 },true);
 
 renderHome();
+setInterval(()=>{
+  const home=document.getElementById('scr-home');
+  if(home&&home.classList.contains('active'))renderHabits();
+},30000);
 if(D.settings.autoSync&&(D.settings.syncUrl||'').trim())syncPull(true);
 </script>
 </body>
