@@ -114,6 +114,13 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .manage-habit-row .manage-name{flex:1;min-width:0;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .manage-habit-row .habit-del{background:none;border:none;color:var(--dim);padding:5px;font-size:12px;cursor:pointer;white-space:nowrap}
 
+/* Google Calendar */
+.cal-event{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px dashed #3a3480;font-size:13px;color:var(--text)}
+.cal-event-color{width:5px;height:24px;border-radius:999px;background:var(--event-color);box-shadow:0 0 8px var(--event-color);flex-shrink:0}
+.cal-event-date{color:var(--event-color);font-weight:700;min-width:64px;flex-shrink:0}
+.cal-event-time{color:var(--gold);min-width:42px;flex-shrink:0}
+.cal-event-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* tab bar */
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:4px;background:rgba(18,16,42,.92);backdrop-filter:blur(10px);border-top:1px solid #322c6e;padding:8px max(8px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-bottom));z-index:50}
 .tabbar button{flex:1;max-width:130px;background:none;border:none;color:var(--dim);font-size:11px;font-weight:700;cursor:pointer;padding:6px 4px;border-radius:12px}
@@ -1600,6 +1607,18 @@ async function syncPull(auto){
 
 /* ============ 📅 Googleカレンダー連携 (GAS経由) ============ */
 let calCache=null,calCacheAt=0;
+const CAL_EVENT_COLORS={
+  '1':'#a4bdfc','2':'#7ae7bf','3':'#dbadff','4':'#ff887c','5':'#fbd75b','6':'#ffb878',
+  '7':'#46d6db','8':'#e1e1e1','9':'#5484ed','10':'#51b749','11':'#dc2127'
+};
+function calEventColor(ev){
+  const raw=String(ev.colorHex||ev.backgroundColor||ev.color||'').trim();
+  if(/^#[0-9a-f]{6}$/i.test(raw))return raw;
+  const eventColor=CAL_EVENT_COLORS[String(ev.colorId||ev.eventColor||raw||'')];
+  if(eventColor)return eventColor;
+  const calendarColor=String(ev.calendarColor||'').trim();
+  return /^#[0-9a-f]{6}$/i.test(calendarColor)?calendarColor:'#35e0ff';
+}
 function fmtEvDate(ms){
   const d=new Date(ms),now=new Date();
   const d0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -1630,8 +1649,8 @@ function renderCalEvents(){
     const d=new Date(ev.start);
     const time=ev.allDay?'終日':`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
     const row=document.createElement('div');
-    row.style.cssText='display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed #3a3480;font-size:13px;color:var(--text)';
-    row.innerHTML=`<span style="color:var(--cyan);font-weight:700;min-width:64px;flex-shrink:0">${fmtEvDate(ev.start)}</span><span style="color:var(--gold);min-width:42px;flex-shrink:0">${time}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ev.title||'(無題)')}</span>`;
+    row.className='cal-event';row.style.setProperty('--event-color',calEventColor(ev));
+    row.innerHTML=`<span class="cal-event-color" aria-hidden="true"></span><span class="cal-event-date">${fmtEvDate(ev.start)}</span><span class="cal-event-time">${time}</span><span class="cal-event-title">${esc(ev.title||'(無題)')}</span>`;
     el.appendChild(row);
   }
 }
