@@ -79,6 +79,7 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .memo-post:first-child{border-top:none}
 .memo-post .memo-body{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
 .memo-post time{display:block;color:var(--dim);font-size:9px;margin-top:2px}
+.memo-context{display:block;color:var(--cyan);font-size:9px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .memo-post .memo-del{align-self:flex-start;background:none;border:none;color:var(--dim);padding:3px;font-size:12px;cursor:pointer;flex-shrink:0}
 .memo-timeline{margin-top:2px}
 .tweet-row{display:flex;gap:9px;padding:11px 1px;border-bottom:1px solid #3a3480}
@@ -88,6 +89,7 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .tweet-head b{font-size:12px;white-space:nowrap}
 .tweet-head span,.tweet-head time{color:var(--dim);white-space:nowrap}
 .tweet-text{font-size:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.tweet-context{color:var(--cyan);font-size:10px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tweet-del{margin-left:auto;background:none;border:none;color:var(--dim);font-size:12px;padding:2px 3px;cursor:pointer;flex-shrink:0}
 
 /* daily habits */
@@ -152,6 +154,7 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .activity-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid #453f95;border-radius:9px;flex-shrink:0;font-size:13px}
 .activity-body{flex:1;min-width:0}
 .activity-type{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:9px;margin-bottom:2px}
+.activity-type>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .activity-type time{margin-left:auto;color:var(--gold);white-space:nowrap}
 .activity-text{font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 .activity-item.check .activity-text{font-weight:700}
@@ -260,6 +263,12 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 /* memo */
 .runmemo{max-width:460px;width:100%;background:rgba(27,24,64,.8);border:1px dashed #453f95;border-radius:14px;padding:10px 14px;font-size:13px;line-height:1.7;margin-top:8px;color:var(--dim);word-break:break-all}
 .runmemo a{color:var(--cyan)}
+.run-note-composer{max-width:460px;width:100%;background:rgba(27,24,64,.82);border:1px solid #453f95;border-radius:14px;padding:9px 10px;margin-top:8px}
+.run-note-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;font-size:11px;font-weight:800;color:var(--cyan)}
+.run-note-context{color:var(--dim);font-size:9px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.run-note-row{display:flex;gap:6px;align-items:stretch}
+.run-note-row textarea{flex:1;min-width:0;resize:none;height:48px;min-height:48px;font-size:12px;padding:6px 8px}
+.run-note-row button{white-space:nowrap;flex-shrink:0;padding:6px 10px;font-size:11px;border-radius:9px}
 .aibtn{background:linear-gradient(135deg,#7b5cff,#b13cff)!important;border:none!important;color:#fff!important;box-shadow:0 0 12px rgba(157,123,255,.4)}
 .aibtn.busy{opacity:.5;pointer-events:none}
 
@@ -269,6 +278,15 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 input[type=text],input[type=number],textarea,select{width:100%;background:var(--bg2);border:1px solid #453f95;border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px}
 textarea{resize:vertical;min-height:36px}
 .steprow{background:var(--bg2);border:1px solid #3a3480;border-radius:12px;padding:8px;margin-bottom:8px}
+.steprow.open{border-color:#514aac;box-shadow:0 0 14px rgba(53,224,255,.08)}
+.step-summary{display:flex;align-items:center;gap:7px;min-width:0}
+.step-summary .draghandle{padding:3px 5px}
+.step-summary-emoji{font-size:20px;flex-shrink:0}
+.step-summary-main{flex:1;min-width:0}
+.step-summary-name{font-size:14px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step-summary-meta{color:var(--dim);font-size:9px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step-edit-btn{background:none;border:none;color:var(--cyan);padding:5px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.step-editor-body{border-top:1px dashed #3a3480;margin-top:8px;padding-top:8px}
 .steprow .rowtop{display:flex;gap:6px;align-items:center}
 .steprow .rowtop input.sname{flex:1}
 .steprow .rowtop input.semoji{width:46px;text-align:center;padding:8px 4px}
@@ -285,6 +303,19 @@ textarea{resize:vertical;min-height:36px}
 .secbtns button:active{transform:scale(.9)}
 .secbtns .secshow{font-family:'DotGothic16',monospace;color:var(--cyan);font-size:12px;min-width:46px;text-align:center;flex-shrink:0}
 .sharebadge{background:rgba(53,224,255,.12);border:1px solid var(--cyan);border-radius:8px;color:var(--cyan);font-size:12px;padding:4px 6px;cursor:pointer;flex-shrink:0}
+
+/* routine selection / preview */
+.preview-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.preview-emoji{width:48px;height:48px;border-radius:14px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.preview-title{flex:1;min-width:0}
+.preview-title h2{font-size:19px;margin:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-title p{margin-top:3px}
+.preview-step{display:flex;align-items:center;gap:8px;padding:9px 2px;border-top:1px dashed #3a3480}
+.preview-step .pe{font-size:20px;flex-shrink:0}
+.preview-step .pn{flex:1;min-width:0;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-step .ps{color:var(--gold);font-size:10px;white-space:nowrap}
+.preview-actions{display:flex;gap:8px;margin-top:14px}
+.preview-actions button{flex:1;white-space:nowrap;padding:12px 8px;font-size:13px}
 /* リザルト画面 */
 #result{position:fixed;inset:0;background:rgba(18,16,42,.93);backdrop-filter:blur(8px);z-index:120;display:none;align-items:center;justify-content:center;padding:20px}
 #result.show{display:flex}
@@ -383,6 +414,23 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     <div class="sect card" id="activityTimelineCard">
       <div class="activity-head"><h2>🧭 活動と気持ちのタイムライン</h2><span class="activity-range">過去24時間・新しい順</span></div>
       <div id="activityTimeline" class="activity-timeline"></div>
+    </div>
+  </div>
+
+  <!-- ROUTINE PREVIEW -->
+  <div class="screen" id="scr-preview">
+    <div class="card">
+      <div class="preview-head">
+        <div class="preview-emoji" id="previewEmoji">✨</div>
+        <div class="preview-title"><h2 id="previewName">ルーチン</h2><p class="muted" id="previewMeta"></p></div>
+        <button class="edit-btn" id="previewEdit" type="button" style="background:none;border:none;color:var(--cyan);font-size:16px;padding:7px">✏️</button>
+      </div>
+      <h2>このルーチンのステップ</h2>
+      <div id="previewSteps"></div>
+      <div class="preview-actions">
+        <button class="btn btn-g" type="button" onclick="showScreen('scr-home')">← 戻る</button>
+        <button class="btn btn-p" type="button" id="previewStart" onclick="startSelectedRoutine()">▶ このルーチンを開始</button>
+      </div>
     </div>
   </div>
 
@@ -577,6 +625,13 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     <button class="btn btn-p" id="btnDoneStep" onclick="doneStep()">✅ できた！</button>
   </div>
   <div class="moti" id="runMoti">…</div>
+  <div class="run-note-composer">
+    <div class="run-note-head"><span>📝 実行中のひとこと</span><span class="run-note-context" id="runNoteContext"></span></div>
+    <div class="run-note-row">
+      <textarea id="runNoteInput" rows="2" maxlength="280" placeholder="いま考えたこと・感じたこと…" onkeydown="submitShortcut(event,addRunNote)"></textarea>
+      <button class="btn btn-c" type="button" onclick="addRunNote()">記録</button>
+    </div>
+  </div>
   <div class="runmemo" id="runMemo" style="display:none"></div>
   <div class="runck" id="runCk" style="display:none"></div>
   <div class="upcoming" id="upcomingWrap">
@@ -908,8 +963,8 @@ function renderHome(){
       <div class="info"><div class="name">${esc(r.name)}</div>
       <div class="meta">${r.steps.length}ステップ・約${Math.round(total/60)}分</div></div>
       <button class="edit-btn" title="編集">✏️</button>
-      <button class="go">▶ 開始</button>`;
-    div.querySelector('.go').onclick=e=>{e.stopPropagation();startRun(r.id);};
+      <button class="go">選択</button>`;
+    div.querySelector('.go').onclick=e=>{e.stopPropagation();openRoutinePreview(r.id);};
     div.querySelector('.edit-btn').onclick=e=>{e.stopPropagation();openEdit(r.id);};
     el.appendChild(div);
   }
@@ -923,6 +978,32 @@ function renderHome(){
     hc.appendChild(c);
   });
 }
+let selectedRoutineId=null;
+function openRoutinePreview(id){
+  selectedRoutineId=id;renderRoutinePreview();showScreen('scr-preview');
+}
+function renderRoutinePreview(){
+  const r=D.routines.find(x=>x.id===selectedRoutineId);
+  if(!r){showScreen('scr-home');return;}
+  const total=r.steps.reduce((sum,s)=>sum+(Number(s.sec)||0),0);
+  document.getElementById('previewEmoji').textContent=r.emoji||'📝';
+  document.getElementById('previewName').textContent=r.name||'名前なしルーチン';
+  document.getElementById('previewMeta').textContent=`${r.steps.length}ステップ・約${Math.round(total/60)}分`;
+  document.getElementById('previewEdit').onclick=()=>openEdit(r.id);
+  const list=document.getElementById('previewSteps');list.innerHTML='';
+  if(!r.steps.length)list.innerHTML='<p class="muted">ステップがありません。✏️から追加してください。</p>';
+  for(const step of r.steps){
+    const row=document.createElement('div');row.className='preview-step';
+    row.innerHTML=`<span class="pe">${esc(step.emoji||'✅')}</span><span class="pn">${esc(step.name||'名前なしステップ')}</span><span class="ps">${stepDurationLabel(step.sec)}</span>`;
+    list.appendChild(row);
+  }
+  document.getElementById('previewStart').disabled=!r.steps.length;
+}
+function startSelectedRoutine(){
+  const id=selectedRoutineId;
+  if(!id)return;
+  showScreen('scr-home');startRun(id);
+}
 function renderPersonalNotes(){
   const feed=document.getElementById('personalMemoFeed');
   if(!feed)return;
@@ -932,12 +1013,17 @@ function renderPersonalNotes(){
     const row=document.createElement('div');row.className='memo-post';
     const dt=new Date(note.createdAt||Date.now());
     const stamp=`${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
-    row.innerHTML=`<div class="memo-body">${esc(note.text)}<time>${stamp}</time></div><button class="memo-del" title="削除">✕</button>`;
+    const context=noteContextLabel(note);
+    row.innerHTML=`<div class="memo-body">${context?`<span class="memo-context">▶ ${esc(context)}</span>`:''}${esc(note.text)}<time>${stamp}</time></div><button class="memo-del" title="削除">✕</button>`;
     row.querySelector('.memo-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
       D.personalNotes=D.personalNotes.filter(n=>n.id!==note.id);save();renderPersonalNotes();renderActivityTimeline();toast('🗑 メモを削除しました');
     });
     feed.appendChild(row);
   }
+}
+function noteContextLabel(note){
+  if(!note||!note.stepName)return '';
+  return `${note.routineName||'ルーチン'} › ${note.stepName}`;
 }
 function activityLogStamp(log){
   if(Number(log&&log.completedAt)>0)return Number(log.completedAt);
@@ -959,7 +1045,8 @@ function renderActivityTimeline(){
   const now=Date.now(),cutoff=now-24*60*60*1000,items=[];
   for(const note of D.personalNotes){
     const stamp=Number(note.createdAt)||0;
-    if(stamp>=cutoff&&stamp<=now)items.push({kind:'note',icon:'📝',label:'ひとことメモ',text:note.text||'',stamp});
+    const context=noteContextLabel(note);
+    if(stamp>=cutoff&&stamp<=now)items.push({kind:'note',icon:'📝',label:context?`実行メモ・${context}`:'ひとことメモ',text:note.text||'',stamp});
   }
   for(const log of D.habitLogs){
     const stamp=activityLogStamp(log);
@@ -998,7 +1085,16 @@ function addPersonalNote(){
   if(document.getElementById('scr-manage').classList.contains('active'))renderAllNotes();
   toast('📮 メモしました');sfxDone();
 }
-let memoRecognition=null,memoListening=false,memoVoiceIdleTm=null,memoVoiceKeepAlive=false,memoVoiceIdleUntil=0;
+function addRunNote(){
+  if(!run)return;
+  const input=document.getElementById('runNoteInput'),text=input.value.trim();
+  if(!text){toast('📝 メモを入力してください');return;}
+  const step=run.r.steps[run.idx];
+  D.personalNotes.push({id:uid(),text,createdAt:Date.now(),source:'run',routineId:run.r.id,routineName:run.r.name,stepId:step.id,stepName:step.name});
+  input.value='';input.blur();save();renderPersonalNotes();renderActivityTimeline();
+  toast(`📝 「${step.name}」のメモを記録しました`);sfxDone();
+}
+let memoRecognition=null,memoListening=false,memoVoiceIdleTm=null,memoVoiceKeepAlive=false,memoVoiceIdleUntil=0,memoVoiceSubmitOnEnd=false;
 function finishMemoVoiceUI(){
   clearTimeout(memoVoiceIdleTm);memoListening=false;memoVoiceKeepAlive=false;
   const btn=document.getElementById('memoMicBtn'),status=document.getElementById('memoVoiceStatus');
@@ -1006,15 +1102,20 @@ function finishMemoVoiceUI(){
 }
 function scheduleMemoVoiceStop(){
   clearTimeout(memoVoiceIdleTm);
-  memoVoiceIdleTm=setTimeout(()=>{memoVoiceKeepAlive=false;try{memoRecognition.stop();}catch(e){finishMemoVoiceUI();}},Math.max(0,memoVoiceIdleUntil-Date.now()));
+  memoVoiceIdleTm=setTimeout(()=>{memoVoiceSubmitOnEnd=false;memoVoiceKeepAlive=false;try{memoRecognition.stop();}catch(e){finishMemoVoiceUI();}},Math.max(0,memoVoiceIdleUntil-Date.now()));
 }
 function toggleMemoVoice(){
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SpeechRecognition){toast('⚠️ このブラウザは音声入力に対応していません');return;}
-  if(memoListening){memoVoiceKeepAlive=false;try{memoRecognition.stop();}catch(e){finishMemoVoiceUI();}return;}
   const input=document.getElementById('personalMemoInput');
+  if(memoListening){
+    memoVoiceSubmitOnEnd=true;memoVoiceKeepAlive=false;
+    try{memoRecognition.stop();}catch(e){memoVoiceSubmitOnEnd=false;finishMemoVoiceUI();memoRecognition=null;if(input.value.trim())addPersonalNote();}
+    return;
+  }
   const btn=document.getElementById('memoMicBtn');
   const status=document.getElementById('memoVoiceStatus');
+  memoVoiceSubmitOnEnd=false;
   memoRecognition=new SpeechRecognition();
   memoRecognition.lang='ja-JP';memoRecognition.interimResults=true;memoRecognition.continuous=true;
   let before=input.value.trim();
@@ -1030,11 +1131,16 @@ function toggleMemoVoice(){
     memoVoiceIdleUntil=Date.now()+5500;scheduleMemoVoiceStop();
   };
   memoRecognition.onerror=e=>{
-    if(e.error==='not-allowed'){memoVoiceKeepAlive=false;toast('⚠️ マイクの使用を許可してください');}
+    if(e.error==='not-allowed'){memoVoiceSubmitOnEnd=false;memoVoiceKeepAlive=false;toast('⚠️ マイクの使用を許可してください');}
     else if(e.error!=='aborted'&&e.error!=='no-speech')toast('⚠️ 音声を認識できませんでした');
   };
   memoRecognition.onend=()=>{
     clearTimeout(memoVoiceIdleTm);
+    if(memoVoiceSubmitOnEnd){
+      memoVoiceSubmitOnEnd=false;finishMemoVoiceUI();memoRecognition=null;
+      if(input.value.trim())addPersonalNote();
+      return;
+    }
     if(memoVoiceKeepAlive&&Date.now()<memoVoiceIdleUntil){before=input.value.trim();setTimeout(()=>{if(!memoVoiceKeepAlive){finishMemoVoiceUI();return;}try{memoRecognition.start();}catch(e){finishMemoVoiceUI();}},200);return;}
     finishMemoVoiceUI();
   };
@@ -1297,9 +1403,10 @@ function renderAllNotes(){
     const dt=new Date(note.createdAt||Date.now());
     const stamp=`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
     const row=document.createElement('article');row.className='tweet-row';
-    row.innerHTML=`<div class="tweet-avatar">✍️</div><div class="tweet-main"><div class="tweet-head"><b>ひとことメモ</b><span>@memo</span><span>·</span><time>${stamp}</time><button class="tweet-del">✕</button></div><div class="tweet-text">${esc(note.text)}</div></div>`;
+    const context=noteContextLabel(note);
+    row.innerHTML=`<div class="tweet-avatar">${context?'▶️':'✍️'}</div><div class="tweet-main"><div class="tweet-head"><b>${context?'実行メモ':'ひとことメモ'}</b><span>@memo</span><span>·</span><time>${stamp}</time><button class="tweet-del">✕</button></div>${context?`<div class="tweet-context">${esc(context)}</div>`:''}<div class="tweet-text">${esc(note.text)}</div></div>`;
     row.querySelector('button').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
-      D.personalNotes=D.personalNotes.filter(n=>n.id!==note.id);save();renderAllNotes();renderPersonalNotes();toast('🗑 メモを削除しました');
+      D.personalNotes=D.personalNotes.filter(n=>n.id!==note.id);save();renderAllNotes();renderPersonalNotes();renderActivityTimeline();toast('🗑 メモを削除しました');
     });
     feed.appendChild(row);
   }
@@ -1329,13 +1436,14 @@ function syncShared(s){
 }
 
 /* ============ EDIT ============ */
-let editId=null;
+let editId=null,stepEditId=null;
 function newRoutine(){
   const r={id:uid(),name:'',emoji:'✨',steps:[]};
   D.routines.push(r);openEdit(r.id);
 }
 function openEdit(id){
   editId=id;const r=D.routines.find(x=>x.id===id);
+  stepEditId=null;
   document.getElementById('eName').value=r.name;
   document.getElementById('eEmoji').value=r.emoji;
   renderSteps();
@@ -1345,82 +1453,78 @@ function renderSteps(){
   const r=D.routines.find(x=>x.id===editId);
   const el=document.getElementById('stepList');el.innerHTML='';
   r.steps.forEach((s,i)=>{
-    const d=document.createElement('div');d.className='steprow';d.dataset.id=s.id;
+    s.texts=Array.isArray(s.texts)?s.texts:[];s.checklist=Array.isArray(s.checklist)?s.checklist:[];
+    const open=stepEditId===s.id;
+    const d=document.createElement('div');d.className='steprow'+(open?' open':'');d.dataset.id=s.id;
     const secLabel=v=>v>=60?`${Math.floor(v/60)}分${v%60?v%60+'秒':''}`:`${v}秒`;
-    d.innerHTML=`<div class="rowtop">
-        <span class="draghandle" title="ドラッグで並べ替え">≡</span>${s.sharedId?'<button class="sharebadge" title="共有ステップ（タップで解除）">🔗</button>':''}
-        <input class="semoji" value="${esc(s.emoji)}" placeholder="🪥">
-        <input class="sname" value="${esc(s.name)}" placeholder="ステップ名">
-      </div>
+    d.innerHTML=`<div class="step-summary"><span class="draghandle" title="ドラッグで並べ替え">≡</span><span class="step-summary-emoji">${esc(s.emoji||'✅')}</span><div class="step-summary-main"><div class="step-summary-name">${esc(s.name||'名前なしステップ')}</div><div class="step-summary-meta">${secLabel(s.sec)} ・ 💬${s.texts.length} ・ ☑${s.checklist.length}${s.memo?' ・ 📎メモ':''}</div></div>${s.sharedId?'<button class="sharebadge" title="共有ステップ（タップで解除）">🔗</button>':''}<button class="step-edit-btn" type="button">${open?'閉じる':'✏️ 編集'}</button></div>`;
+    const updateSummary=()=>{d.querySelector('.step-summary-emoji').textContent=s.emoji||'✅';d.querySelector('.step-summary-name').textContent=s.name||'名前なしステップ';d.querySelector('.step-summary-meta').textContent=`${secLabel(s.sec)} ・ 💬${s.texts.length} ・ ☑${s.checklist.length}${s.memo?' ・ 📎メモ':''}`;};
+    d.querySelector('.step-edit-btn').onclick=()=>{stepEditId=open?null:s.id;renderSteps();};
+    const sb=d.querySelector('.sharebadge');
+    if(sb)sb.onclick=e=>twoTap(e.currentTarget,'解除？',()=>{delete s.sharedId;save();renderSteps();toast('🔗 共有を解除しました（独立ステップに）');});
+    if(open){
+      const body=document.createElement('div');body.className='step-editor-body';
+      body.innerHTML=`<div class="rowtop"><input class="semoji" type="text" value="${esc(s.emoji||'✅')}" placeholder="🪥"><input class="sname" type="text" value="${esc(s.name)}" placeholder="ステップ名"></div>
       <div class="secbtns">
         <button data-d="-60">−1分</button><button data-d="-30">−30</button><button data-d="-10">−10</button>
         <span class="secshow">${secLabel(s.sec)}</span>
         <button data-d="10">＋10</button><button data-d="30">＋30</button><button data-d="60">＋1分</button>
       </div>
-      <div class="field" style="margin:6px 0 0"><textarea class="smemo" rows="1" placeholder="メモ・リンク（実行中に表示）">${esc(s.memo||'')}</textarea></div>
+      <div class="field"><label>📎 実行中に表示するメモ・リンク</label><textarea class="smemo" rows="2" placeholder="手順、注意点、参考リンクなど">${esc(s.memo||'')}</textarea></div>
+      <div class="field"><label>💬 読み上げテキスト</label><div class="chips"></div></div>
       <div class="smalltools">
-        <button class="btn btn-g btn-sm del">🗑 削除</button>
-        <button class="btn btn-c btn-sm addtxt">💬 手動追加</button>
+        <button class="btn btn-c btn-sm addtxt">＋ 読み上げ追加</button>
         <button class="btn btn-sm aibtn ait">🤖 AI生成</button>
         <button class="btn btn-g btn-sm ckbtn">☑ リスト</button>
+        <button class="btn btn-g btn-sm del">🗑 削除</button>
       </div>
       <div class="ckwrap" style="display:none;margin-top:6px"></div>
       <div class="txtform" style="display:none;margin-top:6px;gap:6px">
         <input type="text" class="txtin" placeholder="読み上げテキスト（コツ・励ましなど）">
         <button class="btn btn-c btn-sm txtok">追加</button>
-      </div>
-      <div class="chips"></div>`;
-    d.querySelector('.semoji').onchange=e=>{s.emoji=e.target.value;syncShared(s);save();};
-    d.querySelector('.sname').onchange=e=>{s.name=e.target.value;syncShared(s);save();};
-    d.querySelector('.smemo').onchange=e=>{s.memo=e.target.value;syncShared(s);save();};
-    d.querySelectorAll('.secbtns button').forEach(b=>{
-      b.onclick=()=>{s.sec=Math.max(5,s.sec+(+b.dataset.d));syncShared(s);save();d.querySelector('.secshow').textContent=secLabel(s.sec);beep(988,.04,'sine',.06);};
-    });
-    const sb=d.querySelector('.sharebadge');
-    if(sb)sb.onclick=e=>twoTap(e.currentTarget,'解除？',()=>{delete s.sharedId;save();renderSteps();toast('🔗 共有を解除しました（独立ステップに）');});
-    d.querySelector('.del').onclick=e=>twoTap(e.currentTarget,'🗑 ほんとに削除？',()=>{r.steps.splice(i,1);save();renderSteps();});
-    const tf=d.querySelector('.txtform'),ti=d.querySelector('.txtin');
-    d.querySelector('.addtxt').onclick=()=>{
-      tf.style.display=tf.style.display==='none'?'flex':'none';
-      if(tf.style.display==='flex')ti.focus();
-    };
-    const commitTxt=()=>{const v=ti.value.trim();if(!v)return;s.texts.push(v);syncShared(s);save();renderSteps();};
-    d.querySelector('.txtok').onclick=commitTxt;
-    ti.onkeydown=e=>{if(e.key==='Enter')commitTxt();};
-    d.querySelector('.ait').onclick=e=>aiStepTexts(e.target,r.name||document.getElementById('eName').value,s);
-    // チェックリスト編集
-    const ckwrap=d.querySelector('.ckwrap');
-    const ckbtn=d.querySelector('.ckbtn');
-    s.checklist=s.checklist||[];
-    ckbtn.textContent=`☑ リスト${s.checklist.length?`(${s.checklist.length})`:''}`;
-    function renderCkEdit(){
-      ckwrap.innerHTML='';
-      s.checklist.forEach((c,k)=>{
-        const row=document.createElement('div');row.className='ckrow';
-        row.innerHTML=`<span class="box">✓</span><span class="ckt">${esc(c.t)}</span><button class="ckdel">✕</button>`;
-        row.querySelector('.ckdel').onclick=()=>{s.checklist.splice(k,1);syncShared(s);save();renderCkEdit();ckbtn.textContent=`☑ リスト${s.checklist.length?`(${s.checklist.length})`:''}`;};
-        ckwrap.appendChild(row);
+      </div>`;
+      d.appendChild(body);
+      body.querySelector('.semoji').onchange=e=>{s.emoji=e.target.value;syncShared(s);save();updateSummary();};
+      body.querySelector('.sname').onchange=e=>{s.name=e.target.value;syncShared(s);save();updateSummary();};
+      body.querySelector('.smemo').onchange=e=>{s.memo=e.target.value;syncShared(s);save();updateSummary();};
+      body.querySelectorAll('.secbtns button').forEach(b=>{
+        b.onclick=()=>{s.sec=Math.max(5,s.sec+(+b.dataset.d));syncShared(s);save();body.querySelector('.secshow').textContent=secLabel(s.sec);updateSummary();beep(988,.04,'sine',.06);};
       });
-      const addr=document.createElement('div');addr.className='ckaddrow';
-      addr.innerHTML=`<input type="text" placeholder="チェック項目（例：財布）"><button class="btn btn-c btn-sm">追加</button>`;
-      const inp=addr.querySelector('input');
-      const commit=()=>{const v=inp.value.trim();if(!v)return;s.checklist.push({t:v});syncShared(s);save();renderCkEdit();ckbtn.textContent=`☑ リスト(${s.checklist.length})`;ckwrap.querySelector('.ckaddrow input').focus();};
-      addr.querySelector('button').onclick=commit;
-      inp.onkeydown=e=>{if(e.key==='Enter')commit();};
-      ckwrap.appendChild(addr);
+      body.querySelector('.del').onclick=e=>twoTap(e.currentTarget,'🗑 ほんとに削除？',()=>{r.steps.splice(i,1);stepEditId=null;save();renderSteps();});
+      const tf=body.querySelector('.txtform'),ti=body.querySelector('.txtin');
+      body.querySelector('.addtxt').onclick=()=>{tf.style.display=tf.style.display==='none'?'flex':'none';if(tf.style.display==='flex')ti.focus();};
+      const commitTxt=()=>{const v=ti.value.trim();if(!v)return;s.texts.push(v);syncShared(s);save();renderSteps();};
+      body.querySelector('.txtok').onclick=commitTxt;
+      ti.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229)commitTxt();};
+      body.querySelector('.ait').onclick=e=>aiStepTexts(e.currentTarget,r.name||document.getElementById('eName').value,s);
+      const ckwrap=body.querySelector('.ckwrap'),ckbtn=body.querySelector('.ckbtn');
+      ckbtn.textContent=`☑ リスト${s.checklist.length?`(${s.checklist.length})`:''}`;
+      function renderCkEdit(){
+        ckwrap.innerHTML='';
+        s.checklist.forEach((c,k)=>{
+          const row=document.createElement('div');row.className='ckrow';
+          row.innerHTML=`<span class="box">✓</span><span class="ckt">${esc(c.t)}</span><button class="ckdel">✕</button>`;
+          row.querySelector('.ckdel').onclick=()=>{s.checklist.splice(k,1);syncShared(s);save();renderCkEdit();ckbtn.textContent=`☑ リスト${s.checklist.length?`(${s.checklist.length})`:''}`;updateSummary();};
+          ckwrap.appendChild(row);
+        });
+        const addr=document.createElement('div');addr.className='ckaddrow';
+        addr.innerHTML=`<input type="text" placeholder="チェック項目（例：財布）"><button class="btn btn-c btn-sm">追加</button>`;
+        const inp=addr.querySelector('input');
+        const commit=()=>{const v=inp.value.trim();if(!v)return;s.checklist.push({t:v});syncShared(s);save();renderCkEdit();ckbtn.textContent=`☑ リスト(${s.checklist.length})`;updateSummary();ckwrap.querySelector('.ckaddrow input').focus();};
+        addr.querySelector('button').onclick=commit;
+        inp.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229)commit();};
+        ckwrap.appendChild(addr);
+      }
+      ckbtn.onclick=()=>{const shown=ckwrap.style.display!=='none';ckwrap.style.display=shown?'none':'block';if(!shown)renderCkEdit();};
+      const chips=body.querySelector('.chips');
+      if(!s.texts.length)chips.innerHTML='<span class="muted">まだありません。</span>';
+      s.texts.forEach((t,j)=>{
+        const c=document.createElement('span');c.className='txtchip';
+        c.innerHTML=`${esc(t)}<button>✕</button>`;
+        c.querySelector('button').onclick=()=>{s.texts.splice(j,1);syncShared(s);save();renderSteps();};
+        chips.appendChild(c);
+      });
     }
-    ckbtn.onclick=()=>{
-      const open=ckwrap.style.display!=='none';
-      ckwrap.style.display=open?'none':'block';
-      if(!open)renderCkEdit();
-    };
-    const chips=d.querySelector('.chips');
-    s.texts.forEach((t,j)=>{
-      const c=document.createElement('span');c.className='txtchip';
-      c.innerHTML=`${esc(t)}<button>✕</button>`;
-      c.querySelector('button').onclick=()=>{s.texts.splice(j,1);syncShared(s);save();renderSteps();};
-      chips.appendChild(c);
-    });
     el.appendChild(d);
   });
   enableDrag(el,'.steprow',ids=>{
@@ -1430,7 +1534,7 @@ function renderSteps(){
 }
 function addStep(){
   const r=D.routines.find(x=>x.id===editId);
-  r.steps.push({id:uid(),name:'',emoji:'✅',sec:60,texts:[]});
+  const s={id:uid(),name:'',emoji:'✅',sec:60,texts:[]};r.steps.push(s);stepEditId=s.id;
   save();renderSteps();
 }
 const PRESET_STEPS=[
@@ -1540,6 +1644,8 @@ function loadStep(speakIt){
   document.getElementById('runEmoji').textContent=s.emoji||'✅';
   document.getElementById('runStep').textContent=s.name;
   document.getElementById('runProg').textContent=`ステップ ${run.idx+1} / ${run.r.steps.length}`;
+  document.getElementById('runNoteContext').textContent=`${run.r.name} › ${s.name}`;
+  document.getElementById('runNoteInput').value='';
   slamIn();
   updateTimerModeUi();updateRing();renderUpcoming();
   const pool=[...(s.texts||[]),...D.hitokoto];
