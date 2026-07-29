@@ -310,10 +310,16 @@ textarea{resize:vertical;min-height:36px}
 .preview-title{flex:1;min-width:0}
 .preview-title h2{font-size:19px;margin:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .preview-title p{margin-top:3px}
-.preview-step{display:flex;align-items:center;gap:8px;padding:9px 2px;border-top:1px dashed #3a3480}
-.preview-step .pe{font-size:20px;flex-shrink:0}
-.preview-step .pn{flex:1;min-width:0;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.preview-step .ps{color:var(--gold);font-size:10px;white-space:nowrap}
+.preview-step{display:flex;align-items:center;gap:5px;padding:7px 0;border-top:1px dashed #3a3480;min-width:0}
+.preview-step .draghandle{padding:3px 4px;font-size:17px}
+.preview-step .pe{font-size:18px;flex-shrink:0}
+.preview-step-main{display:flex;align-items:baseline;gap:5px;flex:1;min-width:0;overflow:hidden;white-space:nowrap}
+.preview-step .pn{max-width:55%;min-width:0;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:1}
+.preview-step-main.only-name .pn{max-width:100%;flex:1}
+.preview-step .pm{flex:1;min-width:0;color:var(--dim);font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-step .ps{color:var(--gold);font-family:'DotGothic16',monospace;font-size:9px;text-align:center;min-width:32px;white-space:nowrap;flex-shrink:0}
+.preview-minute{width:36px;height:27px;padding:0;border:1px solid #453f95;border-radius:8px;background:var(--card2);color:var(--text);font-family:inherit;font-size:9px;font-weight:800;line-height:1;white-space:nowrap;flex-shrink:0;cursor:pointer}
+.preview-minute:active{transform:scale(.9)}
 .preview-actions{display:flex;gap:8px;margin-top:14px}
 .preview-actions button{flex:1;white-space:nowrap;padding:12px 8px;font-size:13px}
 /* リザルト画面 */
@@ -993,10 +999,21 @@ function renderRoutinePreview(){
   const list=document.getElementById('previewSteps');list.innerHTML='';
   if(!r.steps.length)list.innerHTML='<p class="muted">ステップがありません。✏️から追加してください。</p>';
   for(const step of r.steps){
-    const row=document.createElement('div');row.className='preview-step';
-    row.innerHTML=`<span class="pe">${esc(step.emoji||'✅')}</span><span class="pn">${esc(step.name||'名前なしステップ')}</span><span class="ps">${stepDurationLabel(step.sec)}</span>`;
+    const memo=(step.memo||'').trim();
+    const row=document.createElement('div');row.className='preview-step';row.dataset.id=step.id;
+    row.innerHTML=`<span class="draghandle" title="ドラッグで並べ替え">≡</span><span class="pe">${esc(step.emoji||'✅')}</span><div class="preview-step-main${memo?'':' only-name'}"><span class="pn">${esc(step.name||'名前なしステップ')}</span>${memo?`<span class="pm" title="${esc(memo)}">📎 ${esc(memo)}</span>`:''}</div><button class="preview-minute" type="button" data-d="-60" title="1分減らす" aria-label="${esc(step.name||'ステップ')}の時間を1分減らす">−1分</button><span class="ps">${stepDurationLabel(step.sec)}</span><button class="preview-minute" type="button" data-d="60" title="1分増やす" aria-label="${esc(step.name||'ステップ')}の時間を1分増やす">＋1分</button>`;
+    row.querySelectorAll('.preview-minute').forEach(btn=>{
+      btn.onclick=()=>{
+        step.sec=Math.max(5,(Number(step.sec)||0)+Number(btn.dataset.d));
+        syncShared(step);save();renderRoutinePreview();beep(988,.04,'sine',.06);
+      };
+    });
     list.appendChild(row);
   }
+  enableDrag(list,'.preview-step',ids=>{
+    r.steps.sort((a,b)=>ids.indexOf(a.id)-ids.indexOf(b.id));
+    save();renderRoutinePreview();sfxSlam();
+  });
   document.getElementById('previewStart').disabled=!r.steps.length;
 }
 function startSelectedRoutine(){
