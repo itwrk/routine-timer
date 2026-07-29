@@ -564,7 +564,9 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <button class="btn btn-c btn-sm" onclick="document.getElementById('csvFile').click()">テキストCSV読み込み</button>
         <button class="btn btn-g btn-sm" onclick="exportLogs()">ログCSV書き出し</button>
         <button class="btn btn-g btn-sm" onclick="exportHabitLogs()">チェックリストCSV書き出し</button>
+        <button class="btn btn-p btn-sm" onclick="exportChatGPTTimeline()">🤖 ChatGPT用CSV</button>
       </div>
+      <p class="muted" style="margin-top:8px">ChatGPT用CSVには、ルーチン完了・チェック完了・気分・自由記述メモだけを時系列で収録します。設定、APIキー、同期合言葉、内部IDは含めません。</p>
       <input type="file" id="csvFile" accept=".csv,text/csv" style="display:none" onchange="importTexts(this)">
     </div>
     <div class="card">
@@ -592,6 +594,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <button class="btn btn-c btn-sm" onclick="syncPush()">☁️ 今すぐアップロード</button>
         <button class="btn btn-c btn-sm" onclick="syncPull()">⬇️ 今すぐ取得</button>
       </div>
+      <p class="muted" style="margin-top:8px">アップロード時に、ChatGPT用の <b>routine_timeline.csv</b> もGoogle Drive更新用データとして送信します。</p>
       <p class="muted" style="margin-top:8px">付属の <b>rvt-sync.gs</b> を自分のGoogleアカウントのApps Scriptにデプロイして、URLと合言葉を両端末に入れるだけ。データはあなたのGoogle Drive内に保存されます。AIのAPIキーは同期されません（端末ごとに保持）。</p>
     </div>
     <div class="card">
@@ -2156,11 +2159,25 @@ async function syncPush(silent){
   const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
   if(!url){toast('⚠️ 設定で同期URLを入力してね');return;}
   try{
-    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({key,data:D})});
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({
+      key,
+      data:syncDataForCloud(),
+      timelineFileName:'routine_timeline.csv',
+      timelineCsv:buildChatGPTTimelineCsv()
+    })});
     const j=await res.json();
-    if(j.ok){if(!silent)toast('☁️ アップロード完了');}
+    if(j.ok){if(!silent)toast(j.timelineSaved?'☁️ データとCSVを更新しました':'☁️ アップロード完了');}
     else toast('⚠️ 同期エラー：'+(j.error||'不明'));
   }catch(e){if(!silent)toast('⚠️ アップロード失敗（URL/通信を確認）');}
+}
+function syncDataForCloud(){
+  const data=JSON.parse(JSON.stringify(D));
+  data.settings=Object.assign({},data.settings||{});
+  delete data.settings.apiKey;
+  delete data.settings.syncUrl;
+  delete data.settings.syncKey;
+  delete data.settings.autoSync;
+  return data;
 }
 async function syncPull(auto){
   const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
@@ -2285,7 +2302,15 @@ function saveSettings(){
   D.settings.sound=document.getElementById('setSound').checked;
   save();
 }
-const csvEsc=s=>/[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+const csvEsc=value=>{
+  const s=String(value??'');
+  return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+};
+const timelineCsvEsc=value=>{
+  let s=String(value??'');
+  if(/^[=+\-@]/.test(s))s="'"+s;
+  return csvEsc(s);
+};
 function download(name,content,type='text/csv'){
   const blob=new Blob(['\uFEFF'+content],{type:type+';charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
@@ -2350,6 +2375,49 @@ function exportHabitLogs(){
   for(const log of D.todayTaskLogs)rows.push(['今日だけ',log.date,log.time||'',csvEsc(log.taskName||'削除済みの項目'),'完了'].join(','));
   for(const task of D.todayTasks)if(!D.todayTaskLogs.some(g=>g.taskId===task.id&&g.date===task.date))rows.push(['今日だけ',task.date,'',csvEsc(task.name),'未完了'].join(','));
   download('チェックリストログ.csv',rows.join('\n'));toast('📤 チェックリストログを書き出しました');
+}
+function timelineDateTime(stamp,date='',time=''){
+  const value=Number(stamp)||0;
+  if(value>0){
+    const d=new Date(value);
+    if(Number.isFinite(d.getTime()))return `${localDateKey(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+  }
+  return `${date||''}${time?` ${time}`:''}`.trim();
+}
+function chatgptTimelineRows(){
+  const rows=[];
+  for(const note of D.personalNotes){
+    const stamp=Number(note.createdAt)||0;
+    rows.push({stamp,dateTime:timelineDateTime(stamp),type:'自由記述メモ',content:note.text||'',routine:note.routineName||'',step:note.stepName||'',detail:note.source==='run'?'ルーチン実行中':''});
+  }
+  for(const log of D.moodLogs){
+    const stamp=Number(log.createdAt)||0;
+    rows.push({stamp,dateTime:timelineDateTime(stamp),type:'気分',content:`${log.emoji||''} ${log.label||'気分'}`.trim(),routine:'',step:'',detail:''});
+  }
+  for(const log of D.habitLogs){
+    const stamp=activityLogStamp(log);
+    rows.push({stamp,dateTime:timelineDateTime(stamp,log.date,log.time),type:'チェック完了',content:log.habitName||'削除済みの項目',routine:'',step:'',detail:'毎日'});
+  }
+  for(const log of D.todayTaskLogs){
+    const stamp=activityLogStamp(log);
+    rows.push({stamp,dateTime:timelineDateTime(stamp,log.date,log.time),type:'チェック完了',content:log.taskName||'削除済みの項目',routine:'',step:'',detail:'今日だけ'});
+  }
+  for(const log of D.logs){
+    const stamp=activityLogStamp(log);
+    const durationSec=Number(log.durationSec)||Math.max(0,Number(log.durationMin)||0)*60;
+    const detail=[`${Number(log.done)||0}/${Number(log.total)||0}ステップ完了`,Number(log.skips)?`${Number(log.skips)}スキップ`:'スキップなし',`実時間${durationSec}秒`].join('・');
+    rows.push({stamp,dateTime:timelineDateTime(stamp,log.date,log.time),type:'ルーチン完了',content:log.routine||'ルーチン',routine:log.routine||'',step:'',detail});
+  }
+  return rows.sort((a,b)=>(a.stamp||0)-(b.stamp||0));
+}
+function buildChatGPTTimelineCsv(){
+  const lines=['日時,種類,内容,ルーチン,ステップ,詳細'];
+  for(const row of chatgptTimelineRows())lines.push([row.dateTime,row.type,row.content,row.routine,row.step,row.detail].map(timelineCsvEsc).join(','));
+  return lines.join('\n');
+}
+function exportChatGPTTimeline(){
+  download('routine_timeline.csv',buildChatGPTTimelineCsv());
+  toast('🤖 ChatGPT用CSVを書き出しました');
 }
 function backupAll(){download('rvt_backup.json',JSON.stringify(D,null,1),'application/json');toast('💾 バックアップ完了');}
 function restoreAll(input){
