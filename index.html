@@ -44,9 +44,10 @@ h1{font-size:14px;letter-spacing:.06em;white-space:nowrap}
 .rcard{gap:10px}
 .rcard .em{font-size:20px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--card2);border-radius:10px;flex-shrink:0}
 .rcard .info{flex:1;min-width:0}
+.rcard-titleline{display:flex;align-items:center;gap:6px;min-width:0}
 .rcard .name{font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rcard .meta{color:var(--dim);font-size:11px;margin-top:1px}
-.rcard .go{background:linear-gradient(135deg,var(--pink),var(--purple));border:none;color:#fff;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 11px;font-size:12px;cursor:pointer;box-shadow:0 0 14px rgba(255,77,141,.4);white-space:nowrap;flex-shrink:0}
+.rcard .duration{color:var(--gold);font-family:'DotGothic16',monospace;font-size:9px;white-space:nowrap;flex-shrink:0}
+.rcard .stepnames{color:var(--dim);font-size:9px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rcard .edit-btn{background:none;border:none;color:var(--dim);font-size:15px;cursor:pointer;padding:6px;flex-shrink:0}
 
 button{font-family:inherit;transition:transform .07s,filter .07s}
@@ -963,14 +964,15 @@ function renderHome(){
   if(!D.routines.length)el.innerHTML='<div class="card muted">まだルーチンがありません。下のボタンから作ってみよう！</div>';
   const sorted=[...D.routines].sort((a,b)=>(b.lastRun||0)-(a.lastRun||0));
   for(const r of sorted){
-    const total=r.steps.reduce((a,s)=>a+s.sec,0);
-    const div=document.createElement('div');div.className='card rcard';
-    div.innerHTML=`<div class="em">${r.emoji||'📝'}</div>
-      <div class="info"><div class="name">${esc(r.name)}</div>
-      <div class="meta">${r.steps.length}ステップ・約${Math.round(total/60)}分</div></div>
-      <button class="edit-btn" title="編集">✏️</button>
-      <button class="go">選択</button>`;
-    div.querySelector('.go').onclick=e=>{e.stopPropagation();openRoutinePreview(r.id);};
+    const total=r.steps.reduce((a,s)=>a+(Number(s.sec)||0),0);
+    const stepNames=r.steps.length?r.steps.map(s=>`${s.emoji||'✅'} ${s.name||'名前なしステップ'}`).join(' ・ '):'ステップ未登録';
+    const div=document.createElement('div');div.className='card rcard';div.tabIndex=0;div.setAttribute('role','button');div.setAttribute('aria-label',`${r.name||'名前なしルーチン'}を選択`);
+    div.innerHTML=`<div class="em">${esc(r.emoji||'📝')}</div>
+      <div class="info"><div class="rcard-titleline"><div class="name">${esc(r.name||'名前なしルーチン')}</div><span class="duration">約${Math.round(total/60)}分</span></div>
+      <div class="stepnames" title="${esc(stepNames)}">${esc(stepNames)}</div></div>
+      <button class="edit-btn" type="button" title="編集" aria-label="${esc(r.name||'ルーチン')}を編集">✏️</button>`;
+    div.onclick=()=>openRoutinePreview(r.id);
+    div.onkeydown=e=>{if(e.target===div&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openRoutinePreview(r.id);}};
     div.querySelector('.edit-btn').onclick=e=>{e.stopPropagation();openEdit(r.id);};
     el.appendChild(div);
   }
