@@ -572,6 +572,8 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     <div class="card">
       <h2>🔊 音声設定</h2>
       <div class="field"><label>読み上げ速度</label><input type="number" id="setRate" min="0.5" max="2" step="0.1" onchange="saveSettings()"></div>
+      <div class="field"><label>読み上げ音量</label><input type="range" id="setVoiceVolume" min="0.1" max="1" step="0.05" onchange="saveSettings()"></div>
+      <div class="field"><label>SE音量</label><input type="range" id="setSfxVolume" min="0.1" max="1" step="0.05" onchange="saveSettings()"></div>
       <div class="field"><label><input type="checkbox" id="setMoti" onchange="saveSettings()" style="width:auto;margin-right:6px">モチベテキストを読み上げる</label></div>
       <div class="field"><label><input type="checkbox" id="setSound" onchange="saveSettings()" style="width:auto;margin-right:6px">効果音を鳴らす</label></div>
       <div class="field"><label>⏱ 時間経過のお知らせ音</label>
@@ -760,11 +762,11 @@ const seed=()=>({
   habits:[],habitLogs:[],
   todayTasks:[],todayTaskLogs:[],
   logs:[], xp:0, combo:0,
-  settings:{rate:1.0,moti:true,sound:true}
+  settings:{rate:1.0,voiceVolume:1,sfxVolume:.45,moti:true,sound:true}
 });
 let D; try{D=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){D=seed();}
 D=Object.assign({moods:defaultMoods(),moodLogs:[]},D);
-D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{});
+D.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true},D.settings||{});
 D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];
 D.moods=(Array.isArray(D.moods)?D.moods:defaultMoods()).map(normalizeMood);
 D.moodLogs=Array.isArray(D.moodLogs)?D.moodLogs:[];
@@ -824,7 +826,7 @@ function speak(text,cb){
   try{
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
-    u.lang='ja-JP';u.rate=D.settings.rate||1;
+    u.lang='ja-JP';u.rate=D.settings.rate||1;u.volume=Math.min(1,Math.max(.1,+D.settings.voiceVolume||1));
     const vs=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('ja'));
     if(vs.length)u.voice=vs.find(v=>/Kyoko|O-?ren|Google/.test(v.name))||vs[0];
     if(cb)u.onend=cb;
@@ -840,8 +842,9 @@ function beep(freq,dur,type='square',vol=.15,when=0){
   try{
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();
     const o=AC.createOscillator(),g=AC.createGain();
-    o.type=type;o.frequency.value=freq;g.gain.value=vol;
-    g.gain.setValueAtTime(vol,AC.currentTime+when);
+    const level=vol*Math.min(1,Math.max(.1,+D.settings.sfxVolume||.45));
+    o.type=type;o.frequency.value=freq;g.gain.value=level;
+    g.gain.setValueAtTime(level,AC.currentTime+when);
     g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+when+dur);
     o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+when);o.stop(AC.currentTime+when+dur);
   }catch(e){}
@@ -853,7 +856,7 @@ function hitNoise(vol=.25){
     const len=AC.sampleRate*0.12,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);
     for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);
     const src=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
-    f.type='highpass';f.frequency.value=1500;src.buffer=buf;g.gain.value=vol;
+    f.type='highpass';f.frequency.value=1500;src.buffer=buf;g.gain.value=vol*Math.min(1,Math.max(.1,+D.settings.sfxVolume||.45));
     src.connect(f);f.connect(g);g.connect(AC.destination);src.start();
   }catch(e){}
 }
@@ -2192,7 +2195,7 @@ async function syncPull(auto){
     const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey};
     D=remote;
     D=Object.assign({moods:defaultMoods(),moodLogs:[]},D);
-    D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{},localSync); // 同期設定とAPIキーは端末側を維持
+    D.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true},D.settings||{},localSync); // 同期設定とAPIキーは端末側を維持
     D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];
     D.moods=(Array.isArray(D.moods)?D.moods:defaultMoods()).map(normalizeMood);
     D.moodLogs=Array.isArray(D.moodLogs)?D.moodLogs:[];
@@ -2279,6 +2282,8 @@ function askCalLog(log,startMs,endMs){
 /* ============ SETTINGS / CSV ============ */
 function renderSet(){
   document.getElementById('setRate').value=D.settings.rate;
+  document.getElementById('setVoiceVolume').value=D.settings.voiceVolume;
+  document.getElementById('setSfxVolume').value=D.settings.sfxVolume;
   document.getElementById('setMoti').checked=D.settings.moti;
   document.getElementById('setSound').checked=D.settings.sound;
   document.getElementById('setTick').value=D.settings.tickPattern||'none';
@@ -2298,6 +2303,8 @@ function saveSettings(){
   D.settings.apiKey=document.getElementById('setApiKey').value.trim();
   D.settings.webhook=document.getElementById('setWebhook').value.trim();
   D.settings.rate=Math.min(2,Math.max(.5,+document.getElementById('setRate').value||1));
+  D.settings.voiceVolume=Math.min(1,Math.max(.1,+document.getElementById('setVoiceVolume').value||1));
+  D.settings.sfxVolume=Math.min(1,Math.max(.1,+document.getElementById('setSfxVolume').value||.45));
   D.settings.moti=document.getElementById('setMoti').checked;
   D.settings.sound=document.getElementById('setSound').checked;
   save();
@@ -2423,7 +2430,7 @@ function backupAll(){download('rvt_backup.json',JSON.stringify(D,null,1),'applic
 function restoreAll(input){
   const f=input.files[0];if(!f)return;
   const rd=new FileReader();
-  rd.onload=()=>{try{D=Object.assign({moods:defaultMoods(),moodLogs:[]},JSON.parse(rd.result));D.settings=Object.assign({rate:1,moti:true,sound:true},D.settings||{});D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];D.moods=(Array.isArray(D.moods)?D.moods:defaultMoods()).map(normalizeMood);D.moodLogs=Array.isArray(D.moodLogs)?D.moodLogs:[];D.habits=(Array.isArray(D.habits)?D.habits:[]).map(normalizeHabit);D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];delete D.badges;save();toast('✅ 復元しました');renderHome();}catch(e){toast('⚠️ 読み込みに失敗しました');}input.value='';};
+  rd.onload=()=>{try{D=Object.assign({moods:defaultMoods(),moodLogs:[]},JSON.parse(rd.result));D.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true},D.settings||{});D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];D.moods=(Array.isArray(D.moods)?D.moods:defaultMoods()).map(normalizeMood);D.moodLogs=Array.isArray(D.moodLogs)?D.moodLogs:[];D.habits=(Array.isArray(D.habits)?D.habits:[]).map(normalizeHabit);D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];delete D.badges;save();toast('✅ 復元しました');renderHome();}catch(e){toast('⚠️ 読み込みに失敗しました');}input.value='';};
   rd.readAsText(f,'utf-8');
 }
 function resetAll(){
