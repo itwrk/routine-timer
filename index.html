@@ -50,11 +50,15 @@ h1{font-size:14px;letter-spacing:.06em;white-space:nowrap}
 .rcard .stepnames{color:var(--dim);font-size:9px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rcard .edit-btn{background:none;border:none;color:var(--dim);font-size:15px;cursor:pointer;padding:6px;flex-shrink:0}
 
-button{font-family:inherit;transition:transform .07s,filter .07s}
-button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
-.tapfx{position:fixed;width:16px;height:16px;border-radius:50%;pointer-events:none;z-index:500;background:radial-gradient(circle,#fff 0%,rgba(53,224,255,.85) 35%,rgba(255,77,141,.5) 60%,transparent 75%);animation:tapfx .32s ease-out forwards;mix-blend-mode:screen}
-@keyframes tapfx{0%{opacity:.95;transform:translate(-50%,-50%) scale(.5)}100%{opacity:0;transform:translate(-50%,-50%) scale(4.5)}}
-.btn{border:none;border-radius:16px;padding:14px 20px;font-size:16px;font-weight:800;cursor:pointer;color:#fff;transition:transform .1s}
+button{font-family:inherit;transform-origin:center;transition:transform .18s cubic-bezier(.2,1.7,.35,1),filter .12s,box-shadow .18s}
+button:active{transform:scale(.86);filter:brightness(1.4) saturate(1.25)}
+button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
+@keyframes tapPop{0%{transform:scale(.88)}55%{transform:scale(1.09)}100%{transform:scale(1)}}
+.tapfx{position:fixed;width:18px;height:18px;border-radius:50%;pointer-events:none;z-index:500;border:2px solid rgba(255,255,255,.95);box-shadow:0 0 10px var(--cyan),0 0 20px var(--pink);animation:tapfx .42s ease-out forwards;mix-blend-mode:screen}
+.tapfx::after{content:'';position:absolute;inset:2px;border-radius:50%;border:2px solid var(--gold);animation:tapfxInner .34s .03s ease-out forwards}
+@keyframes tapfx{0%{opacity:1;transform:translate(-50%,-50%) scale(.25)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.8)}}
+@keyframes tapfxInner{0%{opacity:1;transform:scale(.2)}100%{opacity:0;transform:scale(2.4)}}
+.btn{border:none;border-radius:16px;padding:14px 20px;font-size:16px;font-weight:800;cursor:pointer;color:#fff}
 .btn:active{transform:scale(.92);filter:brightness(1.3) saturate(1.2)}
 .btn-p{background:linear-gradient(135deg,var(--pink),var(--purple));box-shadow:0 0 20px rgba(255,77,141,.4)}
 .btn-c{background:linear-gradient(135deg,#1fb8d8,#1d6de0)}
@@ -274,10 +278,12 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .xppop{position:fixed;left:50%;top:38%;transform:translateX(-50%);font-family:'DotGothic16',monospace;font-size:36px;font-weight:800;color:var(--gold);text-shadow:0 0 16px rgba(255,201,60,.9);pointer-events:none;z-index:310;animation:xppop .7s ease-out forwards}
 @keyframes xppop{0%{transform:translateX(-50%) translateY(0) scale(.5);opacity:0}20%{transform:translateX(-50%) translateY(-10px) scale(1.3);opacity:1}100%{transform:translateX(-50%) translateY(-70px) scale(1);opacity:0}}
 .shake{animation:shake .25s}
+#run.impact{animation:runImpact .38s cubic-bezier(.2,.8,.25,1)}
 .shock{position:fixed;left:50%;top:44%;width:24px;height:24px;border-radius:50%;border:3px solid var(--cyan);pointer-events:none;z-index:300;animation:shock .38s ease-out forwards;box-shadow:0 0 22px rgba(53,224,255,.85)}
 .shock.big{border-color:var(--gold);border-width:4px;box-shadow:0 0 30px rgba(255,201,60,.9);animation-duration:.46s}
 @keyframes shock{0%{transform:translate(-50%,-50%) scale(.35);opacity:1}100%{transform:translate(-50%,-50%) scale(15);opacity:0}}
-@keyframes shake{0%,100%{transform:none}25%{transform:translate(3px,-2px)}50%{transform:translate(-3px,2px)}75%{transform:translate(2px,1px)}}
+@keyframes shake{0%,100%{transform:none}20%{transform:translate(6px,-3px) rotate(.7deg)}45%{transform:translate(-5px,3px) rotate(-.6deg)}70%{transform:translate(3px,-1px) rotate(.3deg)}}
+@keyframes runImpact{0%,100%{transform:none;filter:none}18%{transform:translateY(5px) scale(.985);filter:brightness(1.2)}42%{transform:translateY(-3px) scale(1.008)}68%{transform:translateY(1px)}}
 /* drag & drop */
 .draghandle{cursor:grab;touch-action:none;user-select:none;color:var(--dim);font-size:18px;padding:4px 8px;flex-shrink:0}
 .dragging{opacity:.45;transform:scale(1.02);box-shadow:0 8px 24px rgba(0,0,0,.5);position:relative;z-index:5}
@@ -854,27 +860,39 @@ function beep(freq,dur,type='square',vol=.15,when=0){
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();
     const o=AC.createOscillator(),g=AC.createGain();
     const level=vol*Math.min(1,Math.max(.1,+D.settings.sfxVolume||.45));
-    o.type=type;o.frequency.value=freq;g.gain.value=level;
-    g.gain.setValueAtTime(level,AC.currentTime+when);
-    g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+when+dur);
-    o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+when);o.stop(AC.currentTime+when+dur);
+    const start=AC.currentTime+when,end=start+Math.max(.05,dur),attack=Math.min(.018,dur*.25);
+    // 矩形波・ノコギリ波も角のない三角波へ寄せ、耳に刺さる成分をなくす
+    o.type=type==='sine'?'sine':'triangle';o.frequency.value=freq;
+    g.gain.setValueAtTime(.0001,start);
+    g.gain.exponentialRampToValueAtTime(Math.max(.0002,level),start+Math.max(.004,attack));
+    g.gain.exponentialRampToValueAtTime(.0001,end);
+    o.connect(g);g.connect(AC.destination);o.start(start);o.stop(end+.02);
   }catch(e){}
 }
-function hitNoise(vol=.25){
+function poan(freq=660,dur=.32,vol=.13,when=0){
   if(!D.settings.sound)return;
   try{
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();
-    const len=AC.sampleRate*0.12,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);
-    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);
-    const src=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
-    f.type='highpass';f.frequency.value=1500;src.buffer=buf;g.gain.value=vol*Math.min(1,Math.max(.1,+D.settings.sfxVolume||.45));
-    src.connect(f);f.connect(g);g.connect(AC.destination);src.start();
+    if(AC.state==='suspended')AC.resume();
+    const start=AC.currentTime+when,level=vol*Math.min(1,Math.max(.1,+D.settings.sfxVolume||.45));
+    [[1,1],[2.01,.22]].forEach(([ratio,mix],i)=>{
+      const o=AC.createOscillator(),g=AC.createGain(),end=start+dur*(i ? .78 : 1);
+      o.type='sine';
+      o.frequency.setValueAtTime(freq*ratio*1.08,start);
+      o.frequency.exponentialRampToValueAtTime(freq*ratio,start+dur*.32);
+      g.gain.setValueAtTime(.0001,start);
+      g.gain.exponentialRampToValueAtTime(Math.max(.0002,level*mix),start+.018+i*.006);
+      g.gain.exponentialRampToValueAtTime(.0001,end);
+      o.connect(g);g.connect(AC.destination);o.start(start);o.stop(end+.03);
+    });
   }catch(e){}
 }
-const sfxSlam=()=>{hitNoise(.3);beep(1568,.05,'square',.16);beep(2093,.09,'square',.13,.04);};
-const sfxDone=()=>{hitNoise(.28);[784,1047,1568].forEach((f,i)=>beep(f,.09,'square',.15,i*.045));};
-const sfxJackpot=()=>{[523,659,784,1047,1319,1568].forEach((f,i)=>beep(f,.22,'sawtooth',.12,i*.11));};
-const sfxTick=()=>beep(880,.06,'sine',.05);
+// 旧ノイズ呼び出しも低いポワンへ変換（カシャカシャ音は生成しない）
+const hitNoise=vol=>poan(220,.2,(vol||.25)*.35);
+const sfxSlam=()=>{poan(440,.24,.11);poan(660,.3,.08,.045);};
+const sfxDone=()=>{poan(659,.28,.12);poan(988,.36,.1,.08);};
+const sfxJackpot=()=>{poan(523,.34,.11);poan(784,.38,.1,.1);poan(1047,.46,.09,.2);};
+const sfxTick=()=>poan(740,.16,.045);
 
 /* ============ confetti ============ */
 const fx=document.getElementById('fx'),ctx=fx.getContext('2d');let parts=[];
@@ -1775,6 +1793,8 @@ function startRun(id){
 function slamIn(){
   const flash=document.getElementById('flash');
   flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');
+  const runEl=document.getElementById('run');
+  runEl.classList.remove('impact');void runEl.offsetWidth;runEl.classList.add('impact');
   ['runEmoji','runStep','runTime'].forEach(id=>{
     const el=document.getElementById(id);
     el.classList.remove('slam');void el.offsetWidth;el.classList.add('slam');
@@ -2465,14 +2485,18 @@ function resetAll(){
   D=seed();save();renderHome();toast('🧹 初期化しました');
 }
 
-// ボタン押下のポップ音（快感強化）
+// ボタン押下：やわらかいポワン＋光の波紋。クリック成立時にバネで戻す
 document.addEventListener('pointerdown',e=>{
   if(!e.target.closest('button'))return;
-  beep(1568,.03,'sine',.06);
-  // 音ゲー風タップフラッシュ（押した位置でパンっと光る）
+  poan(820,.13,.035);
   const fx=document.createElement('div');fx.className='tapfx';
   fx.style.left=e.clientX+'px';fx.style.top=e.clientY+'px';
-  document.body.appendChild(fx);setTimeout(()=>fx.remove(),350);
+  document.body.appendChild(fx);setTimeout(()=>fx.remove(),450);
+},true);
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('button');if(!btn)return;
+  btn.classList.remove('tap-pop');void btn.offsetWidth;btn.classList.add('tap-pop');
+  setTimeout(()=>btn.classList.remove('tap-pop'),320);
 },true);
 
 renderHome();
