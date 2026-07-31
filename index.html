@@ -256,6 +256,9 @@ button:active{transform:scale(.9);filter:brightness(1.45) saturate(1.3)}
 .ckaddrow input{flex:1;font-size:13px;padding:7px 9px}
 .upcoming{width:100%;max-width:460px;margin-top:12px}
 .upcoming h3{font-size:12px;color:var(--dim);font-weight:700;margin-bottom:6px;letter-spacing:.1em}
+.countup-step-tools{background:rgba(255,201,60,.08);border:1px solid rgba(255,201,60,.45);border-radius:12px;padding:9px 10px;margin-bottom:8px}
+.countup-step-tools .hint{color:var(--gold);font-size:10px;font-weight:700;margin-bottom:6px}
+.countup-step-tools .btn-full{margin-top:6px;white-space:nowrap}
 .uprow{display:flex;align-items:center;gap:6px;background:rgba(43,38,100,.55);border:1px solid #3a3480;border-radius:12px;padding:8px 8px;margin-bottom:6px;font-size:13px;animation:fadein .15s}
 .uprow .ue{font-size:18px;flex-shrink:0}
 .uprow .un{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
@@ -680,6 +683,14 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   <div class="runck" id="runCk" style="display:none"></div>
   <div class="upcoming" id="upcomingWrap">
     <h3>▼ このあとのステップ（≡ドラッグ・✏️で編集）</h3>
+    <div class="countup-step-tools" id="countUpStepTools" style="display:none">
+      <p class="hint">⏱ 行動しながら、必要になったステップを追加できます</p>
+      <div class="habit-add">
+        <input type="text" id="runNewStepInput" maxlength="60" placeholder="新しいステップ名" onkeydown="submitShortcut(event,addRunStep)">
+        <button class="btn btn-p btn-sm" type="button" onclick="addRunStep()">＋ 新規</button>
+      </div>
+      <button class="btn btn-c btn-sm btn-full" type="button" onclick="openLib('run')">📚 ライブラリから追加</button>
+    </div>
     <div id="upcoming"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn btn-g btn-sm" style="flex:1" onclick="twoTap(this,'ほんとに完了する？',finishAll)">🏁 全スキップで完了</button>
@@ -1656,6 +1667,21 @@ function addStep(){
   const s={id:uid(),name:'',emoji:'✅',sec:60,texts:[]};r.steps.push(s);stepEditId=s.id;
   save();renderSteps();
 }
+function refreshStepTarget(target){
+  if(target==='run'&&run){
+    document.getElementById('runProg').textContent=`ステップ ${run.idx+1} / ${run.r.steps.length}`;
+    renderUpcoming();
+  }else renderSteps();
+}
+function addRunStep(){
+  if(!run||run.timerMode!=='up')return;
+  const input=document.getElementById('runNewStepInput');
+  const name=input.value.trim();
+  if(!name){toast('追加するステップ名を入力してね');input.focus();return;}
+  run.r.steps.push({id:uid(),name,emoji:'✅',sec:60,memo:'',texts:[],checklist:[]});
+  input.value='';save();refreshStepTarget('run');sfxDone();
+  toast(`＋ 「${name}」をこのあとに追加しました`);input.focus();
+}
 const PRESET_STEPS=[
  {name:'水を一杯飲む',emoji:'💧',sec:60,texts:['起き抜けの一杯は脳のスターターキー。']},
  {name:'歯みがき',emoji:'🪥',sec:180,texts:['3分の歯みがきは未来の自分への投資。奥歯までていねいに！']},
@@ -1674,8 +1700,9 @@ const PRESET_STEPS=[
  {name:'水分補給',emoji:'🥤',sec:30,texts:['脳の8割は水分。補給、補給！']},
  {name:'アンちゃんのお世話',emoji:'🦜',sec:300,texts:['アンちゃんが待ってるよ。小鳥の世話は最高のマインドフルネス。']},
 ];
-function openLib(){
-  const r=D.routines.find(x=>x.id===editId);
+function openLib(target='edit'){
+  const r=target==='run'&&run?run.r:D.routines.find(x=>x.id===editId);
+  if(!r)return;
   const el=document.getElementById('libList');el.innerHTML='';
   const items=[];
   for(const rt of D.routines)for(const s of rt.steps)
@@ -1690,12 +1717,12 @@ function openLib(){
       <button class="add">複製</button><button class="add lk">🔗共有</button>`;
     d.querySelector('.add:not(.lk)').onclick=()=>{
       r.steps.push({id:uid(),name:step.name,emoji:step.emoji,sec:step.sec,memo:step.memo||'',texts:[...step.texts],checklist:(step.checklist||[]).map(c=>({t:c.t}))});
-      save();renderSteps();sfxDone();toast(`📚 「${step.name}」を複製しました（独立コピー）`);
+      save();refreshStepTarget(target);sfxDone();toast(`📚 「${step.name}」を複製しました（独立コピー）`);
     };
     d.querySelector('.lk').onclick=()=>{
       if(!step.sharedId)step.sharedId=uid();
       r.steps.push({id:uid(),sharedId:step.sharedId,name:step.name,emoji:step.emoji,sec:step.sec,memo:step.memo||'',texts:[...step.texts],checklist:(step.checklist||[]).map(c=>({t:c.t}))});
-      save();renderSteps();sfxDone();toast(`🔗 「${step.name}」を共有で追加（編集が連動します）`);
+      save();refreshStepTarget(target);sfxDone();toast(`🔗 「${step.name}」を共有で追加（編集が連動します）`);
     };
     el.appendChild(d);
   });
@@ -1710,7 +1737,7 @@ function openLib(){
       <button class="add">＋追加</button>`;
     d.querySelector('.add').onclick=()=>{
       r.steps.push({id:uid(),name:p.name,emoji:p.emoji,sec:p.sec,memo:'',texts:[...p.texts],checklist:(p.checklist||[]).map(t=>({t}))});
-      save();renderSteps();sfxDone();toast(`🧰 「${p.name}」を追加しました`);
+      save();refreshStepTarget(target);sfxDone();toast(`🧰 「${p.name}」を追加しました`);
     };
     el.appendChild(d);
   }
@@ -1969,6 +1996,7 @@ function updateTimerModeUi(){
   down.classList.toggle('on',!countUp);up.classList.toggle('on',countUp);
   down.setAttribute('aria-pressed',String(!countUp));up.setAttribute('aria-pressed',String(countUp));
   document.getElementById('btnDoneStep').textContent=countUp?'✅ 次のステップへ':'✅ できた！';
+  document.getElementById('countUpStepTools').style.display=countUp?'block':'none';
 }
 function setTimerMode(mode){
   if(!run||!['down','up'].includes(mode)||run.timerMode===mode)return;
