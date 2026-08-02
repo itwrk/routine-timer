@@ -477,6 +477,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div id="personalMemoFeed" class="memo-feed"></div>
     </div>
     <div class="card meal-card" id="mealCard"></div>
+    <div class="card" id="recallCard"></div>
     <div class="card" id="habitCard">
       <div class="habit-head"><h2>✅ 今日のチェックリスト</h2><span class="habit-score" id="habitScore">0 / 0</span></div>
       <div class="habit-bar"><div id="habitBarFill" style="width:0%"></div></div>
@@ -1223,6 +1224,7 @@ function renderHome(){
   document.getElementById('hLevel').textContent=levelInfo().level;
   const el=document.getElementById('routineList');el.innerHTML='';
   renderMealCard();
+  renderRecallCard();
   renderPersonalNotes();
   renderMoodButtons();
   renderHabits();
@@ -2530,7 +2532,7 @@ function todayWake(){const key=localDateKey(new Date());return D.wakeLogs.find(w
 function recordWake(){
   let w=todayWake();const now=Date.now();
   if(w){w.at=now;w.updatedAt=now;}else D.wakeLogs.push(normalizeWakeLog({date:localDateKey(new Date()),at:now,updatedAt:now}));
-  save();renderMealCard();renderActivityTimeline();toast('☀️ '+new Date(now).toTimeString().slice(0,5)+' 起床を記録しました');
+  save();renderMealCard();renderRecallCard();renderActivityTimeline();toast('☀️ '+new Date(now).toTimeString().slice(0,5)+' 起床を記録しました');
 }
 
 let mealState={
@@ -2540,7 +2542,7 @@ let mealState={
 };
 
 function touchUrge(u){if(!u)return;u.updatedAt=Date.now();save();}
-function renderUrgeUi(){renderMealCard();renderMealActive();}
+function renderUrgeUi(){renderMealCard();renderMealActive();renderRecallCard();}
 function startUrgeFlow(phase='standalone',mealSessionId=null){
   mealState.urgeOpen=true;
   mealState.urgeDraft={strength:null,phase:phase==='cascade'?'cascade':'standalone',mealSessionId:mealSessionId||null,mode:'strength',targetId:null,itemInputOpen:false,
@@ -2823,7 +2825,7 @@ function learnMealSessionItems(s){
 function closeMealSession(){
   const s=activeMealSession();if(!s)return;
   stopMealWaitTimer();learnMealSessionItems(s);s.status='closed';if(!s.endedAt)s.endedAt=Date.now();s.updatedAt=Date.now();mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
-  save();renderMealCard();renderMeal();toast('📗 今回の食事を記録しました');
+  save();renderMealCard();renderRecallCard();renderMeal();toast('📗 今回の食事を記録しました');
 }
 function deleteMealSession(id){
   const s=D.mealSessions.find(x=>x.id===id);if(!s)return;
@@ -2843,11 +2845,11 @@ function deleteAllMealSessions(){
 function scrubUrgeLog(u,now){u.deletedAt=now;u.updatedAt=now;u.items=[];u.tags=[];u.settledBy=[];u.note='';}
 function deleteUrgeLog(id){
   const u=D.urgeLogs.find(x=>x.id===id);if(!u)return;scrubUrgeLog(u,Date.now());
-  save();renderMealCard();renderMealHistory();renderActivityTimeline();toast('🗑 衝動の記録を削除しました');
+  save();renderMealCard();renderRecallCard();renderMealHistory();renderActivityTimeline();toast('🗑 衝動の記録を削除しました');
 }
 function deleteAllUrgeLogs(){
   const now=Date.now();for(const u of D.urgeLogs)if(!u.deletedAt)scrubUrgeLog(u,now);
-  mealState.urgeOpen=false;mealState.urgeDraft=null;save();renderMealCard();renderMealHistory();renderActivityTimeline();toast('🗑 衝動の記録を削除しました');
+  mealState.urgeOpen=false;mealState.urgeDraft=null;save();renderMealCard();renderRecallCard();renderMealHistory();renderActivityTimeline();toast('🗑 衝動の記録を削除しました');
 }
 function saveSessionAsTemplate(sessionId){
   const s=D.mealSessions.find(x=>x.id===sessionId&&!x.deletedAt);if(!s)return;
@@ -3126,6 +3128,34 @@ function urgeRecallHtml(strength,at,limit,excludeId,compact){
   return `<div class="urge-recall"><p class="urge-recall-head">${esc(head)}</p>`
     +r.list.map(u=>`<div class="urge-recall-row">${urgeRecallLine(u)}</div>`).join('')+`</div>`;
 }
+function todayThreadItems(){
+  const key=localDateKey(new Date()),items=[];
+  const sameDay=s=>s&&localDateKey(new Date(Number(s)||0))===key;
+  for(const w of D.wakeLogs)if(!w.deletedAt&&sameDay(w.at))items.push({at:w.at,text:'☀️ 起床'});
+  for(const s of D.mealSessions)if(!s.deletedAt&&sameDay(s.startedAt))
+    items.push({at:s.startedAt,text:`🍽 ${esc(s.label||'食事')}`});
+  for(const u of D.urgeLogs)if(!u.deletedAt&&sameDay(u.at)){
+    const did=(u.settledBy&&u.settledBy.length)?u.settledBy.map(urgeSettlerLabel).join('・')
+      :(u.outcome==='ate'&&u.items&&u.items.length?mealItemsLabel(u.items):'');
+    const tail=u.outcome==='open'?' まだ続いてる':(did?` → ${esc(did)}`:'');
+    items.push({at:u.at,text:`⚡${u.strength===null?'':u.strength}${tail}`});
+  }
+  return items.sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,5);
+}
+function renderRecallCard(){
+  const el=document.getElementById('recallCard');if(!el)return;
+  const today=todayThreadItems();
+  const recall=urgeRecallHtml(null,Date.now(),3,null,false);
+  const empty=!today.length&&!D.urgeLogs.some(u=>!u.deletedAt);
+  el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>🔎 ふりかえり</strong></div>`
+    +`<button class="text-link" type="button" onclick="showScreen('scr-meal')">すべて見る →</button></div>`
+    +(empty?'<p class="muted" style="margin-top:6px">まだ記録がありません。⚡を押すと、ここに残ります。</p>'
+      :(today.length?`<p class="urge-recall-head" style="margin-top:6px">今日</p>`
+        +today.map(i=>`<div class="urge-recall-row">${hhmm(i.at)} ${i.text}</div>`).join(''):'')
+       +recall);
+}
+function hhmm(s){const d=new Date(Number(s)||0);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
 function urgeResultLabel(u){
   if(u.outcome==='ate'){const items=mealItemsLabel(u.items);return `食べた${items?`(${items})`:''}`;}
   if(u.outcome==='settled'){const by=(u.settledBy||[]).map(urgeSettlerLabel).join('・');return `収まった${by?`(${by})`:''}`;}
