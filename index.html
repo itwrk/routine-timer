@@ -678,7 +678,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div class="field"><label><input type="checkbox" id="setAutoSync" onchange="saveSettings()" style="width:auto;margin-right:6px">自動同期（起動時に取得・変更後に自動アップロード）</label></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-c btn-sm" onclick="syncPush()">☁️ 今すぐアップロード</button>
-        <button class="btn btn-c btn-sm" onclick="syncPull()">⬇️ 今すぐ取得</button>
+        <button class="btn btn-c btn-sm" onclick="syncPullSafe(this)">⬇️ 今すぐ取得</button>
       </div>
       <p class="muted" style="margin-top:8px">アップロード時に、ChatGPT用の <b>routine_timeline.csv</b> もGoogle Drive更新用データとして送信します。</p>
       <p class="muted" style="margin-top:8px">食事の記録（内容・数値・タグ・メモ）も同期対象に含まれます。</p>
@@ -2869,6 +2869,19 @@ function buildMealCsv(){
   return lines.join('\n');
 }
 function exportMealCsv(){download('meal_sessions.csv',buildMealCsv());toast('🍽 食事CSVを書き出しました');}
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules'];
+function mergeMealCollections(local,remote){
+  for(const k of MERGE_COLLECTIONS){
+    const l=Array.isArray(local[k])?local[k]:[],r=Array.isArray(remote[k])?remote[k]:[],map=new Map();
+    for(const it of r)if(it&&it.id)map.set(it.id,it);
+    for(const it of l){
+      if(!it||!it.id)continue;const prev=map.get(it.id);
+      if(!prev){map.set(it.id,it);continue;}
+      if((Number(it.updatedAt)||0)>(Number(prev.updatedAt)||0))map.set(it.id,it);
+    }
+    remote[k]=[...map.values()];
+  }
+}
 function mealWaitRemainMs(){const w=activeWait();return w?Math.max(0,w.endsAt-Date.now()):0;}
 function mealWaitTime(ms){
   const sec=Math.max(0,Math.ceil(ms/1000));return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
@@ -2933,12 +2946,14 @@ async function syncPush(silent){
   const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
   if(!url){toast('⚠️ 設定で同期URLを入力してね');return;}
   try{
-    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({
+    const payload=JSON.stringify({
       key,
       data:syncDataForCloud(),
       timelineFileName:'routine_timeline.csv',
       timelineCsv:buildChatGPTTimelineCsv()
-    })});
+    });
+    if(payload.length>2*1024*1024&&!silent)toast('⚠️ データが大きくなっています（'+Math.round(payload.length/1048576)+'MB）');
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
     const j=await res.json();
     if(j.ok){if(!silent)toast(j.timelineSaved?'☁️ データとCSVを更新しました':'☁️ アップロード完了');}
     else toast('⚠️ 同期エラー：'+(j.error||'不明'));
@@ -2964,11 +2979,25 @@ async function syncPull(auto){
     const remote=j.data;
     if(auto&&(remote.updatedAt||0)<=(D.updatedAt||0))return; // 自動時はリモートが新しい場合のみ
     const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey};
+    mergeMealCollections(D,remote);
     D=normalizeData(remote);
     D.settings=Object.assign(D.settings,localSync); // 同期設定とAPIキーは端末側を維持
     localStorage.setItem(KEY,JSON.stringify(D));
-    renderHome();toast('⬇️ クラウドから取得しました');
+    stopMealWaitTimer();restoreMealState();renderHome();toast('⬇️ クラウドから取得しました');
   }catch(e){if(!auto)toast('⚠️ 取得失敗（URL/通信を確認）');}
+}
+async function syncPullSafe(btn){
+  const url=(D.settings.syncUrl||'').trim();
+  if(!url){toast('⚠️ 設定で同期URLを入力してね');return;}
+  try{
+    const res=await fetch(url+'?key='+encodeURIComponent((D.settings.syncKey||'').trim()));
+    const j=await res.json();
+    if(!j.ok||!j.data){syncPull();return;}
+    if((j.data.updatedAt||0)<(D.updatedAt||0)){
+      twoTap(btn,'⚠️ 古いです。もう一度で上書き',()=>syncPull());return;
+    }
+  }catch(e){}
+  syncPull();
 }
 
 /* ============ 📅 Googleカレンダー連携 (GAS経由) ============ */
