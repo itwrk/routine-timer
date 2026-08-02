@@ -2470,7 +2470,7 @@ function normalizeFoodRule(r){
 }
 function normalizeUrgeLog(u){
   const n=Object.assign({id:uid(),at:0,updatedAt:0,deletedAt:null,strength:null,phase:'standalone',mealSessionId:null,
-    outcome:null,settledBy:[],items:[],tags:[],place:null,watching:null,note:''},u||{});
+    outcome:null,settledBy:[],items:[],tags:[],place:null,watching:null,note:'',rechecks:[]},u||{});
   n.id=String(n.id||uid());n.at=mealNumber(n.at,0);n.updatedAt=mealNumber(n.updatedAt,n.at||Date.now());
   n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);n.strength=mealScore(n.strength);
   if(!['standalone','cascade'].includes(n.phase))n.phase='standalone';
@@ -2480,7 +2480,9 @@ function normalizeUrgeLog(u){
   n.settledBy=[...new Set((Array.isArray(n.settledBy)?n.settledBy:[]).filter(x=>settlerIds.includes(x)))];
   n.items=Array.isArray(n.items)?n.items.map(normalizeMealItem):[];n.tags=normalizeMealTags(n.tags);
   if(!['home','out',null].includes(n.place))n.place=null;if(typeof n.watching!=='boolean')n.watching=null;
-  n.note=String(n.note||'').slice(0,140);return n;
+  n.note=String(n.note||'').slice(0,140);
+  n.rechecks=(Array.isArray(n.rechecks)?n.rechecks:[]).map(x=>mealNumber(x,0)).filter(x=>x>0).slice(-30);
+  return n;
 }
 function normalizeFoodItem(f){
   const n=Object.assign({id:uid(),name:'',emoji:'🥨',useCount:0,lastUsedAt:0,createdAt:0,updatedAt:0,deletedAt:null},f||{});
@@ -2573,7 +2575,11 @@ function beginUrgeItems(targetId=null){
 }
 function resolveOpenUrge(kind){
   const u=openUrge();if(!u)return;
-  if(kind==='still'){mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();return;}
+  if(kind==='still'){
+    u.rechecks.push(Date.now());if(u.rechecks.length>30)u.rechecks=u.rechecks.slice(-30);
+    touchUrge(u);mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();renderActivityTimeline();
+    toast('👀 まだ続いてる、を記録しました');return;
+  }
   mealState.urgeOpen=true;
   mealState.urgeDraft={strength:u.strength,phase:u.phase,mealSessionId:u.mealSessionId,
     mode:kind==='settled'?'settlers':'items',targetId:u.id,itemInputOpen:false,place:u.place,watching:u.watching};
@@ -3131,6 +3137,7 @@ function urgeContextLabel(u){
 function urgeTimelineDetail(u){
   const parts=[`結果:${urgeResultLabel(u)}`],context=urgeContextLabel(u),mealMin=urgeMealMinutes(u),wakeMin=urgeWakeMinutes(u);
   if(context)parts.push(`文脈:${context}`);if(mealMin!==null)parts.push(`食事から${mealMin}分`);if(wakeMin!==null)parts.push(`起床から${wakeMin}分`);
+  if(u.rechecks&&u.rechecks.length)parts.push(`再確認${u.rechecks.length}回`);
   if(u.tags&&u.tags.length)parts.push(`タグ:${u.tags.map(mealTagLabel).join(',')}`);return parts.join('／');
 }
 function mealTimelineItems(cutoff,now){
@@ -3199,12 +3206,13 @@ function buildMealCsv(){
 }
 function exportMealCsv(){download('meal_sessions.csv',buildMealCsv());toast('🍽 食事CSVを書き出しました');}
 function buildUrgeCsv(){
-  const head=['日時','強さ','種別','結果','何が効いたか','食べたもの','タグ','関連食事','場所','ながら','起床からの分','食事からの分','メモ'],lines=[head.join(',')];
+  const head=['日時','強さ','種別','結果','何が効いたか','食べたもの','タグ','関連食事','場所','ながら','起床からの分','食事からの分','メモ','再確認回数','再確認時刻'],lines=[head.join(',')];
   const list=D.urgeLogs.filter(u=>!u.deletedAt).sort((a,b)=>(a.at||0)-(b.at||0));
   for(const u of list){
     const s=mealForUrge(u),wakeMin=urgeWakeMinutes(u),mealMin=urgeMealMinutes(u);
     const outcome=u.outcome==='ate'?'食べた':u.outcome==='settled'?'収まった':u.outcome==='open'?'様子見':'記録のみ';
-    const row=[timelineDateTime(u.at),u.strength===null?'':u.strength,u.phase==='cascade'?'食後の波':'単独',outcome,(u.settledBy||[]).map(urgeSettlerLabel).join('／'),mealItemsLabel(u.items),(u.tags||[]).map(mealTagLabel).join('／'),s?s.label:'',u.place==='home'?'家':u.place==='out'?'外':'',u.watching===true?'あり':u.watching===false?'なし':'',wakeMin===null?'':wakeMin,mealMin===null?'':mealMin,u.note||''];
+    const row=[timelineDateTime(u.at),u.strength===null?'':u.strength,u.phase==='cascade'?'食後の波':'単独',outcome,(u.settledBy||[]).map(urgeSettlerLabel).join('／'),mealItemsLabel(u.items),(u.tags||[]).map(mealTagLabel).join('／'),s?s.label:'',u.place==='home'?'家':u.place==='out'?'外':'',u.watching===true?'あり':u.watching===false?'なし':'',wakeMin===null?'':wakeMin,mealMin===null?'':mealMin,u.note||'',
+      (u.rechecks||[]).length||'',(u.rechecks||[]).map(t=>new Date(t).toTimeString().slice(0,5)).join('／')];
     lines.push(row.map(timelineCsvEsc).join(','));
   }
   return lines.join('\n');
