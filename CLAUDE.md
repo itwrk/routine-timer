@@ -34,6 +34,7 @@ Hal個人用のルーチン実行支援アプリ。「タイマー × 二重音�
 - **データ**: localStorage キー `rvt_v1`。構造は `D = {routines, hitokoto, logs, xp, badges, combo, settings, updatedAt}`
   - routine: `{id, name, emoji, lastRun, steps:[{id, name, emoji, sec, memo, texts[], sharedId?}]}`
   - 新プロパティ追加時は `Object.assign` でデフォルト補完（既存データとの後方互換を維持）
+- **食事サポート**: `mealSessions` / `mealTemplates` / `foodRules` / `mealPrefs` を `normalizeData()` で正規化。待機は `endsAt` 基準の独立タイマーで復元し、食事はXP・コンボ・ルーチンログへ接続しない
 - **端末間同期**: GASウェブアプリ経由でGoogle Driveの `rvt_sync.json` に全データを保存
   - `syncPush()` / `syncPull()`。自動同期ON時はsave()の4秒後にpush、起動時にpull（updatedAt比較で新しい方優先）
   - `settings.apiKey` と同期設定自体は同期対象外（端末ローカル保持）
@@ -49,7 +50,7 @@ Hal個人用のルーチン実行支援アプリ。「タイマー × 二重音�
 - **Notion記録**: `settings.webhook`（GAS中継）に完走ログをPOST（`sendNotion`）
 
 ## UI方針
-- ダークネオンアーケード調（DotGothic16 + M PLUS Rounded 1c、ピンク/シアン/ゴールド）
+- ライト背景のネオンアーケード調（ほぼ白背景 + DotGothic16 + M PLUS Rounded 1c、ピンク/シアン/ゴールドの差し色。色は:rootのCSS変数で一元管理）
 - スマホ最優先。文字・余白はコンパクトに、ボタンは折返し禁止（過去に崩れ多発）
 - 実行画面上部はアプリ内ビューアのバーに隠れることがあるため、重要ボタンは画面下部にも配置
 - ルーチン一覧は `lastRun` 降順（最後にやったものが先頭）
