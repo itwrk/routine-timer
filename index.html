@@ -882,6 +882,8 @@ const MEAL_CASCADE_WINDOW_MS=90*60*1000;
 const URGE_OPEN_EXPIRE_MS=6*60*60*1000;
 
 const mealScore=v=>Number.isInteger(v)&&v>=0&&v<=10?v:null;
+const liveLogs=arr=>(Array.isArray(arr)?arr:[]).filter(x=>x&&!x.deletedAt);
+function tombstoneLog(arr,id){const it=arr.find(x=>x&&x.id===id);if(it){it.deletedAt=Date.now();it.updatedAt=it.deletedAt;}}
 const CURRENT_SCHEMA=3;
 
 function normalizeData(raw){
@@ -932,7 +934,7 @@ function migrateData(d){
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs'])d[k]=d[k].filter(x=>!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -1281,7 +1283,7 @@ function renderPersonalNotes(){
   const feed=document.getElementById('personalMemoFeed');
   if(!feed)return;
   feed.innerHTML='';
-  const notes=[...D.personalNotes].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,3);
+  const notes=liveLogs(D.personalNotes).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,3);
   for(const note of notes){
     const row=document.createElement('div');row.className='memo-post';
     const dt=new Date(note.createdAt||Date.now());
@@ -1289,13 +1291,13 @@ function renderPersonalNotes(){
     const context=noteContextLabel(note);
     row.innerHTML=`<div class="memo-body">${context?`<span class="memo-context">▶ ${esc(context)}</span>`:''}${esc(note.text)}<time>${stamp}</time></div><button class="memo-del" title="削除">✕</button>`;
     row.querySelector('.memo-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
-      D.personalNotes=D.personalNotes.filter(n=>n.id!==note.id);save();renderPersonalNotes();renderActivityTimeline();toast('🗑 メモを削除しました');
+      tombstoneLog(D.personalNotes,note.id);save();renderPersonalNotes();renderActivityTimeline();toast('🗑 メモを削除しました');
     });
     feed.appendChild(row);
   }
 }
 function latestMoodLog(){
-  return D.moodLogs.reduce((latest,log)=>(Number(log.createdAt)||0)>(Number(latest&&latest.createdAt)||0)?log:latest,null);
+  return liveLogs(D.moodLogs).reduce((latest,log)=>(Number(log.createdAt)||0)>(Number(latest&&latest.createdAt)||0)?log:latest,null);
 }
 function renderMoodButtons(){
   const el=document.getElementById('moodButtons'),lastEl=document.getElementById('moodLast');
@@ -1339,20 +1341,20 @@ function renderActivityTimeline(){
   const el=document.getElementById('activityTimeline');
   if(!el)return;
   const now=Date.now(),cutoff=now-24*60*60*1000,items=[];
-  for(const note of D.personalNotes){
+  for(const note of liveLogs(D.personalNotes)){
     const stamp=Number(note.createdAt)||0;
     const context=noteContextLabel(note);
     if(stamp>=cutoff&&stamp<=now)items.push({kind:'note',icon:'📝',label:context?`実行メモ・${context}`:'ひとことメモ',text:note.text||'',stamp});
   }
-  for(const log of D.moodLogs){
+  for(const log of liveLogs(D.moodLogs)){
     const stamp=Number(log.createdAt)||0;
     if(stamp>=cutoff&&stamp<=now)items.push({kind:'mood',icon:log.emoji||'🌡️',label:'今の気分',text:log.label||'気分',stamp});
   }
-  for(const log of D.habitLogs){
+  for(const log of liveLogs(D.habitLogs)){
     const stamp=activityLogStamp(log);
     if(stamp>=cutoff&&stamp<=now)items.push({kind:'check',icon:'✅',label:'チェックリスト・毎日',text:log.habitName||'削除済みの項目',stamp});
   }
-  for(const log of D.todayTaskLogs){
+  for(const log of liveLogs(D.todayTaskLogs)){
     const stamp=activityLogStamp(log);
     if(stamp>=cutoff&&stamp<=now)items.push({kind:'check',icon:'✅',label:'チェックリスト・今日だけ',text:log.taskName||'削除済みの項目',stamp});
   }
@@ -1447,8 +1449,8 @@ function toggleMemoVoice(){
   };
   try{memoRecognition.start();}catch(e){toast('⚠️ 音声入力を開始できませんでした');}
 }
-function habitLogForToday(id){return D.habitLogs.find(g=>g.habitId===id&&g.date===today());}
-function todayTaskLog(id){return D.todayTaskLogs.find(g=>g.taskId===id&&g.date===today());}
+function habitLogForToday(id){return D.habitLogs.find(g=>!g.deletedAt&&g.habitId===id&&g.date===today());}
+function todayTaskLog(id){return D.todayTaskLogs.find(g=>!g.deletedAt&&g.taskId===id&&g.date===today());}
 const WEEKDAY_LABELS=['日','月','火','水','木','金','土'];
 function localDateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function timeMinutes(value){
@@ -1553,7 +1555,7 @@ function addHabit(){
 function toggleHabit(habit){
   const old=habitLogForToday(habit.id);
   if(old){
-    D.habitLogs=D.habitLogs.filter(g=>g.id!==old.id);
+    tombstoneLog(D.habitLogs,old.id);
     save();renderHabits();renderActivityTimeline();toast('↩️ チェックを戻しました');return;
   }
   const now=new Date();
@@ -1571,7 +1573,7 @@ function addTodayTask(){
 function toggleTodayTask(task){
   const old=todayTaskLog(task.id);
   if(old){
-    D.todayTaskLogs=D.todayTaskLogs.filter(g=>g.id!==old.id);
+    tombstoneLog(D.todayTaskLogs,old.id);
     save();renderHabits();renderActivityTimeline();toast('↩️ チェックを戻しました');return;
   }
   const now=new Date();
@@ -1720,7 +1722,7 @@ function renderAllNotes(){
   const feed=document.getElementById('allMemoFeed');
   if(!feed)return;
   feed.innerHTML='';
-  const notes=[...D.personalNotes].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const notes=liveLogs(D.personalNotes).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   if(!notes.length){feed.innerHTML='<p class="muted">まだメモがありません。</p>';return;}
   for(const note of notes){
     const dt=new Date(note.createdAt||Date.now());
@@ -1729,7 +1731,7 @@ function renderAllNotes(){
     const context=noteContextLabel(note);
     row.innerHTML=`<div class="tweet-avatar">${context?'▶️':'✍️'}</div><div class="tweet-main"><div class="tweet-head"><b>${context?'実行メモ':'ひとことメモ'}</b><span>@memo</span><span>·</span><time>${stamp}</time><button class="tweet-del">✕</button></div>${context?`<div class="tweet-context">${esc(context)}</div>`:''}<div class="tweet-text">${esc(note.text)}</div></div>`;
     row.querySelector('button').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
-      D.personalNotes=D.personalNotes.filter(n=>n.id!==note.id);save();renderAllNotes();renderPersonalNotes();renderActivityTimeline();toast('🗑 メモを削除しました');
+      tombstoneLog(D.personalNotes,note.id);save();renderAllNotes();renderPersonalNotes();renderActivityTimeline();toast('🗑 メモを削除しました');
     });
     feed.appendChild(row);
   }
@@ -2335,8 +2337,8 @@ function endRun(){
 function renderProg(){
   const li=levelInfo();
   document.getElementById('pRuns').textContent=D.logs.length;
-  document.getElementById('pNotes').textContent=D.personalNotes.length;
-  document.getElementById('pChecks').textContent=D.habitLogs.length+D.todayTaskLogs.length;
+  document.getElementById('pNotes').textContent=liveLogs(D.personalNotes).length;
+  document.getElementById('pChecks').textContent=liveLogs(D.habitLogs).length+liveLogs(D.todayTaskLogs).length;
   document.getElementById('pLevel').textContent=li.level;
   document.getElementById('pXpBar').style.width=(li.cur/li.need*100)+'%';
   document.getElementById('pXpText').textContent=`次のレベルまで あと ${li.need-li.cur} XP`;
@@ -2364,9 +2366,9 @@ function renderProg(){
     le.appendChild(d);
   });
   const hle=document.getElementById('habitLogs');hle.innerHTML='';
-  const checkLogs=D.habitLogs.map(g=>({name:g.habitName||'削除済みの習慣',date:g.date,time:g.time||'',stamp:g.completedAt||0,label:'毎日',done:true}));
-  for(const log of D.todayTaskLogs)checkLogs.push({name:log.taskName||'削除済みの項目',date:log.date,time:log.time||'',stamp:log.completedAt||0,label:'今日だけ',done:true});
-  for(const task of D.todayTasks)if(!D.todayTaskLogs.some(g=>g.taskId===task.id&&g.date===task.date))checkLogs.push({name:task.name,date:task.date,time:'',stamp:task.createdAt||0,label:'今日だけ',done:false});
+  const checkLogs=liveLogs(D.habitLogs).map(g=>({name:g.habitName||'削除済みの習慣',date:g.date,time:g.time||'',stamp:g.completedAt||0,label:'毎日',done:true}));
+  for(const log of liveLogs(D.todayTaskLogs))checkLogs.push({name:log.taskName||'削除済みの項目',date:log.date,time:log.time||'',stamp:log.completedAt||0,label:'今日だけ',done:true});
+  for(const task of D.todayTasks)if(!D.todayTaskLogs.some(g=>!g.deletedAt&&g.taskId===task.id&&g.date===task.date))checkLogs.push({name:task.name,date:task.date,time:'',stamp:task.createdAt||0,label:'今日だけ',done:false});
   if(!checkLogs.length)hle.innerHTML='<p class="muted">まだチェックリストログがありません。</p>';
   checkLogs.sort((a,b)=>b.stamp-a.stamp).slice(0,30).forEach(g=>{
     const d=document.createElement('div');d.className='habit-log-row';
@@ -3218,7 +3220,7 @@ function buildUrgeCsv(){
   return lines.join('\n');
 }
 function exportUrgeCsv(){download('urge_logs.csv',buildUrgeCsv());toast('⚡ 衝動CSVを書き出しました');}
-const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs'];
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs'];
 function mergeMealCollections(local,remote){
   for(const k of MERGE_COLLECTIONS){
     const l=Array.isArray(local[k])?local[k]:[],r=Array.isArray(remote[k])?remote[k]:[],map=new Map();
@@ -3296,6 +3298,12 @@ async function syncPush(silent){
   const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
   if(!url){toast('⚠️ 設定で同期URLを入力してね');return;}
   try{
+    // push前にクラウド側の新着をID単位で取り込む（別端末の記録を上書きで消さない）
+    try{
+      const pre=await fetch(url+'?key='+encodeURIComponent(key));
+      const pj=await pre.json();
+      if(pj.ok&&pj.data){mergeMealCollections(pj.data,D);D=normalizeData(D);localStorage.setItem(KEY,JSON.stringify(D));}
+    }catch(e){}
     const payload=JSON.stringify({
       key,
       data:syncDataForCloud(),
@@ -3536,9 +3544,9 @@ function exportLogs(){
 }
 function exportHabitLogs(){
   let rows=['種類,日付,時刻,項目,状態'];
-  for(const g of D.habitLogs.slice().sort((a,b)=>(b.completedAt||0)-(a.completedAt||0)))rows.push(['毎日',g.date,g.time,csvEsc(g.habitName||'削除済みの習慣'),'完了'].join(','));
-  for(const log of D.todayTaskLogs)rows.push(['今日だけ',log.date,log.time||'',csvEsc(log.taskName||'削除済みの項目'),'完了'].join(','));
-  for(const task of D.todayTasks)if(!D.todayTaskLogs.some(g=>g.taskId===task.id&&g.date===task.date))rows.push(['今日だけ',task.date,'',csvEsc(task.name),'未完了'].join(','));
+  for(const g of liveLogs(D.habitLogs).sort((a,b)=>(b.completedAt||0)-(a.completedAt||0)))rows.push(['毎日',g.date,g.time,csvEsc(g.habitName||'削除済みの習慣'),'完了'].join(','));
+  for(const log of liveLogs(D.todayTaskLogs))rows.push(['今日だけ',log.date,log.time||'',csvEsc(log.taskName||'削除済みの項目'),'完了'].join(','));
+  for(const task of D.todayTasks)if(!D.todayTaskLogs.some(g=>!g.deletedAt&&g.taskId===task.id&&g.date===task.date))rows.push(['今日だけ',task.date,'',csvEsc(task.name),'未完了'].join(','));
   download('チェックリストログ.csv',rows.join('\n'));toast('📤 チェックリストログを書き出しました');
 }
 function timelineDateTime(stamp,date='',time=''){
@@ -3551,19 +3559,19 @@ function timelineDateTime(stamp,date='',time=''){
 }
 function chatgptTimelineRows(){
   const rows=[];
-  for(const note of D.personalNotes){
+  for(const note of liveLogs(D.personalNotes)){
     const stamp=Number(note.createdAt)||0;
     rows.push({stamp,dateTime:timelineDateTime(stamp),type:'自由記述メモ',content:note.text||'',routine:note.routineName||'',step:note.stepName||'',detail:note.source==='run'?'ルーチン実行中':''});
   }
-  for(const log of D.moodLogs){
+  for(const log of liveLogs(D.moodLogs)){
     const stamp=Number(log.createdAt)||0;
     rows.push({stamp,dateTime:timelineDateTime(stamp),type:'気分',content:`${log.emoji||''} ${log.label||'気分'}`.trim(),routine:'',step:'',detail:''});
   }
-  for(const log of D.habitLogs){
+  for(const log of liveLogs(D.habitLogs)){
     const stamp=activityLogStamp(log);
     rows.push({stamp,dateTime:timelineDateTime(stamp,log.date,log.time),type:'チェック完了',content:log.habitName||'削除済みの項目',routine:'',step:'',detail:'毎日'});
   }
-  for(const log of D.todayTaskLogs){
+  for(const log of liveLogs(D.todayTaskLogs)){
     const stamp=activityLogStamp(log);
     rows.push({stamp,dateTime:timelineDateTime(stamp,log.date,log.time),type:'チェック完了',content:log.taskName||'削除済みの項目',routine:'',step:'',detail:'今日だけ'});
   }
@@ -3619,6 +3627,19 @@ document.addEventListener('click',e=>{
 renderHome();
 restoreMealState();
 expireOldOpenUrges();
+/* タブ復帰時にクラウドから自動取得（両端末を開きっぱなしでも古いまま書かないため） */
+let lastFocusPull=0;
+function autoPullOnFocus(){
+  if(!(D.settings.autoSync&&(D.settings.syncUrl||'').trim()))return;
+  const runEl=document.getElementById('run');
+  if(runEl&&runEl.classList.contains('active'))return;   // ルーチン実行中は触らない
+  if(Date.now()-lastFocusPull<45000)return;
+  lastFocusPull=Date.now();
+  syncPull(true);
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoPullOnFocus();});
+window.addEventListener('focus',autoPullOnFocus);
+window.addEventListener('pageshow',autoPullOnFocus);
 setInterval(()=>{
   const home=document.getElementById('scr-home');
   if(home&&home.classList.contains('active'))renderHabits();
