@@ -95,6 +95,13 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .mood-buttons{display:flex;gap:4px;flex-wrap:wrap}
 .mood-btn{background:var(--card2);border:1px solid var(--line2);border-radius:999px;color:var(--text);font-size:10px;font-weight:700;padding:5px 8px;white-space:nowrap;cursor:pointer}
 .mood-btn.last{border-color:var(--mint);color:var(--mint);box-shadow:0 0 9px rgba(61,255,168,.22)}
+.mood-activity-picker{margin-top:7px;padding:7px 8px;background:rgba(255,77,141,.07);border:1px solid rgba(255,77,141,.24);border-radius:12px}
+.mood-activity-picker[hidden]{display:none}
+.mood-activity-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.mood-activity-title{color:var(--pink);font-size:10px;font-weight:800;white-space:nowrap}
+.mood-activity-skip{background:none;border:none;color:var(--dim);font-size:9px;font-weight:700;padding:3px 2px;white-space:nowrap;cursor:pointer}
+.mood-activity-options{display:flex;gap:4px;flex-wrap:wrap}
+.mood-activity-chip{background:var(--card2);border:1px solid var(--line2);border-radius:999px;color:var(--text);font-size:9px;font-weight:700;padding:5px 7px;white-space:nowrap;cursor:pointer}
 .mood-quick+.memo-feed:not(:empty){border-top:1px dashed var(--line);margin-top:6px;padding-top:2px}
 .mood-manage-row{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px dashed var(--line)}
 .mood-manage-icon{font-size:20px;flex-shrink:0}
@@ -182,6 +189,7 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .activity-item.check .activity-text{font-weight:700}
 .activity-item.mood .activity-icon{border-color:var(--pink);box-shadow:0 0 8px rgba(255,77,141,.18)}
 .activity-item.mood .activity-text{font-weight:800;color:var(--pink)}
+.activity-mood-tag{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;background:rgba(255,77,141,.08);border:1px solid rgba(255,77,141,.22);border-radius:999px;color:var(--text);font-size:9px;font-weight:700;line-height:1.5;white-space:nowrap;vertical-align:middle}
 .activity-item.meal .activity-icon{border-color:var(--gold);box-shadow:0 0 8px rgba(255,201,60,.18)}
 
 /* saved step library manager */
@@ -473,6 +481,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div class="mood-quick">
         <div class="mood-quick-head"><span class="mood-quick-title">🌡️ 今の気分</span><span class="mood-last" id="moodLast"></span><button class="text-link" type="button" onclick="openManage('moods')">編集 →</button></div>
         <div class="mood-buttons" id="moodButtons"></div>
+        <div class="mood-activity-picker" id="moodActivityPicker" hidden></div>
       </div>
       <div id="personalMemoFeed" class="memo-feed"></div>
     </div>
@@ -850,8 +859,20 @@ const DEFAULT_MOODS=[
   {id:'mood-tired',emoji:'😴',label:'眠い'},{id:'mood-hard',emoji:'😣',label:'しんどい'},
   {id:'mood-irritated',emoji:'😤',label:'イライラ'},{id:'mood-calm',emoji:'😌',label:'落ち着く'}
 ];
+const MOOD_ACTIVITY_OPTIONS=[
+  {id:'game',emoji:'🎮',label:'ゲーム'},
+  {id:'ai',emoji:'🤖',label:'AI'},
+  {id:'housework',emoji:'🧹',label:'家事'},
+  {id:'outside',emoji:'🚶',label:'外出'},
+  {id:'meal',emoji:'🍽',label:'食事'},
+  {id:'rest',emoji:'🛋',label:'休憩・何もしてない'},
+  {id:'other',emoji:'✏️',label:'その他'}
+];
 const defaultMoods=()=>DEFAULT_MOODS.map(m=>Object.assign({},m));
 function normalizeMood(m){return Object.assign({id:uid(),emoji:'🙂',label:'気分'},m||{});}
+const moodActivityOption=id=>MOOD_ACTIVITY_OPTIONS.find(option=>option.id===id)||null;
+const moodActivityLabel=id=>{const option=moodActivityOption(id);return option?`${option.emoji} ${option.label}`:'';};
+let pendingMoodActivityLogId=null;
 
 /* 食事・衝動の定数（normalizeData から参照されるため、必ず D の初期化より前に置く）
    ここを下へ動かすと load 時に TDZ の ReferenceError となり、全データが seed に戻る */
@@ -1216,6 +1237,7 @@ function renderHome(){
   const el=document.getElementById('routineList');el.innerHTML='';
   renderPersonalNotes();
   renderMoodButtons();
+  renderMoodActivityPicker();
   renderHabits();
   renderActivityTimeline();
   if(!D.routines.length)el.innerHTML='<div class="card muted">まだルーチンがありません。「記録」画面から作ってみよう！</div>';
@@ -1315,10 +1337,46 @@ function renderMoodButtons(){
 }
 function recordMood(mood){
   const stamp=Date.now();
-  D.moodLogs.unshift({id:uid(),moodId:mood.id,emoji:mood.emoji||'🙂',label:mood.label||'気分',createdAt:stamp});
+  const log={id:uid(),moodId:mood.id,emoji:mood.emoji||'🙂',label:mood.label||'気分',createdAt:stamp,updatedAt:stamp};
+  D.moodLogs.unshift(log);
   if(D.moodLogs.length>2000)D.moodLogs.length=2000;
-  save();renderMoodButtons();renderActivityTimeline();sfxDone();
+  pendingMoodActivityLogId=log.id;
+  save();renderMoodButtons();renderMoodActivityPicker();renderActivityTimeline();sfxDone();
   toast(`${mood.emoji||'🙂'} ${mood.label||'気分'}を${activityTimeLabel(stamp).replace('今日 ','')}に記録`);
+}
+function renderMoodActivityPicker(){
+  const el=document.getElementById('moodActivityPicker');
+  if(!el)return;
+  const log=pendingMoodActivityLogId&&liveLogs(D.moodLogs).find(item=>item.id===pendingMoodActivityLogId);
+  if(!log||moodActivityOption(log.previousActivity)){
+    pendingMoodActivityLogId=null;el.hidden=true;el.innerHTML='';return;
+  }
+  const logId=log.id;
+  el.hidden=false;el.innerHTML='';
+  const head=document.createElement('div');head.className='mood-activity-head';
+  const title=document.createElement('span');title.className='mood-activity-title';title.textContent='直前は何をしてた？';
+  const skip=document.createElement('button');skip.type='button';skip.className='mood-activity-skip';skip.textContent='スキップ';
+  skip.onclick=()=>skipMoodPreviousActivity(logId);
+  head.append(title,skip);el.appendChild(head);
+  const options=document.createElement('div');options.className='mood-activity-options';
+  for(const option of MOOD_ACTIVITY_OPTIONS){
+    const btn=document.createElement('button');btn.type='button';btn.className='mood-activity-chip';
+    btn.textContent=`${option.emoji} ${option.label}`;btn.onclick=()=>setMoodPreviousActivity(logId,option.id);
+    options.appendChild(btn);
+  }
+  el.appendChild(options);
+}
+function setMoodPreviousActivity(logId,activityId){
+  if(pendingMoodActivityLogId!==logId)return;
+  const option=moodActivityOption(activityId),log=liveLogs(D.moodLogs).find(item=>item.id===logId);
+  if(!option||!log)return;
+  log.previousActivity=option.id;log.updatedAt=Date.now();pendingMoodActivityLogId=null;
+  save();renderMoodActivityPicker();renderActivityTimeline();
+  toast(`${option.emoji} ${option.label}を直前の行動に記録`);
+}
+function skipMoodPreviousActivity(logId){
+  if(pendingMoodActivityLogId!==logId)return;
+  pendingMoodActivityLogId=null;renderMoodActivityPicker();
 }
 function noteContextLabel(note){
   if(!note||!note.stepName)return '';
@@ -1349,7 +1407,8 @@ function renderActivityTimeline(){
   }
   for(const log of liveLogs(D.moodLogs)){
     const stamp=Number(log.createdAt)||0;
-    if(stamp>=cutoff&&stamp<=now)items.push({kind:'mood',icon:log.emoji||'🌡️',label:'今の気分',text:log.label||'気分',stamp});
+    const previousActivity=moodActivityLabel(log.previousActivity);
+    if(stamp>=cutoff&&stamp<=now)items.push({kind:'mood',icon:log.emoji||'🌡️',label:'今の気分',text:log.label||'気分',tag:previousActivity,stamp});
   }
   for(const log of liveLogs(D.habitLogs)){
     const stamp=activityLogStamp(log);
@@ -1365,7 +1424,7 @@ function renderActivityTimeline(){
   if(!items.length){el.innerHTML='<p class="muted">過去24時間のメモ、気分、チェック完了はまだありません。</p>';return;}
   for(const item of items){
     const row=document.createElement('article');row.className=`activity-item ${item.kind}`;
-    row.innerHTML=`<span class="activity-icon">${esc(item.icon)}</span><div class="activity-body"><div class="activity-type"><span>${esc(item.label)}</span><time>${activityTimeLabel(item.stamp)}</time></div><div class="activity-text">${esc(item.text)}</div></div>`;
+    row.innerHTML=`<span class="activity-icon">${esc(item.icon)}</span><div class="activity-body"><div class="activity-type"><span>${esc(item.label)}</span><time>${activityTimeLabel(item.stamp)}</time></div><div class="activity-text">${esc(item.text)}${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</div></div>`;
     el.appendChild(row);
   }
 }
@@ -3672,7 +3731,7 @@ function chatgptTimelineRows(){
   }
   for(const log of liveLogs(D.moodLogs)){
     const stamp=Number(log.createdAt)||0;
-    rows.push({stamp,dateTime:timelineDateTime(stamp),type:'気分',content:`${log.emoji||''} ${log.label||'気分'}`.trim(),routine:'',step:'',detail:''});
+    rows.push({stamp,dateTime:timelineDateTime(stamp),type:'気分',content:`${log.emoji||''} ${log.label||'気分'}`.trim(),routine:'',step:'',detail:'',previousActivity:moodActivityLabel(log.previousActivity)});
   }
   for(const log of liveLogs(D.habitLogs)){
     const stamp=activityLogStamp(log);
@@ -3692,8 +3751,8 @@ function chatgptTimelineRows(){
   return rows.sort((a,b)=>(a.stamp||0)-(b.stamp||0));
 }
 function buildChatGPTTimelineCsv(){
-  const lines=['日時,種類,内容,ルーチン,ステップ,詳細'];
-  for(const row of chatgptTimelineRows())lines.push([row.dateTime,row.type,row.content,row.routine,row.step,row.detail].map(timelineCsvEsc).join(','));
+  const lines=['日時,種類,内容,ルーチン,ステップ,詳細,直前の行動'];
+  for(const row of chatgptTimelineRows())lines.push([row.dateTime,row.type,row.content,row.routine,row.step,row.detail,row.previousActivity||''].map(timelineCsvEsc).join(','));
   return lines.join('\n');
 }
 function exportChatGPTTimeline(){
