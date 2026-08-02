@@ -237,6 +237,10 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .meal-rule span{flex:1;min-width:0;overflow-wrap:anywhere}.meal-rule button{background:none;border:none;color:var(--dim);padding:3px;font-size:10px}
 .meal-inline{display:flex;gap:6px;margin-top:7px}.meal-inline input{flex:1;min-width:0}.meal-inline button{white-space:nowrap;flex-shrink:0}
 .urge-row{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
+.urge-recall{margin:6px 0 8px;padding:6px 8px;background:var(--card2);border-left:3px solid var(--cyan);border-radius:8px}
+.urge-recall-head{font-size:10px;font-weight:800;color:var(--dim);margin-bottom:3px}
+.urge-recall-row{font-size:11px;line-height:1.55;overflow-wrap:anywhere}
+.urge-recall-row+.urge-recall-row{border-top:1px dashed var(--line);padding-top:3px;margin-top:3px}
 .meal-editor-items{display:flex;flex-direction:column;gap:5px;margin:7px 0}
 .meal-editor-item{display:grid;grid-template-columns:1fr 82px 28px;gap:5px;align-items:center}
 .meal-editor-item input{min-width:0;padding:6px;font-size:11px}.meal-editor-item button{padding:4px;background:none;border:none;color:var(--pink)}
@@ -2984,7 +2988,7 @@ function urgeFlowHtml(){
   const d=mealState.urgeDraft||{};
   if(d.mode==='items')return urgeItemChoicesHtml();
   if(d.mode==='settlers')return `<p style="font-weight:800">何が効いた？（任意）</p><div class="meal-tags">${URGE_SETTLERS.map(x=>`<button type="button" onclick="addUrgeSettler('${x.id}')">${esc(x.label)}</button>`).join('')}</div><button class="text-link" type="button" onclick="addUrgeSettler(null)" style="margin-top:8px">選ばず記録</button>`;
-  if(d.mode==='outcome')return `<p style="font-weight:800">このあとはどうする？</p>${mealContextHtml(d.place,d.watching,'setUrgeContext')}<div class="meal-choice"><button class="btn btn-g" type="button" onclick="urgeToMeal()">🍽 食事にする</button><button class="btn btn-g" type="button" onclick="beginUrgeItems()">🥨 つまんだ</button><button class="btn btn-g" type="button" onclick="commitUrge('open')">👀 様子を見る</button></div><button class="text-link" type="button" onclick="closeUrgeFlow()" style="margin-top:8px">やめる</button>`;
+  if(d.mode==='outcome')return `<p style="font-weight:800">このあとはどうする？</p>${urgeRecallHtml(d.strength,Date.now(),2,d.targetId,true)}${mealContextHtml(d.place,d.watching,'setUrgeContext')}<div class="meal-choice"><button class="btn btn-g" type="button" onclick="urgeToMeal()">🍽 食事にする</button><button class="btn btn-g" type="button" onclick="beginUrgeItems()">🥨 つまんだ</button><button class="btn btn-g" type="button" onclick="commitUrge('open')">👀 様子を見る</button></div><button class="text-link" type="button" onclick="closeUrgeFlow()" style="margin-top:8px">やめる</button>`;
   return `<p style="font-weight:800">いま、食べたい気持ちは？</p>${mealScaleHtml(d.strength,'setUrgeStrength')}<button class="text-link" type="button" onclick="closeUrgeFlow()" style="margin-top:8px">やめる</button>`;
 }
 function openUrgeHtml(u){
@@ -3066,6 +3070,61 @@ function urgeResolveMinutes(u){
   if(!u||!u.resolvedAt||!u.at)return null;
   const m=Math.round((u.resolvedAt-u.at)/60000);
   return m<0?null:m;
+}
+const URGE_BANDS=[
+  {label:'深夜',from:23,to:5},{label:'朝',from:5,to:10},{label:'昼',from:10,to:15},
+  {label:'夕方',from:15,to:19},{label:'夜',from:19,to:23}
+];
+function urgeBandLabel(stamp){
+  const h=new Date(Number(stamp)||Date.now()).getHours();
+  for(const b of URGE_BANDS){
+    if(b.from<b.to){if(h>=b.from&&h<b.to)return b.label;}
+    else if(h>=b.from||h<b.to)return b.label;
+  }
+  return '';
+}
+function clockDiffMinutes(a,b){
+  const m=s=>{const d=new Date(Number(s)||0);return d.getHours()*60+d.getMinutes();};
+  const diff=Math.abs(m(a)-m(b));
+  return Math.min(diff,1440-diff);
+}
+const URGE_SIMILAR_WINDOW_MIN=120;
+function similarUrges(strength,at,limit,excludeId){
+  const base=Number(at)||Date.now();
+  const pool=D.urgeLogs.filter(u=>u&&!u.deletedAt&&u.id!==excludeId&&Number(u.at));
+  const rank=(a,b)=>{
+    const sa=a.strength===null?99:Math.abs(a.strength-(strength===null?5:strength));
+    const sb=b.strength===null?99:Math.abs(b.strength-(strength===null?5:strength));
+    return sa-sb||(b.at||0)-(a.at||0);
+  };
+  const near=pool.filter(u=>clockDiffMinutes(u.at,base)<=URGE_SIMILAR_WINDOW_MIN).sort(rank);
+  if(near.length)return {mode:'time',band:urgeBandLabel(base),list:near.slice(0,limit)};
+  const byStrength=pool.slice().sort(rank);
+  if(byStrength.length)return {mode:'strength',band:urgeBandLabel(base),list:byStrength.slice(0,limit)};
+  return {mode:'none',band:urgeBandLabel(base),list:[]};
+}
+function urgeRecallLine(u){
+  const d=new Date(u.at||0);
+  const when=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const did=(u.settledBy&&u.settledBy.length)
+    ? u.settledBy.map(urgeSettlerLabel).join('・')
+    : (u.outcome==='ate'&&u.items&&u.items.length ? mealItemsLabel(u.items) : '');
+  const mins=urgeResolveMinutes(u);
+  let result;
+  if(u.outcome==='settled')result=mins!==null?`${mins}分で落ち着いた`:'落ち着いた';
+  else if(u.outcome==='ate')result='食べた';
+  else if(u.outcome==='open')result=`まだ続いてる${u.rechecks&&u.rechecks.length?`×${u.rechecks.length}`:''}`;
+  else result='記録のみ';
+  return `${when} ⚡${u.strength===null?'':u.strength}${did?` → ${esc(did)}`:''} → ${result}`;
+}
+function urgeRecallHtml(strength,at,limit,excludeId,compact){
+  const r=similarUrges(strength,at,limit,excludeId);
+  if(r.mode==='none')
+    return `<div class="urge-recall"><p class="muted">この時間帯の記録はまだありません。これが最初の1件になります。</p></div>`;
+  const head=r.mode==='strength'?'近い強さの記録'
+    :(compact?`${r.band}ごろ、このくらいのとき`:`${r.band}ごろの記録`);
+  return `<div class="urge-recall"><p class="urge-recall-head">${esc(head)}</p>`
+    +r.list.map(u=>`<div class="urge-recall-row">${urgeRecallLine(u)}</div>`).join('')+`</div>`;
 }
 function urgeResultLabel(u){
   if(u.outcome==='ate'){const items=mealItemsLabel(u.items);return `食べた${items?`(${items})`:''}`;}
