@@ -484,7 +484,6 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       </div>
     </div>
     <div id="routineList"></div>
-    <button class="btn btn-p btn-full btn-sm" onclick="newRoutine()" style="padding:11px">＋ 新しいルーチンを作る</button>
     <div class="sect card" id="calCard">
       <h2>📅 今後の予定 <button class="btn btn-g btn-sm" style="float:right;padding:4px 10px;font-size:11px" onclick="loadCalEvents(true)">🔄 更新</button></h2>
       <div id="calList" class="muted">読み込み中…</div>
@@ -531,6 +530,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 
   <!-- MANAGE / NOTES -->
   <div class="screen" id="scr-manage">
+    <button class="btn btn-p btn-full btn-sm" type="button" onclick="newRoutine()" style="padding:11px;margin-bottom:6px">＋ 新しいルーチンを作る</button>
     <div class="card" id="habitManageCard">
       <h2>🌱 チェックリスト項目を管理</h2>
       <p class="muted">追加後の「✏️ 編集」から、手順メモ・リンク・表示する日付/曜日/時間帯を設定できます。</p>
@@ -566,8 +566,13 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     </div>
     <div class="card" id="foodItemManageCard">
       <h2>🥨 よく食べるものを管理</h2>
-      <p class="muted">食事や衝動の記録から自動で育つ単品リストです。名前と絵文字を編集できます。</p>
+      <p class="muted">ここから追加でき、食事や衝動の記録からも自動で育つ単品リストです。名前と絵文字を編集できます。</p>
       <div id="foodItemManageList" style="margin-top:6px"></div>
+      <div class="mood-add">
+        <input class="mood-emoji-input" type="text" id="foodEmojiInput" maxlength="8" value="🥨" aria-label="食べるものの絵文字">
+        <input class="mood-label-input" type="text" id="foodNameInput" maxlength="40" placeholder="食べるものを追加" onkeydown="submitShortcut(event,addFoodItem)">
+        <button class="btn btn-c btn-sm" type="button" onclick="addFoodItem()">＋ 追加</button>
+      </div>
     </div>
     <div class="card" id="allMemoCard">
       <h2>📝 すべてのメモ</h2>
@@ -1217,7 +1222,7 @@ function renderHome(){
   renderMoodButtons();
   renderHabits();
   renderActivityTimeline();
-  if(!D.routines.length)el.innerHTML='<div class="card muted">まだルーチンがありません。下のボタンから作ってみよう！</div>';
+  if(!D.routines.length)el.innerHTML='<div class="card muted">まだルーチンがありません。「記録」画面から作ってみよう！</div>';
   const sorted=[...D.routines].sort((a,b)=>(b.lastRun||0)-(a.lastRun||0));
   for(const r of sorted){
     const total=r.steps.reduce((a,s)=>a+(Number(s.sec)||0),0);
@@ -3096,6 +3101,15 @@ function renderMealTemplateManager(){
   }
 }
 function openFoodItemEditor(id){mealState.foodEditId=mealState.foodEditId===id?null:id;renderFoodItemManager();}
+function addFoodItem(){
+  const nameInput=document.getElementById('foodNameInput'),emojiInput=document.getElementById('foodEmojiInput');
+  const name=String(nameInput&&nameInput.value||'').trim().slice(0,40),emoji=String(emojiInput&&emojiInput.value||'🥨').trim().slice(0,8)||'🥨';
+  if(!name){toast('食べるものの名前を入力してね');return;}
+  if(D.foodItems.some(x=>!x.deletedAt&&x.name===name)){toast('同じ名前が登録されています');return;}
+  const now=Date.now();D.foodItems.push(normalizeFoodItem({name,emoji,createdAt:now,updatedAt:now}));
+  if(nameInput)nameInput.value='';
+  save();renderFoodItemManager();renderMealCard();renderMealActive();toast(`＋ ${emoji} ${name}を追加しました`);
+}
 function saveFoodItemEditor(id){
   const f=D.foodItems.find(x=>x.id===id&&!x.deletedAt);if(!f)return;
   const editor=[...document.querySelectorAll('.food-item-editor')].find(x=>x.dataset.foodId===id);if(!editor)return;
