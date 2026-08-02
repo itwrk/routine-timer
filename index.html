@@ -763,6 +763,28 @@ const DEFAULT_MOODS=[
 const defaultMoods=()=>DEFAULT_MOODS.map(m=>Object.assign({},m));
 function normalizeMood(m){return Object.assign({id:uid(),emoji:'🙂',label:'気分'},m||{});}
 
+const CURRENT_SCHEMA=2;
+
+function normalizeData(raw){
+  const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
+  d.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true},d.settings||{});
+  d.routines=Array.isArray(d.routines)?d.routines:[];
+  d.hitokoto=Array.isArray(d.hitokoto)?d.hitokoto:[];
+  d.logs=Array.isArray(d.logs)?d.logs:[];
+  d.personalNotes=Array.isArray(d.personalNotes)?d.personalNotes:[];
+  d.moods=(Array.isArray(d.moods)?d.moods:defaultMoods()).map(normalizeMood);
+  d.moodLogs=Array.isArray(d.moodLogs)?d.moodLogs:[];
+  d.habits=(Array.isArray(d.habits)?d.habits:[]).map(normalizeHabit);
+  d.habitLogs=Array.isArray(d.habitLogs)?d.habitLogs:[];
+  d.todayTasks=Array.isArray(d.todayTasks)?d.todayTasks:[];
+  d.todayTaskLogs=Array.isArray(d.todayTaskLogs)?d.todayTaskLogs:[];
+  delete d.badges;
+  return migrateData(d);
+}
+
+// C1 時点では中身は schemaVersion の設定のみ。C2 で食事キーを足す。
+function migrateData(d){d.schemaVersion=CURRENT_SCHEMA;return d;}
+
 const seed=()=>({
   routines:[{
     id:uid(),name:'朝のルーチン',emoji:'🌅',steps:[
@@ -781,17 +803,10 @@ const seed=()=>({
   logs:[], xp:0, combo:0,
   settings:{rate:1.0,voiceVolume:1,sfxVolume:.45,moti:true,sound:true}
 });
-let D; try{D=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){D=seed();}
-D=Object.assign({moods:defaultMoods(),moodLogs:[]},D);
-D.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true},D.settings||{});
-D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];
-D.moods=(Array.isArray(D.moods)?D.moods:defaultMoods()).map(normalizeMood);
-D.moodLogs=Array.isArray(D.moodLogs)?D.moodLogs:[];
-D.habits=(Array.isArray(D.habits)?D.habits:[]).map(normalizeHabit);
-D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];
-D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];
-D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];
-if(Object.prototype.hasOwnProperty.call(D,'badges')){delete D.badges;localStorage.setItem(KEY,JSON.stringify(D));}
+let D;
+try{D=normalizeData(JSON.parse(localStorage.getItem(KEY))||seed());}
+catch(e){D=normalizeData(seed());}
+if(!localStorage.getItem(KEY))localStorage.setItem(KEY,JSON.stringify(D));
 /* ── 同期設定のプリセット ──
    ここに書いておけば、どの端末で開いても入力不要（ファイル自体に埋め込み）。
    例: const PRESET_SYNC={url:'https://script.google.com/macros/s/xxxx/exec',key:'anchan-0721',auto:true}; */
@@ -2241,17 +2256,8 @@ async function syncPull(auto){
     const remote=j.data;
     if(auto&&(remote.updatedAt||0)<=(D.updatedAt||0))return; // 自動時はリモートが新しい場合のみ
     const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey};
-    D=remote;
-    D=Object.assign({moods:defaultMoods(),moodLogs:[]},D);
-    D.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true},D.settings||{},localSync); // 同期設定とAPIキーは端末側を維持
-    D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];
-    D.moods=(Array.isArray(D.moods)?D.moods:defaultMoods()).map(normalizeMood);
-    D.moodLogs=Array.isArray(D.moodLogs)?D.moodLogs:[];
-    D.habits=(Array.isArray(D.habits)?D.habits:[]).map(normalizeHabit);
-    D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];
-    D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];
-    D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];
-    delete D.badges;
+    D=normalizeData(remote);
+    D.settings=Object.assign(D.settings,localSync); // 同期設定とAPIキーは端末側を維持
     localStorage.setItem(KEY,JSON.stringify(D));
     renderHome();toast('⬇️ クラウドから取得しました');
   }catch(e){if(!auto)toast('⚠️ 取得失敗（URL/通信を確認）');}
@@ -2478,7 +2484,13 @@ function backupAll(){download('rvt_backup.json',JSON.stringify(D,null,1),'applic
 function restoreAll(input){
   const f=input.files[0];if(!f)return;
   const rd=new FileReader();
-  rd.onload=()=>{try{D=Object.assign({moods:defaultMoods(),moodLogs:[]},JSON.parse(rd.result));D.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true},D.settings||{});D.personalNotes=Array.isArray(D.personalNotes)?D.personalNotes:[];D.moods=(Array.isArray(D.moods)?D.moods:defaultMoods()).map(normalizeMood);D.moodLogs=Array.isArray(D.moodLogs)?D.moodLogs:[];D.habits=(Array.isArray(D.habits)?D.habits:[]).map(normalizeHabit);D.habitLogs=Array.isArray(D.habitLogs)?D.habitLogs:[];D.todayTasks=Array.isArray(D.todayTasks)?D.todayTasks:[];D.todayTaskLogs=Array.isArray(D.todayTaskLogs)?D.todayTaskLogs:[];delete D.badges;save();toast('✅ 復元しました');renderHome();}catch(e){toast('⚠️ 読み込みに失敗しました');}input.value='';};
+  rd.onload=()=>{
+    try{
+      D=normalizeData(JSON.parse(rd.result));
+      save();toast('✅ 復元しました');renderHome();
+    }catch(e){toast('⚠️ 読み込みに失敗しました');}
+    input.value='';
+  };
   rd.readAsText(f,'utf-8');
 }
 function resetAll(){
