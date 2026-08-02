@@ -842,7 +842,7 @@ const DEFAULT_MOODS=[
 const defaultMoods=()=>DEFAULT_MOODS.map(m=>Object.assign({},m));
 function normalizeMood(m){return Object.assign({id:uid(),emoji:'🙂',label:'気分'},m||{});}
 
-const CURRENT_SCHEMA=2;
+const CURRENT_SCHEMA=3;
 
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
@@ -868,21 +868,31 @@ function migrateData(d){
     if(!Array.isArray(d.mealTemplates)||!d.mealTemplates.length)d.mealTemplates=builtinMealTemplates();
     if(!Array.isArray(d.foodRules))d.foodRules=[];
   }
+  if(from<3){
+    if(!Array.isArray(d.urgeLogs))d.urgeLogs=[];
+    if(!Array.isArray(d.foodItems))d.foodItems=[];
+    if(!Array.isArray(d.wakeLogs))d.wakeLogs=[];
+  }
   d.mealSessions=(Array.isArray(d.mealSessions)?d.mealSessions:[]).map(normalizeMealSession);
   d.mealTemplates=(Array.isArray(d.mealTemplates)?d.mealTemplates:[]).map(normalizeMealTemplate);
   d.foodRules=(Array.isArray(d.foodRules)?d.foodRules:[]).map(normalizeFoodRule);
+  d.urgeLogs=(Array.isArray(d.urgeLogs)?d.urgeLogs:[]).map(normalizeUrgeLog);
+  d.foodItems=(Array.isArray(d.foodItems)?d.foodItems:[]).map(normalizeFoodItem).filter(f=>f.name||f.deletedAt);
+  d.wakeLogs=(Array.isArray(d.wakeLogs)?d.wakeLogs:[]).map(normalizeWakeLog);
   d.mealPrefs=Object.assign(defaultMealPrefs(),d.mealPrefs||{});
   purgeMealTombstones(d);
   if(d.mealSessions.length>1000){
     d.mealSessions.sort((a,b)=>(a.startedAt||0)-(b.startedAt||0));
     d.mealSessions=d.mealSessions.slice(-1000);
   }
+  if(d.urgeLogs.length>2000){d.urgeLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.urgeLogs=d.urgeLogs.slice(-2000);}
+  if(d.wakeLogs.length>400){d.wakeLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.wakeLogs=d.wakeLogs.slice(-400);}
   d.schemaVersion=CURRENT_SCHEMA;
   return d;
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules'])d[k]=d[k].filter(x=>!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs'])d[k]=d[k].filter(x=>!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -900,10 +910,11 @@ const seed=()=>({
   moods:defaultMoods(),moodLogs:[],
   habits:[],habitLogs:[],
   todayTasks:[],todayTaskLogs:[],
-  schemaVersion:2,
+  schemaVersion:3,
   mealSessions:[],
   mealTemplates:builtinMealTemplates(),
   foodRules:[],
+  urgeLogs:[],foodItems:[],wakeLogs:[],
   mealPrefs:defaultMealPrefs(),
   logs:[], xp:0, combo:0,
   settings:{rate:1.0,voiceVolume:1,sfxVolume:.45,moti:true,sound:true}
@@ -2344,6 +2355,12 @@ const MEAL_WAIT_ACTIONS=[
   {id:'water',label:'水を飲んだ'},{id:'dishes',label:'片づけた'},
   {id:'tea',label:'お茶を飲んだ'},{id:'walk',label:'歩いた'},{id:'other',label:'その他'}
 ];
+const URGE_SETTLERS=[
+  {id:'water',label:'💧 水'},{id:'tea',label:'🍵 お茶'},{id:'coffee',label:'☕ コーヒー'},
+  {id:'wait',label:'⏳ 時間'},{id:'move',label:'🚶 動いた'},{id:'other',label:'その他'}
+];
+const MEAL_CASCADE_WINDOW_MS=90*60*1000;
+const URGE_OPEN_EXPIRE_MS=6*60*60*1000;
 function builtinMealTemplates(){
   return [
     {id:'tpl-bought',name:'買ってきた食事',emoji:'🛒',items:[],effortLevel:'none',builtin:true,useCount:0,lastUsedAt:0,createdAt:0,updatedAt:0,deletedAt:null},
@@ -2354,7 +2371,8 @@ function builtinMealTemplates(){
 }
 function defaultMealPrefs(){
   return {defaultWaitSec:300,askBeforeState:'optional',speakOnWaitEnd:true,soundOnWaitEnd:true,
-    includeInChatGptCsv:true,csvIncludeItems:true,csvIncludeNotes:true,showTimelineDetail:true,updatedAt:0};
+    includeInChatGptCsv:true,csvIncludeItems:true,csvIncludeNotes:true,showTimelineDetail:true,
+    lastPlace:'home',lastWatching:null,csvIncludeUrges:true,askStartTiming:true,updatedAt:0};
 }
 const mealScore=v=>Number.isInteger(v)&&v>=0&&v<=10?v:null;
 function mealNumber(v,fallback=0){const n=Number(v);return Number.isFinite(n)?n:fallback;}
@@ -2385,7 +2403,8 @@ function normalizeMealWait(w){
 function normalizeMealSession(s){
   const n=Object.assign({
     id:uid(),startedAt:0,endedAt:null,updatedAt:0,deletedAt:null,status:'closed',label:'食事',templateId:null,
-    items:[],effortLevel:'',before:null,afterMeal:null,waits:[],afterWait:null,extra:null,note:''
+    items:[],effortLevel:'',before:null,afterMeal:null,waits:[],afterWait:null,extra:null,note:'',
+    startTiming:null,place:null,watching:null
   },s||{});
   n.id=String(n.id||uid());
   n.startedAt=mealNumber(n.startedAt,0);
@@ -2397,6 +2416,9 @@ function normalizeMealSession(s){
   n.templateId=n.templateId==null?null:String(n.templateId);
   n.items=Array.isArray(n.items)?n.items.map(normalizeMealItem):[];
   n.effortLevel=['none','microwave','pan','cook'].includes(n.effortLevel)?n.effortLevel:'';
+  if(!['before','during',null].includes(n.startTiming))n.startTiming=null;
+  if(!['home','out',null].includes(n.place))n.place=null;
+  if(typeof n.watching!=='boolean')n.watching=null;
   if(n.before&&typeof n.before==='object')n.before={
     hunger:mealScore(n.before.hunger),sleepiness:mealScore(n.before.sleepiness),stress:mealScore(n.before.stress),at:mealNumber(n.before.at,n.startedAt)
   };else n.before=null;
@@ -2431,6 +2453,55 @@ function normalizeFoodRule(r){
   n.source=n.source==='suggested'?'suggested':'manual';n.createdAt=mealNumber(n.createdAt,0);
   n.updatedAt=mealNumber(n.updatedAt,n.createdAt);n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);
   return n;
+}
+function normalizeUrgeLog(u){
+  const n=Object.assign({id:uid(),at:0,updatedAt:0,deletedAt:null,strength:null,phase:'standalone',mealSessionId:null,
+    outcome:null,settledBy:[],items:[],tags:[],place:null,watching:null,note:''},u||{});
+  n.id=String(n.id||uid());n.at=mealNumber(n.at,0);n.updatedAt=mealNumber(n.updatedAt,n.at||Date.now());
+  n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);n.strength=mealScore(n.strength);
+  if(!['standalone','cascade'].includes(n.phase))n.phase='standalone';
+  n.mealSessionId=n.mealSessionId==null?null:String(n.mealSessionId);
+  if(!['ate','settled','open',null].includes(n.outcome))n.outcome=null;
+  const settlerIds=['water','tea','coffee','wait','move','other'];
+  n.settledBy=[...new Set((Array.isArray(n.settledBy)?n.settledBy:[]).filter(x=>settlerIds.includes(x)))];
+  n.items=Array.isArray(n.items)?n.items.map(normalizeMealItem):[];n.tags=normalizeMealTags(n.tags);
+  if(!['home','out',null].includes(n.place))n.place=null;if(typeof n.watching!=='boolean')n.watching=null;
+  n.note=String(n.note||'').slice(0,140);return n;
+}
+function normalizeFoodItem(f){
+  const n=Object.assign({id:uid(),name:'',emoji:'🥨',useCount:0,lastUsedAt:0,createdAt:0,updatedAt:0,deletedAt:null},f||{});
+  n.id=String(n.id||uid());n.name=String(n.name||'').trim().slice(0,40);n.emoji=String(n.emoji||'🥨').slice(0,8);
+  n.useCount=Math.max(0,mealNumber(n.useCount,0));n.lastUsedAt=mealNumber(n.lastUsedAt,0);n.createdAt=mealNumber(n.createdAt,0);
+  n.updatedAt=mealNumber(n.updatedAt,n.createdAt||Date.now());n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);return n;
+}
+function normalizeWakeLog(w){
+  const n=Object.assign({id:uid(),date:'',at:0,updatedAt:0,deletedAt:null},w||{});
+  n.id=String(n.id||uid());n.date=String(n.date||'').slice(0,10);n.at=mealNumber(n.at,0);
+  n.updatedAt=mealNumber(n.updatedAt,n.at||Date.now());n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);return n;
+}
+
+function openUrge(){return D.urgeLogs.find(u=>u.outcome==='open'&&!u.deletedAt)||null;}
+function expireOldOpenUrges(){
+  const lim=Date.now()-URGE_OPEN_EXPIRE_MS;let changed=false,now=Date.now();
+  for(const u of D.urgeLogs)if(u.outcome==='open'&&u.at<lim){u.outcome=null;u.updatedAt=now;changed=true;}
+  if(changed)save();
+}
+function registerFoodItem(name){
+  name=String(name||'').trim().slice(0,40);if(!name)return null;
+  let f=D.foodItems.find(x=>!x.deletedAt&&x.name===name),now=Date.now();
+  if(!f){f=normalizeFoodItem({name,createdAt:now,updatedAt:now});D.foodItems.push(f);}
+  f.useCount=(Number(f.useCount)||0)+1;f.lastUsedAt=now;f.updatedAt=now;
+  if(D.foodItems.filter(x=>!x.deletedAt).length>200){
+    const worst=D.foodItems.filter(x=>!x.deletedAt).sort((a,b)=>(a.useCount||0)-(b.useCount||0)||(a.lastUsedAt||0)-(b.lastUsedAt||0))[0];
+    if(worst&&worst!==f){worst.deletedAt=now;worst.updatedAt=now;}
+  }
+  return f;
+}
+function todayWake(){const key=localDateKey(new Date());return D.wakeLogs.find(w=>!w.deletedAt&&w.date===key)||null;}
+function recordWake(){
+  let w=todayWake();const now=Date.now();
+  if(w){w.at=now;w.updatedAt=now;}else D.wakeLogs.push(normalizeWakeLog({date:localDateKey(new Date()),at:now,updatedAt:now}));
+  save();renderMealCard();toast('☀️ '+new Date(now).toTimeString().slice(0,5)+' 起床を記録しました');
 }
 
 let mealState={
@@ -2870,7 +2941,7 @@ function buildMealCsv(){
   return lines.join('\n');
 }
 function exportMealCsv(){download('meal_sessions.csv',buildMealCsv());toast('🍽 食事CSVを書き出しました');}
-const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules'];
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs'];
 function mergeMealCollections(local,remote){
   for(const k of MERGE_COLLECTIONS){
     const l=Array.isArray(local[k])?local[k]:[],r=Array.isArray(remote[k])?remote[k]:[],map=new Map();
