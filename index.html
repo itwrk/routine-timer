@@ -563,6 +563,11 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <button class="btn btn-c btn-sm" type="button" onclick="addMealTemplate()">＋ 追加</button>
       </div>
     </div>
+    <div class="card" id="foodItemManageCard">
+      <h2>🥨 よく食べるものを管理</h2>
+      <p class="muted">食事や衝動の記録から自動で育つ単品リストです。名前と絵文字を編集できます。</p>
+      <div id="foodItemManageList" style="margin-top:6px"></div>
+    </div>
     <div class="card" id="allMemoCard">
       <h2>📝 すべてのメモ</h2>
       <div id="allMemoFeed" class="memo-timeline"></div>
@@ -640,8 +645,9 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <button class="btn btn-g btn-sm" onclick="exportHabitLogs()">チェックリストCSV書き出し</button>
         <button class="btn btn-p btn-sm" onclick="exportChatGPTTimeline()">🤖 ChatGPT用CSV</button>
         <button class="btn btn-p btn-sm" onclick="exportMealCsv()">🍽 食事CSV</button>
+        <button class="btn btn-p btn-sm" onclick="exportUrgeCsv()">⚡ 衝動CSV</button>
       </div>
-      <p class="muted" style="margin-top:8px">ChatGPT用CSVには、ルーチン完了・チェック完了・気分・自由記述メモだけを時系列で収録します。設定、APIキー、同期合言葉、内部IDは含めません。</p>
+      <p class="muted" style="margin-top:8px">ChatGPT用CSVには、ルーチン完了・チェック完了・気分・自由記述メモと、設定に応じて食事・起床・衝動を時系列で収録します。設定、APIキー、同期合言葉、内部IDは含めません。</p>
       <input type="file" id="csvFile" accept=".csv,text/csv" style="display:none" onchange="importTexts(this)">
     </div>
     <div class="card" id="mealPrefsCard">
@@ -652,8 +658,11 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div class="field"><label><input type="checkbox" id="setMealCsvItems" onchange="saveSettings()" style="width:auto;margin-right:6px">品目名も含める</label></div>
       <div class="field"><label><input type="checkbox" id="setMealCsvNotes" onchange="saveSettings()" style="width:auto;margin-right:6px">自由記述メモも含める</label></div>
       <div class="field"><label><input type="checkbox" id="setMealTimeline" onchange="saveSettings()" style="width:auto;margin-right:6px">24時間タイムラインに食後・待機後も表示する</label></div>
+      <div class="field"><label><input type="checkbox" id="setMealUrges" onchange="saveSettings()" style="width:auto;margin-right:6px">衝動の記録もChatGPT用CSVに含める</label></div>
+      <div class="field"><label><input type="checkbox" id="setMealStartTiming" onchange="saveSettings()" style="width:auto;margin-right:6px">食事開始時に「これから／もう食べてる」を聞く</label></div>
       <p class="muted">☁️ 同期をONにすると、食事の記録（内容・数値・タグ・メモ）もGoogle Driveに保存されます。</p>
       <button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'⚠️ ほんとに削除？',deleteAllMealSessions)">食事の記録だけ削除</button>
+      <button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'⚠️ ほんとに削除？',deleteAllUrgeLogs)">衝動の記録だけ削除</button>
     </div>
     <div class="card">
       <h2>🔊 音声設定</h2>
@@ -1540,7 +1549,7 @@ function toggleTodayTask(task){
   if(D.todayTaskLogs.length>2000)D.todayTaskLogs.length=2000;
   save();renderHabits();renderActivityTimeline();sfxDone();toast('✅ 今日の項目を記録しました！');
 }
-function renderManage(){renderHabitManager();renderMoodManager();renderStepLibraryManager();renderMealTemplateManager();renderAllNotes();}
+function renderManage(){renderHabitManager();renderMoodManager();renderStepLibraryManager();renderMealTemplateManager();renderFoodItemManager();renderAllNotes();}
 function renderMoodManager(){
   const el=document.getElementById('moodManageList');
   if(!el)return;
@@ -2502,13 +2511,13 @@ function todayWake(){const key=localDateKey(new Date());return D.wakeLogs.find(w
 function recordWake(){
   let w=todayWake();const now=Date.now();
   if(w){w.at=now;w.updatedAt=now;}else D.wakeLogs.push(normalizeWakeLog({date:localDateKey(new Date()),at:now,updatedAt:now}));
-  save();renderMealCard();toast('☀️ '+new Date(now).toTimeString().slice(0,5)+' 起床を記録しました');
+  save();renderMealCard();renderActivityTimeline();toast('☀️ '+new Date(now).toTimeString().slice(0,5)+' 起床を記録しました');
 }
 
 let mealState={
   waitTimer:null,activeId:null,view:'idle',tagOpen:false,beforeOpen:false,freeOpen:false,tplEditId:null,
   pendingStart:null,tplDraftItems:[],tplDraftMeta:null,beforeDetailOpen:false,ruleOpen:false,finishedWaitId:null,
-  urgeOpen:false,urgeDraft:null,pendingUrgeId:null,foodItemInputOpen:false,learnedItems:new Set()
+  urgeOpen:false,urgeDraft:null,pendingUrgeId:null,foodItemInputOpen:false,learnedItems:new Set(),foodEditId:null
 };
 
 function touchUrge(u){if(!u)return;u.updatedAt=Date.now();save();}
@@ -2538,7 +2547,7 @@ function commitUrge(outcome,extraFields={}){
     outcome,place:draft.place??D.mealPrefs.lastPlace??null,watching:draft.watching??D.mealPrefs.lastWatching??null},extraFields));
   D.urgeLogs.unshift(u);
   mealState.urgeOpen=false;mealState.urgeDraft=null;
-  save();renderUrgeUi();
+  save();renderUrgeUi();renderActivityTimeline();
   toast(outcome==='open'?'👀 また聞きます':outcome==='settled'?'😌 記録しました':'⚡ 記録しました');
   return u;
 }
@@ -2567,7 +2576,7 @@ function resolveOpenUrge(kind){
 function addUrgeSettler(id){
   const draft=mealState.urgeDraft||{},u=D.urgeLogs.find(x=>x.id===draft.targetId&&!x.deletedAt);if(!u)return;
   if(id&&URGE_SETTLERS.some(x=>x.id===id)&&!u.settledBy.includes(id))u.settledBy.push(id);
-  u.outcome='settled';touchUrge(u);mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();toast('📗 記録しました');
+  u.outcome='settled';touchUrge(u);mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();renderActivityTimeline();toast('📗 記録しました');
 }
 function addUrgeItem(name){
   name=String(name||'').trim().slice(0,40);if(!name)return;
@@ -2575,7 +2584,7 @@ function addUrgeItem(name){
   if(draft.targetId){
     const u=D.urgeLogs.find(x=>x.id===draft.targetId&&!x.deletedAt);if(!u)return;
     u.outcome='ate';if(!u.items.some(x=>x.name===name))u.items.push(item);registerFoodItem(name);touchUrge(u);
-    mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();toast('📗 記録しました');return;
+    mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();renderActivityTimeline();toast('📗 記録しました');return;
   }
   registerFoodItem(name);commitUrge('ate',{items:[item]});
 }
@@ -2805,6 +2814,15 @@ function deleteAllMealSessions(){
   }
   mealState.activeId=null;mealState.view='idle';save();renderMealWaitBar(0);renderMealCard();renderMeal();toast('🗑 食事の記録を削除しました');
 }
+function scrubUrgeLog(u,now){u.deletedAt=now;u.updatedAt=now;u.items=[];u.tags=[];u.settledBy=[];u.note='';}
+function deleteUrgeLog(id){
+  const u=D.urgeLogs.find(x=>x.id===id);if(!u)return;scrubUrgeLog(u,Date.now());
+  save();renderMealCard();renderMealHistory();renderActivityTimeline();toast('🗑 衝動の記録を削除しました');
+}
+function deleteAllUrgeLogs(){
+  const now=Date.now();for(const u of D.urgeLogs)if(!u.deletedAt)scrubUrgeLog(u,now);
+  mealState.urgeOpen=false;mealState.urgeDraft=null;save();renderMealCard();renderMealHistory();renderActivityTimeline();toast('🗑 衝動の記録を削除しました');
+}
 function saveSessionAsTemplate(sessionId){
   const s=D.mealSessions.find(x=>x.id===sessionId&&!x.deletedAt);if(!s)return;
   if(D.mealTemplates.some(t=>!t.deletedAt&&t.name===s.label)){toast(`🍽 「${s.label}」は登録済みです`);return;}
@@ -3017,17 +3035,33 @@ function mealSessionSummary(s){
   if(s.waits&&s.waits.length){const w=s.waits[s.waits.length-1];parts.push(`${Math.round((w.plannedSec||0)/60)}分`);}
   if(s.afterWait&&s.afterWait.urge!==null)parts.push(String(s.afterWait.urge));
   if(s.extra&&s.extra.ate===true)parts.push('追加あり');else if(s.extra&&s.extra.ate===false)parts.push('追加なし');
+  const waves=D.urgeLogs.filter(u=>!u.deletedAt&&u.phase==='cascade'&&u.mealSessionId===s.id).reverse().sort((a,b)=>(a.at||0)-(b.at||0));
+  if(waves.length){const names=[...new Set(waves.flatMap(u=>(u.items||[]).map(i=>i.name).filter(Boolean)))];parts.push(`波${waves.length}回${names.length?`(${names.join('・')})`:''}`);}
   return parts.length?parts.join(' → '):'記録済み';
 }
+function urgeSettlerLabel(id){return ({water:'水',tea:'お茶',coffee:'コーヒー',wait:'時間',move:'動いた',other:'その他'})[id]||id;}
+function urgeResultLabel(u){
+  if(u.outcome==='ate'){const items=mealItemsLabel(u.items);return `食べた${items?`(${items})`:''}`;}
+  if(u.outcome==='settled'){const by=(u.settledBy||[]).map(urgeSettlerLabel).join('・');return `収まった${by?`(${by})`:''}`;}
+  if(u.outcome==='open')return '様子見';
+  return '記録のみ';
+}
+function urgeHistorySummary(u){return `⚡${u.strength===null?'':u.strength} → ${u.outcome==='settled'?'😌 ':u.outcome==='ate'?'🥨 ':u.outcome==='open'?'👀 ':''}${urgeResultLabel(u)}`;}
 function renderMealHistory(){
   const el=document.getElementById('mealHistory');if(!el)return;el.innerHTML='';
-  const list=D.mealSessions.filter(s=>!s.deletedAt&&s.status==='closed').sort((a,b)=>(b.startedAt||0)-(a.startedAt||0)).slice(0,10);
-  if(!list.length){el.innerHTML='<p class="muted">まだ食事の記録はありません。まずは1回、記録してみましょう。</p>';return;}
-  for(const s of list){
-    const d=new Date(s.startedAt||0),row=document.createElement('div');row.className='meal-hist-row';
-    row.innerHTML=`<div class="meal-hist-main"><div class="meal-hist-title">${esc(s.label)}</div><div class="meal-hist-meta">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}　${esc(mealSessionSummary(s))}</div></div><button class="btn btn-g btn-sm meal-save-tpl" type="button">＋テンプレに保存</button><button class="btn btn-g btn-sm meal-delete" type="button">✕</button>`;
-    row.querySelector('.meal-save-tpl').onclick=()=>saveSessionAsTemplate(s.id);
-    row.querySelector('.meal-delete').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteMealSession(s.id));el.appendChild(row);
+  const list=[...D.mealSessions.filter(s=>!s.deletedAt&&s.status==='closed').map(data=>({kind:'meal',stamp:data.startedAt||0,data})),
+    ...D.urgeLogs.filter(u=>!u.deletedAt&&u.phase==='standalone').map(data=>({kind:'urge',stamp:data.at||0,data}))].sort((a,b)=>b.stamp-a.stamp).slice(0,10);
+  if(!list.length){el.innerHTML='<p class="muted">まだ食事や衝動の記録はありません。まずは1回、記録してみましょう。</p>';return;}
+  for(const event of list){
+    const d=new Date(event.stamp),row=document.createElement('div');row.className='meal-hist-row';
+    if(event.kind==='meal'){
+      const s=event.data;row.innerHTML=`<div class="meal-hist-main"><div class="meal-hist-title">${esc(s.label)}</div><div class="meal-hist-meta">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}　${esc(mealSessionSummary(s))}</div></div><button class="btn btn-g btn-sm meal-save-tpl" type="button">＋テンプレに保存</button><button class="btn btn-g btn-sm meal-delete" type="button">✕</button>`;
+      row.querySelector('.meal-save-tpl').onclick=()=>saveSessionAsTemplate(s.id);row.querySelector('.meal-delete').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteMealSession(s.id));
+    }else{
+      const u=event.data;row.innerHTML=`<div class="meal-hist-main"><div class="meal-hist-title">${esc(urgeHistorySummary(u))}</div><div class="meal-hist-meta">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div></div><button class="btn btn-g btn-sm meal-delete" type="button">✕</button>`;
+      row.querySelector('.meal-delete').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteUrgeLog(u.id));
+    }
+    el.appendChild(row);
   }
 }
 function renderMealTemplateManager(){
@@ -3047,24 +3081,67 @@ function renderMealTemplateManager(){
     }
   }
 }
+function openFoodItemEditor(id){mealState.foodEditId=mealState.foodEditId===id?null:id;renderFoodItemManager();}
+function saveFoodItemEditor(id){
+  const f=D.foodItems.find(x=>x.id===id&&!x.deletedAt);if(!f)return;
+  const editor=[...document.querySelectorAll('.food-item-editor')].find(x=>x.dataset.foodId===id);if(!editor)return;
+  const name=String(editor.querySelector('.food-edit-name').value||'').trim().slice(0,40),emoji=String(editor.querySelector('.food-edit-emoji').value||'🥨').trim().slice(0,8)||'🥨';
+  if(!name){toast('名前を入力してね');return;}
+  if(D.foodItems.some(x=>x.id!==id&&!x.deletedAt&&x.name===name)){toast('同じ名前が登録されています');return;}
+  f.name=name;f.emoji=emoji;f.updatedAt=Date.now();mealState.foodEditId=null;save();renderFoodItemManager();renderMealCard();renderMealActive();toast('💾 よく食べるものを保存しました');
+}
+function deleteFoodItem(id){
+  const f=D.foodItems.find(x=>x.id===id);if(!f)return;const now=Date.now();f.deletedAt=now;f.updatedAt=now;f.name='';f.emoji='';f.useCount=0;
+  if(mealState.foodEditId===id)mealState.foodEditId=null;save();renderFoodItemManager();renderMealCard();renderMealActive();toast('🗑 よく食べるものから削除しました');
+}
+function renderFoodItemManager(){
+  const list=document.getElementById('foodItemManageList');if(!list)return;list.innerHTML='';
+  const items=D.foodItems.filter(f=>!f.deletedAt&&f.name).sort((a,b)=>(b.useCount||0)-(a.useCount||0)||(b.lastUsedAt||0)-(a.lastUsedAt||0));
+  if(!items.length){list.innerHTML='<p class="muted">食事や衝動を記録すると、ここに単品が追加されます。</p>';return;}
+  for(const f of items){
+    const row=document.createElement('div');row.className='meal-tpl-row';row.innerHTML=`<span>${esc(f.emoji)}</span><span class="meal-tpl-name">${esc(f.name)} <small class="muted">${f.useCount||0}回</small></span><button class="btn btn-g btn-sm food-edit" type="button">✏️ 編集</button><button class="btn btn-g btn-sm food-delete" type="button">✕</button>`;
+    row.querySelector('.food-edit').onclick=()=>openFoodItemEditor(f.id);row.querySelector('.food-delete').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteFoodItem(f.id));list.appendChild(row);
+    if(mealState.foodEditId===f.id){
+      const editor=document.createElement('div');editor.className='habit-editor food-item-editor';editor.dataset.foodId=f.id;
+      editor.innerHTML=`<div class="habit-editor-grid"><div class="field"><label>絵文字</label><input class="food-edit-emoji" type="text" maxlength="8" value="${esc(f.emoji)}"></div><div class="field"><label>名前</label><input class="food-edit-name" type="text" maxlength="40" value="${esc(f.name)}"></div></div><div class="habit-editor-actions"><button class="btn btn-c btn-sm food-save" type="button">💾 保存</button><button class="btn btn-g btn-sm food-cancel" type="button">キャンセル</button></div>`;
+      editor.querySelector('.food-save').onclick=()=>saveFoodItemEditor(f.id);editor.querySelector('.food-cancel').onclick=()=>openFoodItemEditor(f.id);list.appendChild(editor);
+    }
+  }
+}
 function mealTagLabel(id){const t=MEAL_TAGS.find(x=>x.id===id);return t?t.label:id;}
 function mealEffortLabel(id){const e=MEAL_EFFORTS.find(x=>x.id===id);return e?e.label:'';}
 function mealChangeLabel(id){const c=MEAL_CHANGES.find(x=>x.id===id);return c?c.label:'';}
 function mealActionLabel(id){const a=MEAL_WAIT_ACTIONS.find(x=>x.id===id);return a?a.label:id;}
 function mealItemsLabel(items){return (Array.isArray(items)?items:[]).map(i=>`${i.name||''}${i.amount?` ${i.amount}`:''}`.trim()).filter(Boolean).join('／');}
+function wakeForStamp(stamp){
+  const key=localDateKey(new Date(stamp));return D.wakeLogs.filter(w=>!w.deletedAt&&w.date===key).sort((a,b)=>(b.updatedAt||b.at||0)-(a.updatedAt||a.at||0))[0]||null;
+}
+function mealForUrge(u){return u.mealSessionId?D.mealSessions.find(s=>s.id===u.mealSessionId&&!s.deletedAt)||null:null;}
+function urgeWakeMinutes(u){const w=wakeForStamp(u.at);return w?Math.round((u.at-w.at)/60000):null;}
+function urgeMealMinutes(u){const s=u.phase==='cascade'?mealForUrge(u):null;return s&&s.endedAt?Math.round((u.at-s.endedAt)/60000):null;}
+function urgeContextLabel(u){
+  const parts=[];if(u.place==='home')parts.push('家');else if(u.place==='out')parts.push('外');if(u.watching===true)parts.push('見ながら');else if(u.watching===false)parts.push('ながらなし');return parts.join('・');
+}
+function urgeTimelineDetail(u){
+  const parts=[`結果:${urgeResultLabel(u)}`],context=urgeContextLabel(u),mealMin=urgeMealMinutes(u),wakeMin=urgeWakeMinutes(u);
+  if(context)parts.push(`文脈:${context}`);if(mealMin!==null)parts.push(`食事から${mealMin}分`);if(wakeMin!==null)parts.push(`起床から${wakeMin}分`);
+  if(u.tags&&u.tags.length)parts.push(`タグ:${u.tags.map(mealTagLabel).join(',')}`);return parts.join('／');
+}
 function mealTimelineItems(cutoff,now){
   const items=[],detail=!!(D.mealPrefs&&D.mealPrefs.showTimelineDetail);
+  const push=(kind,icon,label,text,stamp)=>{stamp=Number(stamp)||0;if(stamp>=cutoff&&stamp<=now)items.push({kind,icon,label,text,stamp});};
+  for(const w of D.wakeLogs)if(!w.deletedAt)push('wake','☀️','起床','起床',w.at);
+  if(detail)for(const u of D.urgeLogs)if(!u.deletedAt)push('urge','⚡',`衝動${u.strength===null?'':u.strength}`,urgeResultLabel(u),u.at);
   for(const s of D.mealSessions){
     if(s.deletedAt)continue;
-    const push=(icon,label,text,stamp)=>{stamp=Number(stamp)||0;if(stamp>=cutoff&&stamp<=now)items.push({kind:'meal',icon,label,text,stamp});};
-    push('🍽','食事',s.label||'食事',s.startedAt);
+    push('meal','🍽','食事',s.label||'食事',s.startedAt);
     if(!detail)continue;
-    if(s.afterMeal&&s.afterMeal.urge!==null)push('🍽','食後の記録',`もっと食べたい ${s.afterMeal.urge}`,s.afterMeal.at);
+    if(s.afterMeal&&s.afterMeal.urge!==null)push('meal','🍽','食後の記録',`もっと食べたい ${s.afterMeal.urge}`,s.afterMeal.at);
     if(s.afterWait&&s.afterWait.urge!==null){
       const w=s.waits&&s.waits[s.waits.length-1],min=w?Math.max(1,Math.round((w.plannedSec||0)/60)):0,change=mealChangeLabel(s.afterWait.change);
-      push('⏳',`${min}分待ったあと`,`もっと食べたい ${s.afterWait.urge}${change?`（${change}）`:''}`,s.afterWait.at);
+      push('meal','⏳',`${min}分待ったあと`,`もっと食べたい ${s.afterWait.urge}${change?`（${change}）`:''}`,s.afterWait.at);
     }
-    if(s.extra&&s.extra.ate===true)push('🍚','追加で食べた',mealItemsLabel(s.extra.items)||'（内容は未記録）',s.extra.at);
+    if(s.extra&&s.extra.ate===true)push('meal','🍚','追加で食べた',mealItemsLabel(s.extra.items)||'（内容は未記録）',s.extra.at);
   }
   return items;
 }
@@ -3090,10 +3167,14 @@ function mealTimelineRows(){
     if(s.afterWait&&s.afterWait.urge!==null)rows.push({stamp:s.afterWait.at,dateTime:timelineDateTime(s.afterWait.at),type:'待機後の状態',content:`もっと食べたい ${s.afterWait.urge}`,routine:'',step:'',detail:`変化:${mealChangeLabel(s.afterWait.change)||'未入力'}／タグ:${tagText(s.afterWait.tags)}`});
     if(s.extra&&s.extra.ate===true)rows.push({stamp:s.extra.at,dateTime:timelineDateTime(s.extra.at),type:'追加で食べた',content:mealItemsLabel(s.extra.items)||'（内容は未記録）',routine:'',step:'',detail:`タイミング:${s.extra.when==='before_wait'?'待機前':'待機後'}`});
   }
+  if(prefs.csvIncludeUrges){
+    for(const w of D.wakeLogs)if(!w.deletedAt)rows.push({stamp:w.at,dateTime:timelineDateTime(w.at),type:'起床',content:'起床',routine:'',step:'',detail:''});
+    for(const u of D.urgeLogs)if(!u.deletedAt)rows.push({stamp:u.at,dateTime:timelineDateTime(u.at),type:'衝動',content:`食べたい${u.strength===null?'':` ${u.strength}`}`,routine:'',step:'',detail:urgeTimelineDetail(u)});
+  }
   return rows;
 }
 function buildMealCsv(){
-  const head=['開始日時','終了日時','食事時間分','内容','手間','食前空腹','食前眠気','食前ストレス','食後の欲求','食後タグ','待機回数','待機予定分','待機実績分','待機中の行動','待機後の欲求','欲求の変化','待機後タグ','追加で食べた','追加の内容','メモ'];
+  const head=['開始日時','終了日時','食事時間分','内容','手間','食前空腹','食前眠気','食前ストレス','食後の欲求','食後タグ','待機回数','待機予定分','待機実績分','待機中の行動','待機後の欲求','欲求の変化','待機後タグ','追加で食べた','追加の内容','メモ','開始タイミング','場所','ながら'];
   const lines=[head.join(',')],score=v=>v===null||v===undefined?'':v;
   const list=D.mealSessions.filter(s=>!s.deletedAt).sort((a,b)=>(a.startedAt||0)-(b.startedAt||0));
   for(const s of list){
@@ -3104,12 +3185,25 @@ function buildMealCsv(){
     const row=[timelineDateTime(s.startedAt),s.endedAt?timelineDateTime(s.endedAt):'',s.endedAt?Number(((s.endedAt-s.startedAt)/60000).toFixed(1)):'',content,mealEffortLabel(s.effortLevel),
       score(s.before&&s.before.hunger),score(s.before&&s.before.sleepiness),score(s.before&&s.before.stress),score(s.afterMeal&&s.afterMeal.urge),(s.afterMeal&&s.afterMeal.tags||[]).map(mealTagLabel).join('／'),
       waits.length,waits.length?Number(planned.toFixed(1)):'',waits.length?Number(actual.toFixed(1)):'',actions,score(s.afterWait&&s.afterWait.urge),mealChangeLabel(s.afterWait&&s.afterWait.change),(s.afterWait&&s.afterWait.tags||[]).map(mealTagLabel).join('／'),
-      s.extra&&s.extra.ate===true?'あり':s.extra&&s.extra.ate===false?'なし':'',s.extra&&s.extra.ate===true?mealItemsLabel(s.extra.items):'',s.note||''];
+      s.extra&&s.extra.ate===true?'あり':s.extra&&s.extra.ate===false?'なし':'',s.extra&&s.extra.ate===true?mealItemsLabel(s.extra.items):'',s.note||'',
+      s.startTiming==='before'?'食前':s.startTiming==='during'?'食事中':'',s.place==='home'?'家':s.place==='out'?'外':'',s.watching===true?'あり':s.watching===false?'なし':''];
     lines.push(row.map(timelineCsvEsc).join(','));
   }
   return lines.join('\n');
 }
 function exportMealCsv(){download('meal_sessions.csv',buildMealCsv());toast('🍽 食事CSVを書き出しました');}
+function buildUrgeCsv(){
+  const head=['日時','強さ','種別','結果','何が効いたか','食べたもの','タグ','関連食事','場所','ながら','起床からの分','食事からの分','メモ'],lines=[head.join(',')];
+  const list=D.urgeLogs.filter(u=>!u.deletedAt).sort((a,b)=>(a.at||0)-(b.at||0));
+  for(const u of list){
+    const s=mealForUrge(u),wakeMin=urgeWakeMinutes(u),mealMin=urgeMealMinutes(u);
+    const outcome=u.outcome==='ate'?'食べた':u.outcome==='settled'?'収まった':u.outcome==='open'?'様子見':'記録のみ';
+    const row=[timelineDateTime(u.at),u.strength===null?'':u.strength,u.phase==='cascade'?'食後の波':'単独',outcome,(u.settledBy||[]).map(urgeSettlerLabel).join('／'),mealItemsLabel(u.items),(u.tags||[]).map(mealTagLabel).join('／'),s?s.label:'',u.place==='home'?'家':u.place==='out'?'外':'',u.watching===true?'あり':u.watching===false?'なし':'',wakeMin===null?'':wakeMin,mealMin===null?'':mealMin,u.note||''];
+    lines.push(row.map(timelineCsvEsc).join(','));
+  }
+  return lines.join('\n');
+}
+function exportUrgeCsv(){download('urge_logs.csv',buildUrgeCsv());toast('⚡ 衝動CSVを書き出しました');}
 const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs'];
 function mergeMealCollections(local,remote){
   for(const k of MERGE_COLLECTIONS){
@@ -3332,6 +3426,8 @@ function renderSet(){
   document.getElementById('setMealCsvItems').checked=!!D.mealPrefs.csvIncludeItems;
   document.getElementById('setMealCsvNotes').checked=!!D.mealPrefs.csvIncludeNotes;
   document.getElementById('setMealTimeline').checked=!!D.mealPrefs.showTimelineDetail;
+  document.getElementById('setMealUrges').checked=!!D.mealPrefs.csvIncludeUrges;
+  document.getElementById('setMealStartTiming').checked=!!D.mealPrefs.askStartTiming;
 }
 function saveSettings(){
   D.settings.calLog=document.getElementById('setCalLog').value;
@@ -3352,6 +3448,8 @@ function saveSettings(){
   D.mealPrefs.csvIncludeItems=document.getElementById('setMealCsvItems').checked;
   D.mealPrefs.csvIncludeNotes=document.getElementById('setMealCsvNotes').checked;
   D.mealPrefs.showTimelineDetail=document.getElementById('setMealTimeline').checked;
+  D.mealPrefs.csvIncludeUrges=document.getElementById('setMealUrges').checked;
+  D.mealPrefs.askStartTiming=document.getElementById('setMealStartTiming').checked;
   D.mealPrefs.updatedAt=Date.now();
   save();
 }
