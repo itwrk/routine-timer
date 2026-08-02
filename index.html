@@ -2515,7 +2515,8 @@ function touchUrge(u){if(!u)return;u.updatedAt=Date.now();save();}
 function renderUrgeUi(){renderMealCard();renderMealActive();}
 function startUrgeFlow(phase='standalone',mealSessionId=null){
   mealState.urgeOpen=true;
-  mealState.urgeDraft={strength:null,phase:phase==='cascade'?'cascade':'standalone',mealSessionId:mealSessionId||null,mode:'strength',targetId:null,itemInputOpen:false};
+  mealState.urgeDraft={strength:null,phase:phase==='cascade'?'cascade':'standalone',mealSessionId:mealSessionId||null,mode:'strength',targetId:null,itemInputOpen:false,
+    place:D.mealPrefs.lastPlace??null,watching:D.mealPrefs.lastWatching??null};
   renderUrgeUi();
 }
 function closeUrgeFlow(){mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();}
@@ -2523,11 +2524,18 @@ function setUrgeStrength(v){
   if(!mealState.urgeDraft)return;
   mealState.urgeDraft.strength=mealScore(Number(v));mealState.urgeDraft.mode='outcome';renderUrgeUi();
 }
+function setUrgeContext(field,value){
+  const d=mealState.urgeDraft;if(!d)return;const now=Date.now();
+  if(field==='place'&&['home','out'].includes(value)){d.place=value;D.mealPrefs.lastPlace=value;}
+  else if(field==='watching'&&typeof value==='boolean'){d.watching=value;D.mealPrefs.lastWatching=value;}
+  else return;
+  D.mealPrefs.updatedAt=now;save();renderUrgeUi();
+}
 function commitUrge(outcome,extraFields={}){
   const draft=mealState.urgeDraft||{},now=Date.now();
   const u=normalizeUrgeLog(Object.assign({id:uid(),at:now,updatedAt:now,deletedAt:null,
     strength:mealScore(draft.strength),phase:draft.phase||'standalone',mealSessionId:draft.mealSessionId||null,
-    outcome,place:D.mealPrefs.lastPlace??null,watching:D.mealPrefs.lastWatching??null},extraFields));
+    outcome,place:draft.place??D.mealPrefs.lastPlace??null,watching:draft.watching??D.mealPrefs.lastWatching??null},extraFields));
   D.urgeLogs.unshift(u);
   mealState.urgeOpen=false;mealState.urgeDraft=null;
   save();renderUrgeUi();
@@ -2545,7 +2553,7 @@ function beginUrgeItems(targetId=null){
   const base=u||mealState.urgeDraft||{};
   mealState.urgeOpen=true;
   mealState.urgeDraft={strength:base.strength,phase:base.phase||'standalone',mealSessionId:base.mealSessionId||null,
-    mode:'items',targetId:u?u.id:null,itemInputOpen:false};
+    mode:'items',targetId:u?u.id:null,itemInputOpen:false,place:base.place??D.mealPrefs.lastPlace??null,watching:base.watching??D.mealPrefs.lastWatching??null};
   renderUrgeUi();
 }
 function resolveOpenUrge(kind){
@@ -2553,7 +2561,7 @@ function resolveOpenUrge(kind){
   if(kind==='still'){mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();return;}
   mealState.urgeOpen=true;
   mealState.urgeDraft={strength:u.strength,phase:u.phase,mealSessionId:u.mealSessionId,
-    mode:kind==='settled'?'settlers':'items',targetId:u.id,itemInputOpen:false};
+    mode:kind==='settled'?'settlers':'items',targetId:u.id,itemInputOpen:false,place:u.place,watching:u.watching};
   renderUrgeUi();
 }
 function addUrgeSettler(id){
@@ -2667,12 +2675,16 @@ function executeMealStart(kind,value){
   if(kind==='same')s=startMealSessionSameAsLast();
   else if(kind==='free')s=startFreeMealSession(value);
   else s=startMealSession(value);
-  if(s&&mealState.pendingUrgeId){
-    const u=D.urgeLogs.find(x=>x.id===mealState.pendingUrgeId&&!x.deletedAt);
-    if(u){u.mealSessionId=s.id;touchUrge(u);}
-    mealState.pendingUrgeId=null;
+  if(s){
+    if(s.place===null)s.place=D.mealPrefs.lastPlace??null;
+    if(s.watching===null)s.watching=D.mealPrefs.lastWatching??null;
+    if(mealState.pendingUrgeId){
+      const u=D.urgeLogs.find(x=>x.id===mealState.pendingUrgeId&&!x.deletedAt);
+      if(u){u.mealSessionId=s.id;touchUrge(u);}
+      mealState.pendingUrgeId=null;
+    }
+    mealState.learnedItems=new Set();mealState.foodItemInputOpen=false;touchMeal(s);
   }
-  if(s){mealState.learnedItems=new Set();mealState.foodItemInputOpen=false;}
   return s;
 }
 function startFreeMealFromInput(){
@@ -2692,6 +2704,13 @@ function setMealBefore(field,v){
   if(!s.before)s.before={hunger:null,sleepiness:null,stress:null,at:Date.now()};
   if(['hunger','sleepiness','stress'].includes(field))s.before[field]=mealScore(Number(v));
   touchMeal(s);renderMealCard();renderMealActive();
+}
+function setMealContext(field,value){
+  const s=activeMealSession();if(!s)return;const now=Date.now();
+  if(field==='place'&&['home','out'].includes(value)){s.place=value;D.mealPrefs.lastPlace=value;}
+  else if(field==='watching'&&typeof value==='boolean'){s.watching=value;D.mealPrefs.lastWatching=value;}
+  else return;
+  D.mealPrefs.updatedAt=now;touchMeal(s);renderMealCard();renderMealActive();
 }
 function endMealEating(){
   const s=activeMealSession();if(!s)return;
@@ -2908,6 +2927,9 @@ function mealExtraHtml(s){
   return `<p style="font-weight:800;margin-top:8px">何を足した？（任意）</p><div class="meal-tags">${choices.map(x=>`<button type="button" class="${selected.includes(x)?'on':''}" onclick="addExtraItem('${x}')">${x}</button>`).join('')}</div><p class="muted" style="margin-top:8px">記録しました。次回の最初の量を見直す材料になります。</p><button class="btn btn-p btn-full btn-sm" type="button" onclick="closeMealSession()" style="margin-top:8px">記録して終える</button>`;
 }
 function mealJsArg(v){return JSON.stringify(String(v)).replace(/</g,'\\u003c').replace(/'/g,'\\u0027');}
+function mealContextHtml(place,watching,handlerName){
+  return `<div class="meal-tags"><button type="button" class="${place==='home'?'on':''}" onclick="${handlerName}('place','home')">🏠 家</button><button type="button" class="${place==='out'?'on':''}" onclick="${handlerName}('place','out')">🚪 外</button><button type="button" class="${watching===true?'on':''}" onclick="${handlerName}('watching',true)">📺 見ながら</button><button type="button" class="${watching===false?'on':''}" onclick="${handlerName}('watching',false)">なし</button></div>`;
+}
 function foodItemChipsHtml(handlerName){
   const items=D.foodItems.filter(f=>!f.deletedAt&&f.name).sort((a,b)=>(b.useCount||0)-(a.useCount||0)||(b.lastUsedAt||0)-(a.lastUsedAt||0)).slice(0,6);
   return `<div class="meal-fold"><p class="muted">＋食べているもの</p><div class="meal-tags">${items.map(f=>`<button type="button" onclick='${handlerName}(${mealJsArg(f.name)})'>${esc(f.emoji)} ${esc(f.name)}</button>`).join('')}<button type="button" onclick="showSessionItemInput()">＋</button></div>${mealState.foodItemInputOpen?'<div class="meal-inline"><input type="text" maxlength="40" placeholder="食べているもの" onkeydown="submitSessionItem(event)"><button class="btn btn-c btn-sm" type="button" onclick="addSessionItemFromButton(this)">追加</button></div>':''}</div>`;
@@ -2922,37 +2944,42 @@ function urgeFlowHtml(){
   const d=mealState.urgeDraft||{};
   if(d.mode==='items')return urgeItemChoicesHtml();
   if(d.mode==='settlers')return `<p style="font-weight:800">何が効いた？（任意）</p><div class="meal-tags">${URGE_SETTLERS.map(x=>`<button type="button" onclick="addUrgeSettler('${x.id}')">${esc(x.label)}</button>`).join('')}</div><button class="text-link" type="button" onclick="addUrgeSettler(null)" style="margin-top:8px">選ばず記録</button>`;
-  if(d.mode==='outcome')return `<p style="font-weight:800">このあとはどうする？</p><div class="meal-choice"><button class="btn btn-g" type="button" onclick="urgeToMeal()">🍽 食事にする</button><button class="btn btn-g" type="button" onclick="beginUrgeItems()">🥨 つまんだ</button><button class="btn btn-g" type="button" onclick="commitUrge('open')">👀 様子を見る</button></div><button class="text-link" type="button" onclick="closeUrgeFlow()" style="margin-top:8px">やめる</button>`;
+  if(d.mode==='outcome')return `<p style="font-weight:800">このあとはどうする？</p>${mealContextHtml(d.place,d.watching,'setUrgeContext')}<div class="meal-choice"><button class="btn btn-g" type="button" onclick="urgeToMeal()">🍽 食事にする</button><button class="btn btn-g" type="button" onclick="beginUrgeItems()">🥨 つまんだ</button><button class="btn btn-g" type="button" onclick="commitUrge('open')">👀 様子を見る</button></div><button class="text-link" type="button" onclick="closeUrgeFlow()" style="margin-top:8px">やめる</button>`;
   return `<p style="font-weight:800">いま、食べたい気持ちは？</p>${mealScaleHtml(d.strength,'setUrgeStrength')}<button class="text-link" type="button" onclick="closeUrgeFlow()" style="margin-top:8px">やめる</button>`;
 }
 function openUrgeHtml(u){
   return `<div class="urge-row"><p style="font-weight:800">さっきの衝動${u.strength===null?'':`(${u.strength})`}はどうなった？</p><div class="meal-choice"><button class="btn btn-g" type="button" onclick="resolveOpenUrge('settled')">😌 収まった</button><button class="btn btn-g" type="button" onclick="resolveOpenUrge('ate')">🥨 食べた</button><button class="btn btn-g" type="button" onclick="resolveOpenUrge('still')">まだ続いてる</button></div></div>`;
 }
+function wakePromptHtml(){
+  const hour=new Date().getHours();
+  return hour>=4&&hour<14&&!todayWake()?'<div class="meal-card-row" style="margin-bottom:8px"><button class="btn btn-g btn-full btn-sm" type="button" onclick="recordWake()">☀️ 起きた時間を記録</button></div>':'';
+}
 function mealEatingHtml(s){
   const min=Math.max(0,Math.floor((Date.now()-(s.startedAt||Date.now()))/60000));
-  return `<div class="meal-card-row"><div class="meal-grow"><strong>🍽 食事中 ・ ${min}分経過</strong><div class="muted">${esc(s.label)}</div></div></div><button class="btn btn-p btn-full btn-sm" type="button" onclick="endMealEating()" style="margin-top:7px">🍽 食べ終わった</button>${foodItemChipsHtml('addSessionItem')}${mealBeforeHtml(s)}${s.templateId===null?`<button class="btn btn-g btn-sm" type="button" onclick="saveSessionAsTemplate('${s.id}')" style="margin-top:7px">＋テンプレに保存</button>`:''}`;
+  return `<div class="meal-card-row"><div class="meal-grow"><strong>🍽 食事中 ・ ${min}分経過</strong><div class="muted">${esc(s.label)}</div></div></div>${mealContextHtml(s.place,s.watching,'setMealContext')}<button class="btn btn-p btn-full btn-sm" type="button" onclick="endMealEating()" style="margin-top:7px">🍽 食べ終わった</button>${foodItemChipsHtml('addSessionItem')}${mealBeforeHtml(s)}${s.templateId===null?`<button class="btn btn-g btn-sm" type="button" onclick="saveSessionAsTemplate('${s.id}')" style="margin-top:7px">＋テンプレに保存</button>`:''}`;
 }
 function renderMealCard(){
   const el=document.getElementById('mealCard');if(!el)return;
+  const prefix=wakePromptHtml(),show=html=>{el.innerHTML=prefix+html;};
   expireOldOpenUrges();
-  if(mealState.urgeOpen){el.innerHTML=urgeFlowHtml();return;}
+  if(mealState.urgeOpen){show(urgeFlowHtml());return;}
   const s=syncMealViewFromData();
-  if(mealState.view==='conflict'){el.innerHTML=mealConflictHtml();return;}
-  if(mealState.view==='timing'){el.innerHTML=mealTimingHtml();return;}
+  if(mealState.view==='conflict'){show(mealConflictHtml());return;}
+  if(mealState.view==='timing'){show(mealTimingHtml());return;}
   if(!s){
     const last=latestClosedMeal(),open=openUrge(),cascade=recentCascadeSession();
-    el.innerHTML=`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':'<button class="btn btn-c" type="button" onclick="showScreen(\'scr-meal\')">はじめる</button>'}<button class="btn btn-g" type="button" onclick="showScreen('scr-meal')">選ぶ</button><button class="btn btn-g" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)" style="width:36px;height:36px;padding:0">⚡</button></div>${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`;return;
+    show(`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':'<button class="btn btn-c" type="button" onclick="showScreen(\'scr-meal\')">はじめる</button>'}<button class="btn btn-g" type="button" onclick="showScreen('scr-meal')">選ぶ</button><button class="btn btn-g" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)" style="width:36px;height:36px;padding:0">⚡</button></div>${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`);return;
   }
-  if(mealState.view==='eating')el.innerHTML=mealEatingHtml(s);
-  else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s)+cascadeButtonHtml(s);
+  if(mealState.view==='eating')show(mealEatingHtml(s));
+  else if(mealState.view==='afterMeal')show(mealAfterMealHtml(s)+cascadeButtonHtml(s));
   else if(mealState.view==='waiting'){
     const ms=mealWaitRemainMs(),done=ms<=0;
-    el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>${done?'⏳ 待機時間は終わっています':`⏳ あと ${mealWaitTime(ms)}`}</strong><div class="muted">${esc(s.label)}</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">食事サポートを開く</button></div>`;
+    show(`<div class="meal-card-row"><div class="meal-grow"><strong>${done?'⏳ 待機時間は終わっています':`⏳ あと ${mealWaitTime(ms)}`}</strong><div class="muted">${esc(s.label)}</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">食事サポートを開く</button></div>`);
   }
-  else if(mealState.view==='afterWait')el.innerHTML=mealAfterWaitHtml(s)+cascadeButtonHtml(s);
-  else if(mealState.view==='extra')el.innerHTML=mealExtraHtml(s);
-  else if(mealState.view==='stale')el.innerHTML=mealStaleHtml(s);
-  else el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>🍽 ${esc(s.label)}</strong><div class="muted">記録を続けられます</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">開く</button></div>`;
+  else if(mealState.view==='afterWait')show(mealAfterWaitHtml(s)+cascadeButtonHtml(s));
+  else if(mealState.view==='extra')show(mealExtraHtml(s));
+  else if(mealState.view==='stale')show(mealStaleHtml(s));
+  else show(`<div class="meal-card-row"><div class="meal-grow"><strong>🍽 ${esc(s.label)}</strong><div class="muted">記録を続けられます</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">開く</button></div>`);
 }
 function renderMeal(){
   syncMealViewFromData();
