@@ -852,6 +852,35 @@ const DEFAULT_MOODS=[
 const defaultMoods=()=>DEFAULT_MOODS.map(m=>Object.assign({},m));
 function normalizeMood(m){return Object.assign({id:uid(),emoji:'🙂',label:'気分'},m||{});}
 
+/* 食事・衝動の定数（normalizeData から参照されるため、必ず D の初期化より前に置く）
+   ここを下へ動かすと load 時に TDZ の ReferenceError となり、全データが seed に戻る */
+const MEAL_TAGS=[
+  {id:'hungry_body',label:'まだ身体的に空腹'},{id:'fullness_lag',label:'満腹感が追いついていない'},
+  {id:'want_taste',label:'味をもっと楽しみたい'},{id:'mouth_lonely',label:'口寂しい'},
+  {id:'dont_want_end',label:'食事を終わらせたくない'},{id:'stress',label:'ストレス'},
+  {id:'anxiety',label:'不安'},{id:'irritated',label:'イライラ'},{id:'fatigue',label:'疲労'},
+  {id:'sleepy',label:'眠気'},{id:'bored',label:'退屈'},{id:'habit',label:'習慣'},{id:'unknown',label:'分からない'}
+];
+const MEAL_EFFORTS=[
+  {id:'none',label:'何もしたくない'},{id:'microwave',label:'レンジだけ'},
+  {id:'pan',label:'フライパン'},{id:'cook',label:'少し料理'}
+];
+const MEAL_CHANGES=[
+  {id:'eased',label:'落ち着いた',emoji:'😌'},{id:'slightly',label:'少し落ち着いた',emoji:'🙂'},
+  {id:'same',label:'変わらない',emoji:'😐'},{id:'stronger',label:'強くなった',emoji:'😖'}
+];
+const MEAL_WAIT_ACTIONS=[
+  {id:'water',label:'水を飲んだ'},{id:'dishes',label:'片づけた'},
+  {id:'tea',label:'お茶を飲んだ'},{id:'walk',label:'歩いた'},{id:'other',label:'その他'}
+];
+const URGE_SETTLERS=[
+  {id:'water',label:'💧 水'},{id:'tea',label:'🍵 お茶'},{id:'coffee',label:'☕ コーヒー'},
+  {id:'wait',label:'⏳ 時間'},{id:'move',label:'🚶 動いた'},{id:'other',label:'その他'}
+];
+const MEAL_CASCADE_WINDOW_MS=90*60*1000;
+const URGE_OPEN_EXPIRE_MS=6*60*60*1000;
+
+const mealScore=v=>Number.isInteger(v)&&v>=0&&v<=10?v:null;
 const CURRENT_SCHEMA=3;
 
 function normalizeData(raw){
@@ -2346,31 +2375,6 @@ function renderProg(){
 }
 
 /* ============ 🍽 MEAL SUPPORT ============ */
-const MEAL_TAGS=[
-  {id:'hungry_body',label:'まだ身体的に空腹'},{id:'fullness_lag',label:'満腹感が追いついていない'},
-  {id:'want_taste',label:'味をもっと楽しみたい'},{id:'mouth_lonely',label:'口寂しい'},
-  {id:'dont_want_end',label:'食事を終わらせたくない'},{id:'stress',label:'ストレス'},
-  {id:'anxiety',label:'不安'},{id:'irritated',label:'イライラ'},{id:'fatigue',label:'疲労'},
-  {id:'sleepy',label:'眠気'},{id:'bored',label:'退屈'},{id:'habit',label:'習慣'},{id:'unknown',label:'分からない'}
-];
-const MEAL_EFFORTS=[
-  {id:'none',label:'何もしたくない'},{id:'microwave',label:'レンジだけ'},
-  {id:'pan',label:'フライパン'},{id:'cook',label:'少し料理'}
-];
-const MEAL_CHANGES=[
-  {id:'eased',label:'落ち着いた',emoji:'😌'},{id:'slightly',label:'少し落ち着いた',emoji:'🙂'},
-  {id:'same',label:'変わらない',emoji:'😐'},{id:'stronger',label:'強くなった',emoji:'😖'}
-];
-const MEAL_WAIT_ACTIONS=[
-  {id:'water',label:'水を飲んだ'},{id:'dishes',label:'片づけた'},
-  {id:'tea',label:'お茶を飲んだ'},{id:'walk',label:'歩いた'},{id:'other',label:'その他'}
-];
-const URGE_SETTLERS=[
-  {id:'water',label:'💧 水'},{id:'tea',label:'🍵 お茶'},{id:'coffee',label:'☕ コーヒー'},
-  {id:'wait',label:'⏳ 時間'},{id:'move',label:'🚶 動いた'},{id:'other',label:'その他'}
-];
-const MEAL_CASCADE_WINDOW_MS=90*60*1000;
-const URGE_OPEN_EXPIRE_MS=6*60*60*1000;
 function builtinMealTemplates(){
   return [
     {id:'tpl-bought',name:'買ってきた食事',emoji:'🛒',items:[],effortLevel:'none',builtin:true,useCount:0,lastUsedAt:0,createdAt:0,updatedAt:0,deletedAt:null},
@@ -2384,7 +2388,6 @@ function defaultMealPrefs(){
     includeInChatGptCsv:true,csvIncludeItems:true,csvIncludeNotes:true,showTimelineDetail:true,
     lastPlace:'home',lastWatching:null,csvIncludeUrges:true,askStartTiming:true,updatedAt:0};
 }
-const mealScore=v=>Number.isInteger(v)&&v>=0&&v<=10?v:null;
 function mealNumber(v,fallback=0){const n=Number(v);return Number.isFinite(n)?n:fallback;}
 function mealTagIds(){return ['hungry_body','fullness_lag','want_taste','mouth_lonely','dont_want_end','stress','anxiety','irritated','fatigue','sleepy','bored','habit','unknown'];}
 function normalizeMealTags(tags){
@@ -3117,8 +3120,8 @@ function wakeForStamp(stamp){
   const key=localDateKey(new Date(stamp));return D.wakeLogs.filter(w=>!w.deletedAt&&w.date===key).sort((a,b)=>(b.updatedAt||b.at||0)-(a.updatedAt||a.at||0))[0]||null;
 }
 function mealForUrge(u){return u.mealSessionId?D.mealSessions.find(s=>s.id===u.mealSessionId&&!s.deletedAt)||null:null;}
-function urgeWakeMinutes(u){const w=wakeForStamp(u.at);return w?Math.round((u.at-w.at)/60000):null;}
-function urgeMealMinutes(u){const s=u.phase==='cascade'?mealForUrge(u):null;return s&&s.endedAt?Math.round((u.at-s.endedAt)/60000):null;}
+function urgeWakeMinutes(u){const w=wakeForStamp(u.at);if(!w)return null;const m=Math.round((u.at-w.at)/60000);return m<0?null:m;}
+function urgeMealMinutes(u){const s=u.phase==='cascade'?mealForUrge(u):null;if(!s||!s.endedAt)return null;const m=Math.round((u.at-s.endedAt)/60000);return m<0?null:m;}
 function urgeContextLabel(u){
   const parts=[];if(u.place==='home')parts.push('家');else if(u.place==='out')parts.push('外');if(u.watching===true)parts.push('見ながら');else if(u.watching===false)parts.push('ながらなし');return parts.join('・');
 }
