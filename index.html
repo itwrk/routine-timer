@@ -181,6 +181,7 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .activity-item.check .activity-text{font-weight:700}
 .activity-item.mood .activity-icon{border-color:var(--pink);box-shadow:0 0 8px rgba(255,77,141,.18)}
 .activity-item.mood .activity-text{font-weight:800;color:var(--pink)}
+.activity-item.meal .activity-icon{border-color:var(--gold);box-shadow:0 0 8px rgba(255,201,60,.18)}
 
 /* saved step library manager */
 .step-lib-row{display:flex;align-items:flex-start;gap:8px;padding:8px 2px;border-bottom:1px dashed #3a3480}
@@ -636,9 +637,21 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <button class="btn btn-g btn-sm" onclick="exportLogs()">ログCSV書き出し</button>
         <button class="btn btn-g btn-sm" onclick="exportHabitLogs()">チェックリストCSV書き出し</button>
         <button class="btn btn-p btn-sm" onclick="exportChatGPTTimeline()">🤖 ChatGPT用CSV</button>
+        <button class="btn btn-p btn-sm" onclick="exportMealCsv()">🍽 食事CSV</button>
       </div>
       <p class="muted" style="margin-top:8px">ChatGPT用CSVには、ルーチン完了・チェック完了・気分・自由記述メモだけを時系列で収録します。設定、APIキー、同期合言葉、内部IDは含めません。</p>
       <input type="file" id="csvFile" accept=".csv,text/csv" style="display:none" onchange="importTexts(this)">
+    </div>
+    <div class="card" id="mealPrefsCard">
+      <h2>🍽 食事サポート</h2>
+      <div class="field"><label>待機の既定時間</label><select id="setMealWait" onchange="saveSettings()"><option value="300">5分</option><option value="600">10分</option></select></div>
+      <div class="field"><label><input type="checkbox" id="setMealSpeak" onchange="saveSettings()" style="width:auto;margin-right:6px">待機の終わりを読み上げる</label></div>
+      <div class="field"><label><input type="checkbox" id="setMealCsv" onchange="saveSettings()" style="width:auto;margin-right:6px">食事の記録をChatGPT用CSVに含める</label></div>
+      <div class="field"><label><input type="checkbox" id="setMealCsvItems" onchange="saveSettings()" style="width:auto;margin-right:6px">品目名も含める</label></div>
+      <div class="field"><label><input type="checkbox" id="setMealCsvNotes" onchange="saveSettings()" style="width:auto;margin-right:6px">自由記述メモも含める</label></div>
+      <div class="field"><label><input type="checkbox" id="setMealTimeline" onchange="saveSettings()" style="width:auto;margin-right:6px">24時間タイムラインに食後・待機後も表示する</label></div>
+      <p class="muted">☁️ 同期をONにすると、食事の記録（内容・数値・タグ・メモ）もGoogle Driveに保存されます。</p>
+      <button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'⚠️ ほんとに削除？',deleteAllMealSessions)">食事の記録だけ削除</button>
     </div>
     <div class="card">
       <h2>🔊 音声設定</h2>
@@ -668,6 +681,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <button class="btn btn-c btn-sm" onclick="syncPull()">⬇️ 今すぐ取得</button>
       </div>
       <p class="muted" style="margin-top:8px">アップロード時に、ChatGPT用の <b>routine_timeline.csv</b> もGoogle Drive更新用データとして送信します。</p>
+      <p class="muted" style="margin-top:8px">食事の記録（内容・数値・タグ・メモ）も同期対象に含まれます。</p>
       <p class="muted" style="margin-top:8px">付属の <b>rvt-sync.gs</b> を自分のGoogleアカウントのApps Scriptにデプロイして、URLと合言葉を両端末に入れるだけ。データはあなたのGoogle Drive内に保存されます。AIのAPIキーは同期されません（端末ごとに保持）。</p>
     </div>
     <div class="card">
@@ -1290,6 +1304,7 @@ function renderActivityTimeline(){
     const stamp=activityLogStamp(log);
     if(stamp>=cutoff&&stamp<=now)items.push({kind:'check',icon:'✅',label:'チェックリスト・今日だけ',text:log.taskName||'削除済みの項目',stamp});
   }
+  items.push(...mealTimelineItems(cutoff,now));
   items.sort((a,b)=>b.stamp-a.stamp);
   el.innerHTML='';
   if(!items.length){el.innerHTML='<p class="muted">過去24時間のメモ、気分、チェック完了はまだありません。</p>';return;}
@@ -2578,6 +2593,14 @@ function deleteMealSession(id){
   if(mealState.activeId===id){stopMealWaitTimer();mealState.activeId=null;mealState.view='idle';}
   save();renderMealCard();renderMealHistory();renderMealActive();toast('🗑 食事の記録を削除しました');
 }
+function deleteAllMealSessions(){
+  stopMealWaitTimer();const now=Date.now();
+  for(const s of D.mealSessions){
+    s.deletedAt=now;s.updatedAt=now;s.status='closed';s.items=[];s.note='';
+    if(s.afterMeal)s.afterMeal.tags=[];if(s.afterWait)s.afterWait.tags=[];if(s.extra)s.extra.items=[];
+  }
+  mealState.activeId=null;mealState.view='idle';save();renderMealWaitBar(0);renderMealCard();renderMeal();toast('🗑 食事の記録を削除しました');
+}
 function saveSessionAsTemplate(sessionId){
   const s=D.mealSessions.find(x=>x.id===sessionId&&!x.deletedAt);if(!s)return;
   if(D.mealTemplates.some(t=>!t.deletedAt&&t.name===s.label)){toast(`🍽 「${s.label}」は登録済みです`);return;}
@@ -2783,6 +2806,69 @@ function renderMealTemplateManager(){
     }
   }
 }
+function mealTagLabel(id){const t=MEAL_TAGS.find(x=>x.id===id);return t?t.label:id;}
+function mealEffortLabel(id){const e=MEAL_EFFORTS.find(x=>x.id===id);return e?e.label:'';}
+function mealChangeLabel(id){const c=MEAL_CHANGES.find(x=>x.id===id);return c?c.label:'';}
+function mealActionLabel(id){const a=MEAL_WAIT_ACTIONS.find(x=>x.id===id);return a?a.label:id;}
+function mealItemsLabel(items){return (Array.isArray(items)?items:[]).map(i=>`${i.name||''}${i.amount?` ${i.amount}`:''}`.trim()).filter(Boolean).join('／');}
+function mealTimelineItems(cutoff,now){
+  const items=[],detail=!!(D.mealPrefs&&D.mealPrefs.showTimelineDetail);
+  for(const s of D.mealSessions){
+    if(s.deletedAt)continue;
+    const push=(icon,label,text,stamp)=>{stamp=Number(stamp)||0;if(stamp>=cutoff&&stamp<=now)items.push({kind:'meal',icon,label,text,stamp});};
+    push('🍽','食事',s.label||'食事',s.startedAt);
+    if(!detail)continue;
+    if(s.afterMeal&&s.afterMeal.urge!==null)push('🍽','食後の記録',`もっと食べたい ${s.afterMeal.urge}`,s.afterMeal.at);
+    if(s.afterWait&&s.afterWait.urge!==null){
+      const w=s.waits&&s.waits[s.waits.length-1],min=w?Math.max(1,Math.round((w.plannedSec||0)/60)):0,change=mealChangeLabel(s.afterWait.change);
+      push('⏳',`${min}分待ったあと`,`もっと食べたい ${s.afterWait.urge}${change?`（${change}）`:''}`,s.afterWait.at);
+    }
+    if(s.extra&&s.extra.ate===true)push('🍚','追加で食べた',mealItemsLabel(s.extra.items)||'（内容は未記録）',s.extra.at);
+  }
+  return items;
+}
+function mealTimelineRows(){
+  const rows=[],prefs=Object.assign(defaultMealPrefs(),D.mealPrefs||{}),tagText=tags=>(tags&&tags.length?tags.map(mealTagLabel).join(','):'なし');
+  for(const s of D.mealSessions){
+    if(s.deletedAt)continue;
+    const base=[];
+    if(s.before){if(s.before.hunger!==null)base.push(`食前空腹${s.before.hunger}`);if(s.before.sleepiness!==null)base.push(`眠気${s.before.sleepiness}`);if(s.before.stress!==null)base.push(`ストレス${s.before.stress}`);}
+    if(prefs.csvIncludeItems&&s.items.length)base.push(`品目:${mealItemsLabel(s.items)}`);
+    const effort=mealEffortLabel(s.effortLevel);if(effort)base.push(`手間:${effort}`);
+    if(prefs.csvIncludeNotes&&s.note)base.push(`メモ:${s.note}`);
+    rows.push({stamp:s.startedAt,dateTime:timelineDateTime(s.startedAt),type:'食事',content:s.label||'食事',routine:'',step:'',detail:base.join('／')});
+    if(s.afterMeal&&s.afterMeal.urge!==null){
+      const min=s.endedAt&&s.startedAt?Math.max(0,Math.round((s.afterMeal.at-s.startedAt)/60000)):0;
+      rows.push({stamp:s.afterMeal.at,dateTime:timelineDateTime(s.afterMeal.at),type:'食後の状態',content:`もっと食べたい ${s.afterMeal.urge}`,routine:'',step:'',detail:`食事から${min}分／タグ:${tagText(s.afterMeal.tags)}`});
+    }
+    for(const w of s.waits||[]){
+      const planned=Math.max(1,Math.round((w.plannedSec||0)/60)),ended=w.completedAt||w.endsAt;
+      const actions=(w.actions||[]).map(mealActionLabel).join(',')||'なし',endedLabel=w.endedBy==='time'?'時間到達':'自分で終了';
+      rows.push({stamp:w.startedAt,dateTime:timelineDateTime(w.startedAt),type:'待機',content:`${planned}分待った`,routine:'',step:'',detail:`行動:${actions}／終了:${endedLabel}${ended?`／実績${Math.max(0,Math.round((ended-w.startedAt)/60000))}分`:''}`});
+    }
+    if(s.afterWait&&s.afterWait.urge!==null)rows.push({stamp:s.afterWait.at,dateTime:timelineDateTime(s.afterWait.at),type:'待機後の状態',content:`もっと食べたい ${s.afterWait.urge}`,routine:'',step:'',detail:`変化:${mealChangeLabel(s.afterWait.change)||'未入力'}／タグ:${tagText(s.afterWait.tags)}`});
+    if(s.extra&&s.extra.ate===true)rows.push({stamp:s.extra.at,dateTime:timelineDateTime(s.extra.at),type:'追加で食べた',content:mealItemsLabel(s.extra.items)||'（内容は未記録）',routine:'',step:'',detail:`タイミング:${s.extra.when==='before_wait'?'待機前':'待機後'}`});
+  }
+  return rows;
+}
+function buildMealCsv(){
+  const head=['開始日時','終了日時','食事時間分','内容','手間','食前空腹','食前眠気','食前ストレス','食後の欲求','食後タグ','待機回数','待機予定分','待機実績分','待機中の行動','待機後の欲求','欲求の変化','待機後タグ','追加で食べた','追加の内容','メモ'];
+  const lines=[head.join(',')],score=v=>v===null||v===undefined?'':v;
+  const list=D.mealSessions.filter(s=>!s.deletedAt).sort((a,b)=>(a.startedAt||0)-(b.startedAt||0));
+  for(const s of list){
+    const waits=s.waits||[],planned=waits.reduce((n,w)=>n+(Number(w.plannedSec)||0),0)/60;
+    const actual=waits.reduce((n,w)=>n+Math.max(0,((w.completedAt||Math.min(Date.now(),w.endsAt||Date.now()))-(w.startedAt||0))/1000),0)/60;
+    const actions=[...new Set(waits.flatMap(w=>w.actions||[]))].map(mealActionLabel).join('／');
+    const content=[s.label,mealItemsLabel(s.items)].filter(Boolean).join('：');
+    const row=[timelineDateTime(s.startedAt),s.endedAt?timelineDateTime(s.endedAt):'',s.endedAt?Number(((s.endedAt-s.startedAt)/60000).toFixed(1)):'',content,mealEffortLabel(s.effortLevel),
+      score(s.before&&s.before.hunger),score(s.before&&s.before.sleepiness),score(s.before&&s.before.stress),score(s.afterMeal&&s.afterMeal.urge),(s.afterMeal&&s.afterMeal.tags||[]).map(mealTagLabel).join('／'),
+      waits.length,waits.length?Number(planned.toFixed(1)):'',waits.length?Number(actual.toFixed(1)):'',actions,score(s.afterWait&&s.afterWait.urge),mealChangeLabel(s.afterWait&&s.afterWait.change),(s.afterWait&&s.afterWait.tags||[]).map(mealTagLabel).join('／'),
+      s.extra&&s.extra.ate===true?'あり':s.extra&&s.extra.ate===false?'なし':'',s.extra&&s.extra.ate===true?mealItemsLabel(s.extra.items):'',s.note||''];
+    lines.push(row.map(timelineCsvEsc).join(','));
+  }
+  return lines.join('\n');
+}
+function exportMealCsv(){download('meal_sessions.csv',buildMealCsv());toast('🍽 食事CSVを書き出しました');}
 function mealWaitRemainMs(){const w=activeWait();return w?Math.max(0,w.endsAt-Date.now()):0;}
 function mealWaitTime(ms){
   const sec=Math.max(0,Math.ceil(ms/1000));return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
@@ -2969,6 +3055,12 @@ function renderSet(){
   document.getElementById('setAutoSync').checked=!!D.settings.autoSync;
   document.getElementById('setWebhook').value=D.settings.webhook||'';
   document.getElementById('setApiKey').value=D.settings.apiKey||'';
+  document.getElementById('setMealWait').value=String(D.mealPrefs.defaultWaitSec||300);
+  document.getElementById('setMealSpeak').checked=!!D.mealPrefs.speakOnWaitEnd;
+  document.getElementById('setMealCsv').checked=!!D.mealPrefs.includeInChatGptCsv;
+  document.getElementById('setMealCsvItems').checked=!!D.mealPrefs.csvIncludeItems;
+  document.getElementById('setMealCsvNotes').checked=!!D.mealPrefs.csvIncludeNotes;
+  document.getElementById('setMealTimeline').checked=!!D.mealPrefs.showTimelineDetail;
 }
 function saveSettings(){
   D.settings.calLog=document.getElementById('setCalLog').value;
@@ -2983,6 +3075,13 @@ function saveSettings(){
   D.settings.sfxVolume=Math.min(1,Math.max(.1,+document.getElementById('setSfxVolume').value||.45));
   D.settings.moti=document.getElementById('setMoti').checked;
   D.settings.sound=document.getElementById('setSound').checked;
+  D.mealPrefs.defaultWaitSec=Number(document.getElementById('setMealWait').value)===600?600:300;
+  D.mealPrefs.speakOnWaitEnd=document.getElementById('setMealSpeak').checked;
+  D.mealPrefs.includeInChatGptCsv=document.getElementById('setMealCsv').checked;
+  D.mealPrefs.csvIncludeItems=document.getElementById('setMealCsvItems').checked;
+  D.mealPrefs.csvIncludeNotes=document.getElementById('setMealCsvNotes').checked;
+  D.mealPrefs.showTimelineDetail=document.getElementById('setMealTimeline').checked;
+  D.mealPrefs.updatedAt=Date.now();
   save();
 }
 const csvEsc=value=>{
@@ -3091,6 +3190,7 @@ function chatgptTimelineRows(){
     const detail=[`${Number(log.done)||0}/${Number(log.total)||0}ステップ完了`,Number(log.skips)?`${Number(log.skips)}スキップ`:'スキップなし',`実時間${durationSec}秒`].join('・');
     rows.push({stamp,dateTime:timelineDateTime(stamp,log.date,log.time),type:'ルーチン完了',content:log.routine||'ルーチン',routine:log.routine||'',step:'',detail});
   }
+  if(D.mealPrefs&&D.mealPrefs.includeInChatGptCsv)rows.push(...mealTimelineRows());
   return rows.sort((a,b)=>(a.stamp||0)-(b.stamp||0));
 }
 function buildChatGPTTimelineCsv(){
