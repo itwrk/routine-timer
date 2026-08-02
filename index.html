@@ -2508,19 +2508,20 @@ function recordWake(){
 let mealState={
   waitTimer:null,activeId:null,view:'idle',tagOpen:false,beforeOpen:false,freeOpen:false,tplEditId:null,
   pendingStart:null,tplDraftItems:[],tplDraftMeta:null,beforeDetailOpen:false,ruleOpen:false,finishedWaitId:null,
-  urgeOpen:false,urgeDraft:null,pendingUrgeId:null
+  urgeOpen:false,urgeDraft:null,pendingUrgeId:null,foodItemInputOpen:false,learnedItems:new Set()
 };
 
 function touchUrge(u){if(!u)return;u.updatedAt=Date.now();save();}
+function renderUrgeUi(){renderMealCard();renderMealActive();}
 function startUrgeFlow(phase='standalone',mealSessionId=null){
   mealState.urgeOpen=true;
   mealState.urgeDraft={strength:null,phase:phase==='cascade'?'cascade':'standalone',mealSessionId:mealSessionId||null,mode:'strength',targetId:null,itemInputOpen:false};
-  renderMealCard();
+  renderUrgeUi();
 }
-function closeUrgeFlow(){mealState.urgeOpen=false;mealState.urgeDraft=null;renderMealCard();}
+function closeUrgeFlow(){mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();}
 function setUrgeStrength(v){
   if(!mealState.urgeDraft)return;
-  mealState.urgeDraft.strength=mealScore(Number(v));mealState.urgeDraft.mode='outcome';renderMealCard();
+  mealState.urgeDraft.strength=mealScore(Number(v));mealState.urgeDraft.mode='outcome';renderUrgeUi();
 }
 function commitUrge(outcome,extraFields={}){
   const draft=mealState.urgeDraft||{},now=Date.now();
@@ -2529,14 +2530,14 @@ function commitUrge(outcome,extraFields={}){
     outcome,place:D.mealPrefs.lastPlace??null,watching:D.mealPrefs.lastWatching??null},extraFields));
   D.urgeLogs.unshift(u);
   mealState.urgeOpen=false;mealState.urgeDraft=null;
-  save();renderMealCard();
+  save();renderUrgeUi();
   toast(outcome==='open'?'👀 また聞きます':outcome==='settled'?'😌 記録しました':'⚡ 記録しました');
   return u;
 }
 function urgeToMeal(){
   const u=commitUrge('ate');
   mealState.pendingUrgeId=u.id;
-  renderMealCard();
+  renderUrgeUi();
 }
 function beginUrgeItems(targetId=null){
   const u=targetId?D.urgeLogs.find(x=>x.id===targetId&&!x.deletedAt):null;
@@ -2545,20 +2546,20 @@ function beginUrgeItems(targetId=null){
   mealState.urgeOpen=true;
   mealState.urgeDraft={strength:base.strength,phase:base.phase||'standalone',mealSessionId:base.mealSessionId||null,
     mode:'items',targetId:u?u.id:null,itemInputOpen:false};
-  renderMealCard();
+  renderUrgeUi();
 }
 function resolveOpenUrge(kind){
   const u=openUrge();if(!u)return;
-  if(kind==='still'){mealState.urgeOpen=false;mealState.urgeDraft=null;renderMealCard();return;}
+  if(kind==='still'){mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();return;}
   mealState.urgeOpen=true;
   mealState.urgeDraft={strength:u.strength,phase:u.phase,mealSessionId:u.mealSessionId,
     mode:kind==='settled'?'settlers':'items',targetId:u.id,itemInputOpen:false};
-  renderMealCard();
+  renderUrgeUi();
 }
 function addUrgeSettler(id){
   const draft=mealState.urgeDraft||{},u=D.urgeLogs.find(x=>x.id===draft.targetId&&!x.deletedAt);if(!u)return;
   if(id&&URGE_SETTLERS.some(x=>x.id===id)&&!u.settledBy.includes(id))u.settledBy.push(id);
-  u.outcome='settled';touchUrge(u);mealState.urgeOpen=false;mealState.urgeDraft=null;renderMealCard();toast('📗 記録しました');
+  u.outcome='settled';touchUrge(u);mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();toast('📗 記録しました');
 }
 function addUrgeItem(name){
   name=String(name||'').trim().slice(0,40);if(!name)return;
@@ -2566,12 +2567,12 @@ function addUrgeItem(name){
   if(draft.targetId){
     const u=D.urgeLogs.find(x=>x.id===draft.targetId&&!x.deletedAt);if(!u)return;
     u.outcome='ate';if(!u.items.some(x=>x.name===name))u.items.push(item);registerFoodItem(name);touchUrge(u);
-    mealState.urgeOpen=false;mealState.urgeDraft=null;renderMealCard();toast('📗 記録しました');return;
+    mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();toast('📗 記録しました');return;
   }
   registerFoodItem(name);commitUrge('ate',{items:[item]});
 }
 function addUrgeItemFromInput(){const input=document.getElementById('urgeItemInput');addUrgeItem(input?input.value:'');}
-function showUrgeItemInput(){if(!mealState.urgeDraft)return;mealState.urgeDraft.itemInputOpen=true;renderMealCard();}
+function showUrgeItemInput(){if(!mealState.urgeDraft)return;mealState.urgeDraft.itemInputOpen=true;renderUrgeUi();}
 
 function activeMealSession(){
   const list=D.mealSessions.filter(s=>!s.deletedAt&&s.status!=='closed').sort((a,b)=>(b.updatedAt||b.startedAt||0)-(a.updatedAt||a.startedAt||0));
@@ -2591,7 +2592,7 @@ function activeWait(){
 function syncMealViewFromData(){
   const previous=mealState.activeId;
   const s=activeMealSession();
-  if(!s){mealState.view='idle';mealState.activeId=null;return null;}
+  if(!s){if(mealState.view!=='timing')mealState.view='idle';mealState.activeId=null;return null;}
   if(previous!==s.id||mealState.view==='idle'){
     if(s.status==='waiting')mealState.view='waiting';
     else if(s.extra&&s.extra.ate)mealState.view='extra';
@@ -2604,6 +2605,16 @@ function touchMeal(s){s.updatedAt=Date.now();save();}
 function cloneMealItems(items){return (Array.isArray(items)?items:[]).map(i=>({name:i.name||'',amount:i.amount||''}));}
 function latestClosedMeal(){
   return D.mealSessions.filter(s=>!s.deletedAt&&s.status==='closed').sort((a,b)=>(b.startedAt||0)-(a.startedAt||0))[0]||null;
+}
+function recentCascadeSession(){
+  const active=activeMealSession();
+  if(active&&['afterMeal','afterWait'].includes(mealState.view))return active;
+  const closed=latestClosedMeal();
+  return closed&&Date.now()-(closed.updatedAt||closed.endedAt||closed.startedAt||0)<=MEAL_CASCADE_WINDOW_MS?closed:null;
+}
+function startCascadeUrge(sessionId){
+  const s=D.mealSessions.find(x=>x.id===sessionId&&!x.deletedAt);if(!s)return;
+  startUrgeFlow('cascade',s.id);
 }
 function startMealSession(templateId){
   const template=D.mealTemplates.find(t=>t.id===templateId&&!t.deletedAt);
@@ -2635,8 +2646,22 @@ function startFreeMealSession(name){
 function requestMealStart(kind,value){
   const active=activeMealSession();
   if(active){mealState.pendingStart={kind,value:value??null};mealState.view='conflict';renderMealCard();renderMeal();return;}
-  executeMealStart(kind,value);
+  prepareMealStart(kind,value);
 }
+function prepareMealStart(kind,value){
+  if(D.mealPrefs.askStartTiming){
+    mealState.pendingStart={kind,value:value??null};mealState.view='timing';renderMealCard();renderMealActive();renderMealStart();return null;
+  }
+  return executeMealStart(kind,value);
+}
+function finishStart(timing){
+  const pending=mealState.pendingStart;if(!pending)return null;
+  mealState.pendingStart=null;
+  const s=executeMealStart(pending.kind,pending.value);
+  if(s){s.startTiming=timing==='during'?'during':'before';touchMeal(s);renderMealCard();renderMeal();}
+  return s;
+}
+function cancelMealStart(){mealState.pendingStart=null;mealState.pendingUrgeId=null;mealState.view='idle';renderMealCard();renderMealActive();renderMealStart();}
 function executeMealStart(kind,value){
   let s=null;
   if(kind==='same')s=startMealSessionSameAsLast();
@@ -2647,17 +2672,19 @@ function executeMealStart(kind,value){
     if(u){u.mealSessionId=s.id;touchUrge(u);}
     mealState.pendingUrgeId=null;
   }
+  if(s){mealState.learnedItems=new Set();mealState.foodItemInputOpen=false;}
   return s;
 }
 function startFreeMealFromInput(){
   const input=document.getElementById('mealFreeInput');
-  requestMealStart('free',input?input.value:'');
+  const value=String(input&&input.value||'').trim();if(!value){toast('何を食べるか入力してね');return;}
+  requestMealStart('free',value);
 }
 function finishPreviousAndStart(){
   const pending=mealState.pendingStart,old=activeMealSession();
-  if(old){stopMealWaitTimer();old.status='closed';old.updatedAt=Date.now();if(!old.endedAt)old.endedAt=Date.now();save();}
+  if(old){stopMealWaitTimer();learnMealSessionItems(old);old.status='closed';old.updatedAt=Date.now();if(!old.endedAt)old.endedAt=Date.now();save();}
   mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
-  if(pending)executeMealStart(pending.kind,pending.value);
+  if(pending)prepareMealStart(pending.kind,pending.value);
 }
 function continueMealSession(){mealState.pendingStart=null;mealState.view='idle';syncMealViewFromData();renderMealCard();renderMeal();}
 function setMealBefore(field,v){
@@ -2724,9 +2751,24 @@ function addExtraItem(name){
   if(item.name&&!s.extra.items.some(i=>i.name===item.name))s.extra.items.push(item);
   touchMeal(s);renderMealCard();renderMealActive();
 }
+function addSessionItem(name){
+  const s=activeMealSession();name=String(name||'').trim().slice(0,40);if(!s||!name)return;
+  if(!s.items.some(i=>i.name===name)){
+    s.items.push(normalizeMealItem({name,amount:''}));registerFoodItem(name);mealState.learnedItems.add(name);
+  }
+  mealState.foodItemInputOpen=false;touchMeal(s);renderMealCard();renderMealActive();
+}
+function addSessionItemFromButton(button){const input=button&&button.previousElementSibling;addSessionItem(input?input.value:'');}
+function submitSessionItem(event){if(event.key==='Enter'){event.preventDefault();addSessionItem(event.target.value);}}
+function showSessionItemInput(){mealState.foodItemInputOpen=true;renderMealCard();renderMealActive();}
+function learnMealSessionItems(s){
+  for(const item of s&&Array.isArray(s.items)?s.items:[]){
+    const name=String(item.name||'').trim();if(name&&!mealState.learnedItems.has(name)){registerFoodItem(name);mealState.learnedItems.add(name);}
+  }
+}
 function closeMealSession(){
   const s=activeMealSession();if(!s)return;
-  stopMealWaitTimer();s.status='closed';if(!s.endedAt)s.endedAt=Date.now();s.updatedAt=Date.now();mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
+  stopMealWaitTimer();learnMealSessionItems(s);s.status='closed';if(!s.endedAt)s.endedAt=Date.now();s.updatedAt=Date.now();mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
   save();renderMealCard();renderMeal();toast('📗 今回の食事を記録しました');
 }
 function deleteMealSession(id){
@@ -2835,6 +2877,9 @@ function mealScaleForBefore(field,current){
 function mealConflictHtml(){
   return `<div><p style="font-weight:800">いま記録中の食事があります。</p><div class="meal-choice"><button class="btn btn-g" type="button" onclick="finishPreviousAndStart()">先の食事を終える</button><button class="btn btn-c" type="button" onclick="continueMealSession()">続ける</button></div></div>`;
 }
+function mealTimingHtml(){
+  return `<div><p style="font-weight:800">食事はこれから？ もう食べてる？</p><div class="meal-choice"><button class="btn btn-g" type="button" onclick="finishStart('before')">🍽 これから食べる</button><button class="btn btn-g" type="button" onclick="finishStart('during')">🍚 もう食べてる</button></div><button class="text-link" type="button" onclick="cancelMealStart()" style="margin-top:8px">やめる</button></div>`;
+}
 function mealAfterMealHtml(s){
   const a=s.afterMeal;
   if(!a||a.urge===null)return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a?a.urge:null,'setAfterMealUrge')}<button class="text-link" type="button" onclick="closeMealSession()" style="margin-top:8px">入力せず終える</button>`;
@@ -2863,6 +2908,11 @@ function mealExtraHtml(s){
   return `<p style="font-weight:800;margin-top:8px">何を足した？（任意）</p><div class="meal-tags">${choices.map(x=>`<button type="button" class="${selected.includes(x)?'on':''}" onclick="addExtraItem('${x}')">${x}</button>`).join('')}</div><p class="muted" style="margin-top:8px">記録しました。次回の最初の量を見直す材料になります。</p><button class="btn btn-p btn-full btn-sm" type="button" onclick="closeMealSession()" style="margin-top:8px">記録して終える</button>`;
 }
 function mealJsArg(v){return JSON.stringify(String(v)).replace(/</g,'\\u003c').replace(/'/g,'\\u0027');}
+function foodItemChipsHtml(handlerName){
+  const items=D.foodItems.filter(f=>!f.deletedAt&&f.name).sort((a,b)=>(b.useCount||0)-(a.useCount||0)||(b.lastUsedAt||0)-(a.lastUsedAt||0)).slice(0,6);
+  return `<div class="meal-fold"><p class="muted">＋食べているもの</p><div class="meal-tags">${items.map(f=>`<button type="button" onclick='${handlerName}(${mealJsArg(f.name)})'>${esc(f.emoji)} ${esc(f.name)}</button>`).join('')}<button type="button" onclick="showSessionItemInput()">＋</button></div>${mealState.foodItemInputOpen?'<div class="meal-inline"><input type="text" maxlength="40" placeholder="食べているもの" onkeydown="submitSessionItem(event)"><button class="btn btn-c btn-sm" type="button" onclick="addSessionItemFromButton(this)">追加</button></div>':''}</div>`;
+}
+function cascadeButtonHtml(s){return `<button class="btn btn-g btn-full btn-sm" type="button" onclick="startCascadeUrge('${s.id}')" style="margin-top:8px">🌊 また食べたくなった</button>`;}
 function urgeItemChoicesHtml(){
   const draft=mealState.urgeDraft||{};
   const items=D.foodItems.filter(f=>!f.deletedAt&&f.name).sort((a,b)=>(b.useCount||0)-(a.useCount||0)||(b.lastUsedAt||0)-(a.lastUsedAt||0)).slice(0,6);
@@ -2880,7 +2930,7 @@ function openUrgeHtml(u){
 }
 function mealEatingHtml(s){
   const min=Math.max(0,Math.floor((Date.now()-(s.startedAt||Date.now()))/60000));
-  return `<div class="meal-card-row"><div class="meal-grow"><strong>🍽 食事中 ・ ${min}分経過</strong><div class="muted">${esc(s.label)}</div></div></div><button class="btn btn-p btn-full btn-sm" type="button" onclick="endMealEating()" style="margin-top:7px">🍽 食べ終わった</button>${mealBeforeHtml(s)}${s.templateId===null?`<button class="btn btn-g btn-sm" type="button" onclick="saveSessionAsTemplate('${s.id}')" style="margin-top:7px">＋テンプレに保存</button>`:''}`;
+  return `<div class="meal-card-row"><div class="meal-grow"><strong>🍽 食事中 ・ ${min}分経過</strong><div class="muted">${esc(s.label)}</div></div></div><button class="btn btn-p btn-full btn-sm" type="button" onclick="endMealEating()" style="margin-top:7px">🍽 食べ終わった</button>${foodItemChipsHtml('addSessionItem')}${mealBeforeHtml(s)}${s.templateId===null?`<button class="btn btn-g btn-sm" type="button" onclick="saveSessionAsTemplate('${s.id}')" style="margin-top:7px">＋テンプレに保存</button>`:''}`;
 }
 function renderMealCard(){
   const el=document.getElementById('mealCard');if(!el)return;
@@ -2888,17 +2938,18 @@ function renderMealCard(){
   if(mealState.urgeOpen){el.innerHTML=urgeFlowHtml();return;}
   const s=syncMealViewFromData();
   if(mealState.view==='conflict'){el.innerHTML=mealConflictHtml();return;}
+  if(mealState.view==='timing'){el.innerHTML=mealTimingHtml();return;}
   if(!s){
-    const last=latestClosedMeal(),open=openUrge();
-    el.innerHTML=`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':'<button class="btn btn-c" type="button" onclick="showScreen(\'scr-meal\')">はじめる</button>'}<button class="btn btn-g" type="button" onclick="showScreen('scr-meal')">選ぶ</button><button class="btn btn-g" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)" style="width:36px;height:36px;padding:0">⚡</button></div>${open?openUrgeHtml(open):''}`;return;
+    const last=latestClosedMeal(),open=openUrge(),cascade=recentCascadeSession();
+    el.innerHTML=`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':'<button class="btn btn-c" type="button" onclick="showScreen(\'scr-meal\')">はじめる</button>'}<button class="btn btn-g" type="button" onclick="showScreen('scr-meal')">選ぶ</button><button class="btn btn-g" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)" style="width:36px;height:36px;padding:0">⚡</button></div>${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`;return;
   }
   if(mealState.view==='eating')el.innerHTML=mealEatingHtml(s);
-  else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s);
+  else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s)+cascadeButtonHtml(s);
   else if(mealState.view==='waiting'){
     const ms=mealWaitRemainMs(),done=ms<=0;
     el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>${done?'⏳ 待機時間は終わっています':`⏳ あと ${mealWaitTime(ms)}`}</strong><div class="muted">${esc(s.label)}</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">食事サポートを開く</button></div>`;
   }
-  else if(mealState.view==='afterWait')el.innerHTML=mealAfterWaitHtml(s);
+  else if(mealState.view==='afterWait')el.innerHTML=mealAfterWaitHtml(s)+cascadeButtonHtml(s);
   else if(mealState.view==='extra')el.innerHTML=mealExtraHtml(s);
   else if(mealState.view==='stale')el.innerHTML=mealStaleHtml(s);
   else el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>🍽 ${esc(s.label)}</strong><div class="muted">記録を続けられます</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">開く</button></div>`;
@@ -2915,19 +2966,21 @@ function renderMealRules(){
 }
 function renderMealActive(){
   const el=document.getElementById('mealActive');if(!el)return;
+  if(mealState.urgeOpen){el.innerHTML=urgeFlowHtml();return;}
   if(mealState.view==='conflict'){el.innerHTML=mealConflictHtml();return;}
+  if(mealState.view==='timing'){el.innerHTML=mealTimingHtml();return;}
   const s=syncMealViewFromData();if(!s){el.innerHTML='';return;}
   if(mealState.view==='eating')el.innerHTML=mealEatingHtml(s);
-  else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s);
+  else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s)+cascadeButtonHtml(s);
   else if(mealState.view==='waiting')el.innerHTML='<p class="muted" style="margin-top:8px">待機中です。画面下のバーから記録できます。</p>';
-  else if(mealState.view==='afterWait')el.innerHTML=mealAfterWaitHtml(s);
+  else if(mealState.view==='afterWait')el.innerHTML=mealAfterWaitHtml(s)+cascadeButtonHtml(s);
   else if(mealState.view==='extra')el.innerHTML=mealExtraHtml(s);
   else if(mealState.view==='stale')el.innerHTML=mealStaleHtml(s);
   else el.innerHTML='';
 }
 function renderMealStart(){
   const el=document.getElementById('mealStart');if(!el)return;
-  if(activeMealSession()){el.innerHTML='';return;}
+  if(activeMealSession()||mealState.view==='timing'){el.innerHTML='';return;}
   const templates=D.mealTemplates.filter(t=>!t.deletedAt).sort((a,b)=>(b.builtin?0:1)-(a.builtin?0:1)||(b.useCount||0)-(a.useCount||0)||(b.lastUsedAt||0)-(a.lastUsedAt||0));
   const personal=templates.filter(t=>!t.builtin).length;
   el.innerHTML=`<h2 style="margin-top:10px">何を食べる？</h2>${templates.map(t=>`<div class="meal-tpl-row"><span>${esc(t.emoji)}</span><span class="meal-tpl-name">${esc(t.name)}</span><button class="btn btn-c btn-sm" type="button" onclick="requestMealStart('template','${t.id}')">はじめる</button></div>`).join('')}<button class="btn btn-g btn-full btn-sm" type="button" onclick="mealState.freeOpen=!mealState.freeOpen;renderMealStart()" style="margin-top:8px">✏️ 自由入力ではじめる</button>${mealState.freeOpen?'<div class="meal-inline"><input type="text" id="mealFreeInput" maxlength="60" placeholder="何を食べる？（例：コンビニ弁当）" onkeydown="submitShortcut(event,startFreeMealFromInput)"><button class="btn btn-c btn-sm" type="button" onclick="startFreeMealFromInput()">はじめる</button></div>':''}${!personal?'<button class="btn btn-g btn-sm" type="button" onclick="createPersonalMealTemplates()" style="margin-top:8px">定番の食事をつくる</button>':''}<button class="text-link" type="button" onclick="openManage('mealTemplates')" style="display:block;margin-top:7px">テンプレを編集 →</button>`;
@@ -3078,7 +3131,8 @@ function resumeMealWait(){
   renderMealWaitBar(ms);if(mealState.waitTimer===null)mealState.waitTimer=setInterval(mealWaitTick,1000);
 }
 function restoreMealState(){
-  stopMealWaitTimer();mealState.finishedWaitId=null;mealState.activeId=null;mealState.view='idle';
+  stopMealWaitTimer();mealState.finishedWaitId=null;mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
+  mealState.urgeOpen=false;mealState.urgeDraft=null;mealState.pendingUrgeId=null;mealState.foodItemInputOpen=false;mealState.learnedItems=new Set();
   const s=activeMealSession();if(!s){renderMealWaitBar(0);renderMealCard();return;}
   if(s.status==='waiting'){
     const w=activeWait();
