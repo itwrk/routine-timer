@@ -476,8 +476,6 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       </div>
       <div id="personalMemoFeed" class="memo-feed"></div>
     </div>
-    <div class="card meal-card" id="mealCard"></div>
-    <div class="card" id="recallCard"></div>
     <div class="card" id="habitCard">
       <div class="habit-head"><h2>✅ 今日のチェックリスト</h2><span class="habit-score" id="habitScore">0 / 0</span></div>
       <div class="habit-bar"><div id="habitBarFill" style="width:0%"></div></div>
@@ -516,72 +514,13 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     </div>
   </div>
 
+  <!-- MEAL -->
   <div class="screen" id="scr-meal">
-    <div class="card">
-      <div class="preview-head">
-        <div class="preview-emoji">🍽</div>
-        <div class="preview-title"><h2>食事サポート</h2><p class="muted" id="mealHeadMeta"></p></div>
-        <button class="edit-btn" type="button" onclick="showScreen('scr-home')" style="background:none;border:none;color:var(--cyan);font-size:14px;padding:7px">← 戻る</button>
-      </div>
-      <div id="mealRules"></div>
-      <div id="mealActive"></div>
-      <div id="mealStart"></div>
-    </div>
+    <div class="card meal-card" id="mealCard"></div>
+    <div class="card" id="recallCard"></div>
     <div class="card">
       <h2>📗 最近の食事</h2>
       <div id="mealHistory"></div>
-    </div>
-  </div>
-
-  <!-- MANAGE / NOTES -->
-  <div class="screen" id="scr-manage">
-    <button class="btn btn-p btn-full btn-sm" type="button" onclick="newRoutine()" style="padding:11px;margin-bottom:6px">＋ 新しいルーチンを作る</button>
-    <div class="card" id="habitManageCard">
-      <h2>🌱 チェックリスト項目を管理</h2>
-      <p class="muted">追加後の「✏️ 編集」から、手順メモ・リンク・表示する日付/曜日/時間帯を設定できます。</p>
-      <div id="habitManageList" style="margin-top:6px"></div>
-      <div class="habit-add">
-        <input type="text" id="habitInput" maxlength="60" placeholder="チェック項目を追加（初期値は毎日）" onkeydown="submitShortcut(event,addHabit)">
-        <button class="btn btn-c btn-sm" type="button" onclick="addHabit()">＋ 追加</button>
-      </div>
-    </div>
-    <div class="card" id="moodManageCard">
-      <h2>🌡️ 気分ボタンを管理</h2>
-      <p class="muted">気分を押すと時刻付きで記録されます。自動同期ONなら約4秒後にGoogle Driveの rvt_sync.json にも保存されます。</p>
-      <div id="moodManageList" style="margin-top:6px"></div>
-      <div class="mood-add">
-        <input class="mood-emoji-input" type="text" id="moodEmojiInput" maxlength="8" value="🙂" aria-label="気分の絵文字">
-        <input class="mood-label-input" type="text" id="moodLabelInput" maxlength="30" placeholder="例：いい感じ" onkeydown="if(event.key==='Enter'&&!event.isComposing&&event.keyCode!==229){event.preventDefault();addMood();}">
-        <button class="btn btn-c btn-sm" type="button" onclick="addMood()">＋ 追加</button>
-      </div>
-    </div>
-    <div class="card" id="stepLibraryManageCard">
-      <h2>📚 ステップライブラリを管理</h2>
-      <p class="muted">各ルーチンに保存されているステップを編集できます。🔗共有ステップの変更は、同じステップを使うすべてのルーチンに反映されます。</p>
-      <div id="stepLibraryManageList" style="margin-top:6px"></div>
-    </div>
-    <div class="card" id="mealTemplateManageCard">
-      <h2>🍽 食事テンプレを管理</h2>
-      <p class="muted">「はじめる」を押したときの初期内容になります。品目や量は「✏️ 編集」から設定できます。</p>
-      <div id="mealTemplateManageList" style="margin-top:6px"></div>
-      <div class="habit-add">
-        <input type="text" id="mealTplInput" maxlength="60" placeholder="食事テンプレを追加" onkeydown="submitShortcut(event,addMealTemplate)">
-        <button class="btn btn-c btn-sm" type="button" onclick="addMealTemplate()">＋ 追加</button>
-      </div>
-    </div>
-    <div class="card" id="foodItemManageCard">
-      <h2>🥨 よく食べるものを管理</h2>
-      <p class="muted">ここから追加でき、食事や衝動の記録からも自動で育つ単品リストです。名前と絵文字を編集できます。</p>
-      <div id="foodItemManageList" style="margin-top:6px"></div>
-      <div class="mood-add">
-        <input class="mood-emoji-input" type="text" id="foodEmojiInput" maxlength="8" value="🥨" aria-label="食べるものの絵文字">
-        <input class="mood-label-input" type="text" id="foodNameInput" maxlength="40" placeholder="食べるものを追加" onkeydown="submitShortcut(event,addFoodItem)">
-        <button class="btn btn-c btn-sm" type="button" onclick="addFoodItem()">＋ 追加</button>
-      </div>
-    </div>
-    <div class="card" id="allMemoCard">
-      <h2>📝 すべてのメモ</h2>
-      <div id="allMemoFeed" class="memo-timeline"></div>
     </div>
   </div>
 
@@ -633,6 +572,57 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 
   <!-- SETTINGS / CSV -->
   <div class="screen" id="scr-set">
+    <!-- RECORD / MANAGE -->
+    <button class="btn btn-p btn-full btn-sm" type="button" onclick="newRoutine()" style="padding:11px;margin-bottom:6px">＋ 新しいルーチンを作る</button>
+    <div class="card" id="habitManageCard">
+      <h2>🌱 チェックリスト項目を管理</h2>
+      <p class="muted">追加後の「✏️ 編集」から、手順メモ・リンク・表示する日付/曜日/時間帯を設定できます。</p>
+      <div id="habitManageList" style="margin-top:6px"></div>
+      <div class="habit-add">
+        <input type="text" id="habitInput" maxlength="60" placeholder="チェック項目を追加（初期値は毎日）" onkeydown="submitShortcut(event,addHabit)">
+        <button class="btn btn-c btn-sm" type="button" onclick="addHabit()">＋ 追加</button>
+      </div>
+    </div>
+    <div class="card" id="moodManageCard">
+      <h2>🌡️ 気分ボタンを管理</h2>
+      <p class="muted">気分を押すと時刻付きで記録されます。自動同期ONなら約4秒後にGoogle Driveの rvt_sync.json にも保存されます。</p>
+      <div id="moodManageList" style="margin-top:6px"></div>
+      <div class="mood-add">
+        <input class="mood-emoji-input" type="text" id="moodEmojiInput" maxlength="8" value="🙂" aria-label="気分の絵文字">
+        <input class="mood-label-input" type="text" id="moodLabelInput" maxlength="30" placeholder="例：いい感じ" onkeydown="if(event.key==='Enter'&&!event.isComposing&&event.keyCode!==229){event.preventDefault();addMood();}">
+        <button class="btn btn-c btn-sm" type="button" onclick="addMood()">＋ 追加</button>
+      </div>
+    </div>
+    <div class="card" id="stepLibraryManageCard">
+      <h2>📚 ステップライブラリを管理</h2>
+      <p class="muted">各ルーチンに保存されているステップを編集できます。🔗共有ステップの変更は、同じステップを使うすべてのルーチンに反映されます。</p>
+      <div id="stepLibraryManageList" style="margin-top:6px"></div>
+    </div>
+    <div class="card" id="mealTemplateManageCard">
+      <h2>🍽 食事テンプレを管理</h2>
+      <p class="muted">食事タブでは前回の内容か自由入力で開始できます。テンプレは過去データとの互換用に管理できます。</p>
+      <div id="mealTemplateManageList" style="margin-top:6px"></div>
+      <div class="habit-add">
+        <input type="text" id="mealTplInput" maxlength="60" placeholder="食事テンプレを追加" onkeydown="submitShortcut(event,addMealTemplate)">
+        <button class="btn btn-c btn-sm" type="button" onclick="addMealTemplate()">＋ 追加</button>
+      </div>
+    </div>
+    <div class="card" id="foodItemManageCard">
+      <h2>🥨 よく食べるものを管理</h2>
+      <p class="muted">ここから追加でき、食事や衝動の記録からも自動で育つ単品リストです。名前と絵文字を編集できます。</p>
+      <div id="foodItemManageList" style="margin-top:6px"></div>
+      <div class="mood-add">
+        <input class="mood-emoji-input" type="text" id="foodEmojiInput" maxlength="8" value="🥨" aria-label="食べるものの絵文字">
+        <input class="mood-label-input" type="text" id="foodNameInput" maxlength="40" placeholder="食べるものを追加" onkeydown="submitShortcut(event,addFoodItem)">
+        <button class="btn btn-c btn-sm" type="button" onclick="addFoodItem()">＋ 追加</button>
+      </div>
+    </div>
+    <div class="card" id="allMemoCard">
+      <h2>📝 すべてのメモ</h2>
+      <div id="allMemoFeed" class="memo-timeline"></div>
+    </div>
+
+    <!-- SETTINGS -->
     <div class="card">
       <h2>💬 今日のひとことプール</h2>
       <p class="muted">どのルーチンでもランダムに読み上げられる汎用テキスト（豆知識・励まし・自作ニュースなど）。</p>
@@ -841,7 +831,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 <div class="tabbar">
   <button class="on" data-scr="scr-home" onclick="tab(this)"><span class="ti">🏠</span>ホーム</button>
   <button data-scr="scr-prog" onclick="tab(this)"><span class="ti">📊</span>進捗</button>
-  <button data-scr="scr-manage" onclick="tab(this)"><span class="ti">🗂️</span>記録</button>
+  <button data-scr="scr-meal" onclick="tab(this)"><span class="ti">🍽</span>食事</button>
   <button data-scr="scr-set" onclick="tab(this)"><span class="ti">⚙️</span>設定</button>
 </div>
 
@@ -1204,14 +1194,15 @@ function tab(btn){
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  const nav=document.querySelector(`.tabbar button[data-scr="${id}"]`);
+  if(nav){document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('on'));nav.classList.add('on');}
   if(id==='scr-home')renderHome();
   if(id==='scr-meal')renderMeal();
   if(id==='scr-prog')renderProg();
-  if(id==='scr-manage')renderManage();
-  if(id==='scr-set')renderSet();
+  if(id==='scr-set'){renderManage();renderSet();}
 }
 function openManage(section){
-  const btn=document.querySelector('.tabbar button[data-scr="scr-manage"]');
+  const btn=document.querySelector('.tabbar button[data-scr="scr-set"]');
   tab(btn);
   if(section==='memos')requestAnimationFrame(()=>document.getElementById('allMemoCard').scrollIntoView({behavior:'smooth',block:'start'}));
   if(section==='moods')requestAnimationFrame(()=>document.getElementById('moodManageCard').scrollIntoView({behavior:'smooth',block:'start'}));
@@ -1223,8 +1214,6 @@ function renderHome(){
   document.getElementById('hStreak').textContent=streak();
   document.getElementById('hLevel').textContent=levelInfo().level;
   const el=document.getElementById('routineList');el.innerHTML='';
-  renderMealCard();
-  renderRecallCard();
   renderPersonalNotes();
   renderMoodButtons();
   renderHabits();
@@ -1397,7 +1386,7 @@ function addPersonalNote(){
   memoVoiceKeepAlive=false;
   if(memoRecognition)try{memoRecognition.stop();}catch(e){}
   input.value='';input.blur();updateMemoCount();save();renderPersonalNotes();renderActivityTimeline();
-  if(document.getElementById('scr-manage').classList.contains('active'))renderAllNotes();
+  if(document.getElementById('scr-set').classList.contains('active'))renderAllNotes();
   toast('📮 メモしました');sfxDone();
 }
 function addRunNote(){
@@ -2578,7 +2567,7 @@ function urgeToMeal(){
   mealState.pendingUrgeId=u.id;
   // 衝動が強いときにタップ数を増やさない。前回の食事があればそのまま開始へ進む
   if(latestClosedMeal()){requestMealStart('same');return;}
-  renderUrgeUi();showScreen('scr-meal');
+  mealState.freeOpen=true;renderUrgeUi();showScreen('scr-meal');
 }
 function beginUrgeItems(targetId=null){
   const u=targetId?D.urgeLogs.find(x=>x.id===targetId&&!x.deletedAt):null;
@@ -3014,7 +3003,9 @@ function renderMealCard(){
   if(mealState.view==='timing'){show(mealTimingHtml());return;}
   if(!s){
     const last=latestClosedMeal(),open=openUrge(),cascade=recentCascadeSession();
-    show(`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':'<button class="btn btn-c" type="button" onclick="showScreen(\'scr-meal\')">はじめる</button>'}<button class="btn btn-g" type="button" onclick="showScreen('scr-meal')">選ぶ</button><button class="btn btn-g meal-urge-btn" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)">⚡</button></div>${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`);return;
+    const freeButton='<button class="btn btn-g" type="button" onclick="mealState.freeOpen=!mealState.freeOpen;renderMealCard()">✏️ 入力</button>';
+    const freeInput=mealState.freeOpen?'<div class="meal-inline"><input type="text" id="mealFreeInput" maxlength="60" placeholder="何を食べる？（例：コンビニ弁当）" onkeydown="submitShortcut(event,startFreeMealFromInput)"><button class="btn btn-c btn-sm" type="button" onclick="startFreeMealFromInput()">はじめる</button></div>':'';
+    show(`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':freeButton}${last?freeButton:''}<button class="btn btn-g meal-urge-btn" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)">⚡</button></div>${freeInput}${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`);return;
   }
   if(mealState.view==='eating')show(mealEatingHtml(s));
   else if(mealState.view==='afterMeal')show(mealAfterMealHtml(s)+cascadeButtonHtml(s));
@@ -3029,8 +3020,7 @@ function renderMealCard(){
 }
 function renderMeal(){
   syncMealViewFromData();
-  const meta=document.getElementById('mealHeadMeta');if(meta)meta.textContent=activeMealSession()?'記録の途中です':'今の食事を迷わず記録';
-  renderMealRules();renderMealActive();renderMealStart();renderMealHistory();
+  renderMealCard();renderRecallCard();renderMealHistory();
 }
 function renderMealRules(){
   const el=document.getElementById('mealRules');if(!el)return;
@@ -3148,7 +3138,7 @@ function renderRecallCard(){
   const recall=urgeRecallHtml(null,Date.now(),3,null,false);
   const empty=!today.length&&!D.urgeLogs.some(u=>!u.deletedAt);
   el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>🔎 ふりかえり</strong></div>`
-    +`<button class="text-link" type="button" onclick="showScreen('scr-meal')">すべて見る →</button></div>`
+    +`<button class="text-link" type="button" onclick="openMealHistory()">履歴を見る ↓</button></div>`
     +(empty?'<p class="muted" style="margin-top:6px">まだ記録がありません。⚡を押すと、ここに残ります。</p>'
       :(today.length?`<p class="urge-recall-head" style="margin-top:6px">今日</p>`
         +today.map(i=>`<div class="urge-recall-row">${hhmm(i.at)} ${i.text}</div>`).join(''):'')
@@ -3156,6 +3146,10 @@ function renderRecallCard(){
 }
 function hhmm(s){const d=new Date(Number(s)||0);
   return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function openMealHistory(){
+  showScreen('scr-meal');
+  requestAnimationFrame(()=>document.getElementById('mealHistory').scrollIntoView({behavior:'smooth',block:'start'}));
+}
 function urgeResultLabel(u){
   if(u.outcome==='ate'){const items=mealItemsLabel(u.items);return `食べた${items?`(${items})`:''}`;}
   if(u.outcome==='settled'){const by=(u.settledBy||[]).map(urgeSettlerLabel).join('・');return `収まった${by?`(${by})`:''}`;}
