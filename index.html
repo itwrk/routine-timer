@@ -236,6 +236,11 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .meal-editor-items{display:flex;flex-direction:column;gap:5px;margin:7px 0}
 .meal-editor-item{display:grid;grid-template-columns:1fr 82px 28px;gap:5px;align-items:center}
 .meal-editor-item input{min-width:0;padding:6px;font-size:11px}.meal-editor-item button{padding:4px;background:none;border:none;color:var(--pink)}
+#mealWaitBar{position:fixed;z-index:110;bottom:calc(56px + max(10px,env(safe-area-inset-bottom)));left:8px;right:8px;max-width:520px;margin:0 auto;background:var(--card2);border:1px solid var(--gold);border-radius:14px;padding:7px 9px;box-shadow:0 0 18px rgba(255,201,60,.3);display:none}
+#mealWaitBar.show{display:block}#mealWaitBar.done{border-color:var(--mint);animation:mealWaitDone 1.2s ease-in-out infinite alternate}
+@keyframes mealWaitDone{to{box-shadow:0 0 24px rgba(61,255,168,.58)}}
+.meal-wait-actions{display:flex;gap:4px;margin-top:5px}.meal-wait-actions button{flex:1;min-width:0;font-size:10px;white-space:nowrap;padding:7px 2px;border-radius:9px}
+body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-bottom:calc(105px + env(safe-area-inset-bottom))}
 @media(max-width:390px){.meal-choice button{font-size:12px}.meal-card-idle{gap:5px}.meal-card-idle .btn{padding:8px 7px}.meal-editor-item{grid-template-columns:1fr 68px 26px}}
 
 /* tab bar */
@@ -794,6 +799,8 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 
 <canvas id="fx"></canvas>
 <div id="jackpot"><div class="jp"><div class="jt" id="jpText">JACKPOT!!</div><div class="js" id="jpSub"></div></div></div>
+
+<div id="mealWaitBar" role="status" aria-live="off"></div>
 
 <div class="tabbar">
   <button class="on" data-scr="scr-home" onclick="tab(this)"><span class="ti">🏠</span>ホーム</button>
@@ -2412,7 +2419,7 @@ function normalizeFoodRule(r){
 
 let mealState={
   waitTimer:null,activeId:null,view:'idle',tagOpen:false,beforeOpen:false,freeOpen:false,tplEditId:null,
-  pendingStart:null,tplDraftItems:[],tplDraftMeta:null,beforeDetailOpen:false,ruleOpen:false
+  pendingStart:null,tplDraftItems:[],tplDraftMeta:null,beforeDetailOpen:false,ruleOpen:false,finishedWaitId:null
 };
 
 function activeMealSession(){
@@ -2425,6 +2432,10 @@ function activeMealSession(){
   const active=list[0]||null;
   mealState.activeId=active?active.id:null;
   return active;
+}
+function activeWait(){
+  const s=activeMealSession();if(!s||!Array.isArray(s.waits)||!s.waits.length)return null;
+  const w=s.waits[s.waits.length-1];return w&&w.completedAt===null?w:null;
 }
 function syncMealViewFromData(){
   const previous=mealState.activeId;
@@ -2486,7 +2497,7 @@ function startFreeMealFromInput(){
 }
 function finishPreviousAndStart(){
   const pending=mealState.pendingStart,old=activeMealSession();
-  if(old){old.status='closed';old.updatedAt=Date.now();if(!old.endedAt)old.endedAt=Date.now();save();}
+  if(old){stopMealWaitTimer();old.status='closed';old.updatedAt=Date.now();if(!old.endedAt)old.endedAt=Date.now();save();}
   mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
   if(pending)executeMealStart(pending.kind,pending.value);
 }
@@ -2506,6 +2517,36 @@ function setAfterMealUrge(v){
   const urge=mealScore(Number(v));
   if(!s.afterMeal)s.afterMeal={urge,tags:[],at:Date.now()};else{s.afterMeal.urge=urge;s.afterMeal.at=Date.now();}
   mealState.view='afterMeal';touchMeal(s);renderMealCard();renderMealActive();
+}
+function startMealWait(sec){
+  const s=activeMealSession();if(!s)return;
+  const plannedSec=[300,600].includes(Number(sec))?Number(sec):Math.max(1,Number(sec)||D.mealPrefs.defaultWaitSec||300),now=Date.now();
+  s.waits.push(normalizeMealWait({id:uid(),plannedSec,startedAt:now,endsAt:now+plannedSec*1000,completedAt:null,endedBy:null,actions:[]}));
+  s.status='waiting';s.afterWait=null;mealState.view='waiting';mealState.finishedWaitId=null;touchMeal(s);startMealWaitTimer();renderMealCard();renderMealActive();
+  toast(`⏳ ${Math.round(plannedSec/60)}分の待機をはじめました`);
+}
+function addWaitAction(actionId){
+  const s=activeMealSession(),w=activeWait();if(!s||!w||!MEAL_WAIT_ACTIONS.some(a=>a.id===actionId))return;
+  if(!w.actions.includes(actionId))w.actions.push(actionId);touchMeal(s);renderMealWaitBar(mealWaitRemainMs());
+  const a=MEAL_WAIT_ACTIONS.find(x=>x.id===actionId);toast(`${actionId==='water'?'💧':'🍽'} ${a.label}を記録しました`);
+}
+function endMealWait(endedBy){
+  const s=activeMealSession(),w=activeWait();if(!s||!w){stopMealWaitTimer();return;}
+  w.completedAt=Date.now();w.endedBy=['time','calm','still_hungry','cancel'].includes(endedBy)?endedBy:'cancel';
+  s.status='eating';mealState.view='afterWait';stopMealWaitTimer();touchMeal(s);renderMealWaitBar(0);renderMealCard();renderMealActive();
+}
+function setAfterWaitUrge(v){
+  const s=activeMealSession();if(!s)return;const urge=mealScore(Number(v));
+  if(!s.afterWait)s.afterWait={urge,change:null,tags:[],at:Date.now()};else{s.afterWait.urge=urge;s.afterWait.at=Date.now();}
+  mealState.view='afterWait';touchMeal(s);renderMealCard();renderMealActive();
+}
+function setMealChange(changeId){
+  const s=activeMealSession();if(!s||!s.afterWait||!MEAL_CHANGES.some(c=>c.id===changeId))return;
+  s.afterWait.change=changeId;s.afterWait.at=Date.now();mealState.view='afterWait';touchMeal(s);renderMealCard();renderMealActive();
+}
+function recordMealIncrease(){
+  const s=activeMealSession();if(!s)return;
+  s.note=[s.note,'次回は少し増やす'].filter(Boolean).join('／').slice(0,280);touchMeal(s);closeMealSession();
 }
 function toggleMealTag(target,tagId){
   const s=activeMealSession();if(!s||!MEAL_TAGS.some(t=>t.id===tagId))return;
@@ -2527,14 +2568,14 @@ function addExtraItem(name){
 }
 function closeMealSession(){
   const s=activeMealSession();if(!s)return;
-  s.status='closed';if(!s.endedAt)s.endedAt=Date.now();s.updatedAt=Date.now();mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
+  stopMealWaitTimer();s.status='closed';if(!s.endedAt)s.endedAt=Date.now();s.updatedAt=Date.now();mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
   save();renderMealCard();renderMeal();toast('📗 今回の食事を記録しました');
 }
 function deleteMealSession(id){
   const s=D.mealSessions.find(x=>x.id===id);if(!s)return;
   const now=Date.now();s.deletedAt=now;s.updatedAt=now;s.status='closed';s.items=[];s.note='';
   if(s.afterMeal)s.afterMeal.tags=[];if(s.afterWait)s.afterWait.tags=[];if(s.extra)s.extra.items=[];
-  if(mealState.activeId===id){mealState.activeId=null;mealState.view='idle';}
+  if(mealState.activeId===id){stopMealWaitTimer();mealState.activeId=null;mealState.view='idle';}
   save();renderMealCard();renderMealHistory();renderMealActive();toast('🗑 食事の記録を削除しました');
 }
 function saveSessionAsTemplate(sessionId){
@@ -2632,7 +2673,24 @@ function mealAfterMealHtml(s){
   const a=s.afterMeal;
   if(!a||a.urge===null)return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a?a.urge:null,'setAfterMealUrge')}<button class="text-link" type="button" onclick="closeMealSession()" style="margin-top:8px">入力せず終える</button>`;
   const low=a.urge<=3;
-  return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a.urge,'setAfterMealUrge')}<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.tagOpen=!mealState.tagOpen;renderMealCard();renderMealActive()">${mealState.tagOpen?'▾':'▸'} なぜそう感じたか（任意）</button><div class="meal-fold-body ${mealState.tagOpen?'open':''}"><p class="muted">思い当たるものがあれば（任意・複数可）</p>${mealTagsHtml('afterMeal',a.tags)}</div></div>${low?'<p class="muted" style="margin-top:8px">記録しました。おつかれさま。</p>':'<p class="muted" style="margin-top:8px">食事はここまで。<br>水かお茶を飲んで、5分後にもう一度きいてみますか？</p>'}<div class="meal-choice"><button class="btn btn-g" type="button" onclick="closeMealSession()">いまは終える</button><button class="btn btn-g" type="button" onclick="chooseMealExtra('before_wait')">🍚 追加で食べる</button></div>`;
+  const choices=low?`<button class="btn btn-g" type="button" onclick="closeMealSession()">終える</button><button class="btn btn-g" type="button" onclick="startMealWait(${D.mealPrefs.defaultWaitSec||300})">それでも少し待つ</button>`:`<button class="btn btn-g" type="button" onclick="startMealWait(300)">⏳ 5分待つ</button><button class="btn btn-g" type="button" onclick="startMealWait(600)">⏳ 10分待つ</button><button class="btn btn-g" type="button" onclick="closeMealSession()">いまは終える</button><button class="btn btn-g" type="button" onclick="chooseMealExtra('before_wait')">🍚 追加で食べる</button>`;
+  return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a.urge,'setAfterMealUrge')}<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.tagOpen=!mealState.tagOpen;renderMealCard();renderMealActive()">${mealState.tagOpen?'▾':'▸'} なぜそう感じたか（任意）</button><div class="meal-fold-body ${mealState.tagOpen?'open':''}"><p class="muted">思い当たるものがあれば（任意・複数可）</p>${mealTagsHtml('afterMeal',a.tags)}</div></div>${low?'<p class="muted" style="margin-top:8px">記録しました。おつかれさま。</p>':'<p class="muted" style="margin-top:8px">食事はここまで。<br>水かお茶を飲んで、5分後にもう一度きいてみますか？</p>'}<div class="meal-choice">${choices}</div>`;
+}
+function mealAfterWaitHtml(s){
+  const a=s.afterWait,last=s.afterMeal&&s.afterMeal.urge;
+  if(!a||a.urge===null)return `<p style="font-weight:800;margin-top:8px">いま、どのくらい食べたい？</p>${last!==null&&last!==undefined?`<p class="muted">さっきは ${last}</p>`:''}${mealScaleHtml(a?a.urge:null,'setAfterWaitUrge')}<button class="text-link" type="button" onclick="closeMealSession()" style="margin-top:8px">入力せず終える</button>`;
+  const changeButtons=MEAL_CHANGES.map(c=>`<button class="btn btn-g" type="button" onclick="setMealChange('${c.id}')">${c.emoji} ${c.label}</button>`).join('');
+  const tags=`<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.tagOpen=!mealState.tagOpen;renderMealCard();renderMealActive()">${mealState.tagOpen?'▾':'▸'} なぜそう感じたか（任意）</button><div class="meal-fold-body ${mealState.tagOpen?'open':''}"><p class="muted">思い当たるものがあれば（任意・複数可）</p>${mealTagsHtml('afterWait',a.tags)}</div></div>`;
+  if(!a.change)return `<p style="font-weight:800;margin-top:8px">いま、どのくらい食べたい？</p><p class="muted">さっきは ${last??'未入力'}</p>${mealScaleHtml(a.urge,'setAfterWaitUrge')}<div class="meal-choice">${changeButtons}</div>${tags}`;
+  if(['eased','slightly'].includes(a.change))return `<p class="muted" style="margin-top:8px">記録しました。今回はこうだった、でOK。</p>${tags}<button class="btn btn-p btn-full btn-sm" type="button" onclick="closeMealSession()" style="margin-top:8px">終える</button>`;
+  return `<p class="muted" style="margin-top:8px">10分たっても続くなら、身体が必要としているのかもしれません。<br>追加で食べる・次回の量を増やす、どちらも記録できます。</p>${tags}<div class="meal-choice"><button class="btn btn-g" type="button" onclick="chooseMealExtra('after_wait')">🍚 追加で食べる</button><button class="btn btn-g" type="button" onclick="recordMealIncrease()">📝 次回は増やす</button><button class="btn btn-g" type="button" onclick="startMealWait(300)">⏳ もう5分待つ</button><button class="btn btn-g" type="button" onclick="closeMealSession()">終える</button></div>`;
+}
+function mealStaleHtml(s){
+  const hours=Math.max(6,Math.floor((Date.now()-(s.startedAt||Date.now()))/3600000));
+  return `<p style="font-weight:800">${hours}時間前の食事がまだ記録の途中です。このまま記録を終えますか？</p><div class="meal-choice"><button class="btn btn-g" type="button" onclick="closeMealSession()">記録を終える</button><button class="btn btn-c" type="button" onclick="continueStaleMeal()">続きを入力する</button></div>`;
+}
+function continueStaleMeal(){
+  const s=activeMealSession();if(!s)return;mealState.view=s.endedAt?'afterMeal':'eating';renderMealCard();renderMealActive();
 }
 function mealExtraHtml(s){
   const choices=['鶏胸肉','野菜','めかぶ','ゆで卵','主食','その他'],selected=(s.extra&&s.extra.items||[]).map(i=>i.name);
@@ -2652,7 +2710,13 @@ function renderMealCard(){
   }
   if(mealState.view==='eating')el.innerHTML=mealEatingHtml(s);
   else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s);
+  else if(mealState.view==='waiting'){
+    const ms=mealWaitRemainMs(),done=ms<=0;
+    el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>${done?'⏳ 待機時間は終わっています':`⏳ あと ${mealWaitTime(ms)}`}</strong><div class="muted">${esc(s.label)}</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">食事サポートを開く</button></div>`;
+  }
+  else if(mealState.view==='afterWait')el.innerHTML=mealAfterWaitHtml(s);
   else if(mealState.view==='extra')el.innerHTML=mealExtraHtml(s);
+  else if(mealState.view==='stale')el.innerHTML=mealStaleHtml(s);
   else el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>🍽 ${esc(s.label)}</strong><div class="muted">記録を続けられます</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">開く</button></div>`;
 }
 function renderMeal(){
@@ -2671,7 +2735,10 @@ function renderMealActive(){
   const s=syncMealViewFromData();if(!s){el.innerHTML='';return;}
   if(mealState.view==='eating')el.innerHTML=mealEatingHtml(s);
   else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s);
+  else if(mealState.view==='waiting')el.innerHTML='<p class="muted" style="margin-top:8px">待機中です。画面下のバーから記録できます。</p>';
+  else if(mealState.view==='afterWait')el.innerHTML=mealAfterWaitHtml(s);
   else if(mealState.view==='extra')el.innerHTML=mealExtraHtml(s);
+  else if(mealState.view==='stale')el.innerHTML=mealStaleHtml(s);
   else el.innerHTML='';
 }
 function renderMealStart(){
@@ -2716,6 +2783,58 @@ function renderMealTemplateManager(){
     }
   }
 }
+function mealWaitRemainMs(){const w=activeWait();return w?Math.max(0,w.endsAt-Date.now()):0;}
+function mealWaitTime(ms){
+  const sec=Math.max(0,Math.ceil(ms/1000));return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+}
+function startMealWaitTimer(){
+  stopMealWaitTimer();mealWaitTick();
+  if(activeWait()&&mealWaitRemainMs()>0)mealState.waitTimer=setInterval(mealWaitTick,1000);
+}
+function stopMealWaitTimer(){if(mealState.waitTimer!==null)clearInterval(mealState.waitTimer);mealState.waitTimer=null;}
+function mealWaitTick(){
+  const w=activeWait();if(!w){stopMealWaitTimer();renderMealWaitBar(0);return;}
+  const ms=mealWaitRemainMs();renderMealWaitBar(ms);renderMealCard();if(ms<=0)onMealWaitFinished(false);
+}
+function onMealWaitFinished(silent){
+  const w=activeWait();if(!w)return;stopMealWaitTimer();renderMealWaitBar(0);renderMealCard();
+  if(mealState.finishedWaitId===w.id)return;mealState.finishedWaitId=w.id;
+  if(silent)return;
+  const min=Math.max(1,Math.round((w.plannedSec||300)/60));toast(`⏳ ${min}分たちました`);
+  if(D.mealPrefs.soundOnWaitEnd&&D.settings.sound)poan(660,.3,.12);
+  if(D.mealPrefs.speakOnWaitEnd&&!(run&&!run.paused))speak(`${min}分たちました。いま、どのくらい食べたい気持ちですか。`);
+}
+function renderMealWaitBar(remainMs){
+  const el=document.getElementById('mealWaitBar');if(!el)return;
+  const s=activeMealSession(),w=activeWait(),show=!!(s&&s.status==='waiting'&&w);
+  el.classList.toggle('show',show);document.body.classList.toggle('meal-waiting',show);
+  if(!show){el.classList.remove('done');el.innerHTML='';return;}
+  const done=remainMs<=0,min=Math.max(1,Math.round((w.plannedSec||300)/60));el.classList.toggle('done',done);
+  el.innerHTML=done?`<div class="meal-card-row"><strong class="meal-grow">⏳ ${min}分たちました</strong><button class="btn btn-p btn-sm" type="button" onclick="endMealWait('time')">答える</button></div>`:`<div><strong>⏳ あと ${mealWaitTime(remainMs)}</strong><div class="muted">水を飲む、片づける。好きに過ごしてOK</div></div><div class="meal-wait-actions"><button class="btn btn-g" type="button" onclick="addWaitAction('water')">💧水</button><button class="btn btn-g" type="button" onclick="addWaitAction('dishes')">🍽片づけ</button><button class="btn btn-g" type="button" onclick="endMealWait('calm')">✅落ち着いた</button><button class="btn btn-g" type="button" onclick="endMealWait('still_hungry')">🍚まだ食べたい</button></div>`;
+}
+function resumeMealWait(){
+  const w=activeWait();if(!w){stopMealWaitTimer();renderMealWaitBar(0);return;}
+  const ms=mealWaitRemainMs();if(ms<=0){stopMealWaitTimer();renderMealWaitBar(0);mealState.finishedWaitId=w.id;renderMealCard();return;}
+  renderMealWaitBar(ms);if(mealState.waitTimer===null)mealState.waitTimer=setInterval(mealWaitTick,1000);
+}
+function restoreMealState(){
+  stopMealWaitTimer();mealState.finishedWaitId=null;mealState.activeId=null;mealState.view='idle';
+  const s=activeMealSession();if(!s){renderMealWaitBar(0);renderMealCard();return;}
+  if(s.status==='waiting'){
+    const w=activeWait();
+    if(!w){s.status='eating';mealState.view=s.endedAt?'afterMeal':'eating';touchMeal(s);renderMealWaitBar(0);}
+    else if(w.endsAt>Date.now()){mealState.view='waiting';startMealWaitTimer();}
+    else{mealState.view='waiting';mealState.finishedWaitId=w.id;renderMealWaitBar(0);}
+  }else if(!s.endedAt&&Date.now()-(s.startedAt||Date.now())>=6*60*60*1000){mealState.view='stale';renderMealWaitBar(0);}
+  else if(s.extra&&s.extra.ate)mealState.view='extra';
+  else if(s.endedAt&&s.afterWait)mealState.view='afterWait';
+  else if(s.endedAt)mealState.view='afterMeal';
+  else mealState.view='eating';
+  renderMealCard();renderMealActive();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeMealWait();});
+window.addEventListener('focus',resumeMealWait);
+window.addEventListener('pageshow',resumeMealWait);
 /* ============ 🍽 MEAL SUPPORT END ============ */
 
 /* ============ ☁️ 端末間同期 (GAS) ============ */
@@ -2990,14 +3109,14 @@ function restoreAll(input){
   rd.onload=()=>{
     try{
       D=normalizeData(JSON.parse(rd.result));
-      save();toast('✅ 復元しました');renderHome();
+      save();stopMealWaitTimer();renderHome();restoreMealState();toast('✅ 復元しました');
     }catch(e){toast('⚠️ 読み込みに失敗しました');}
     input.value='';
   };
   rd.readAsText(f,'utf-8');
 }
 function resetAll(){
-  D=seed();save();renderHome();toast('🧹 初期化しました');
+  stopMealWaitTimer();D=seed();save();renderHome();renderMealWaitBar(0);toast('🧹 初期化しました');
 }
 
 // ボタン押下：やわらかいポワン＋光の波紋。クリック成立時にバネで戻す
@@ -3015,6 +3134,7 @@ document.addEventListener('click',e=>{
 },true);
 
 renderHome();
+restoreMealState();
 setInterval(()=>{
   const home=document.getElementById('scr-home');
   if(home&&home.classList.contains('active'))renderHabits();
