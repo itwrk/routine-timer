@@ -215,6 +215,7 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .meal-card-idle,.meal-card-row{display:flex;align-items:center;gap:7px}
 .meal-card-idle strong,.meal-card-row .meal-grow{flex:1;min-width:0}
 .meal-card-idle .btn,.meal-card-row .btn{white-space:nowrap;flex-shrink:0;padding:8px 10px;font-size:11px}
+.meal-card-idle .meal-urge-btn{width:44px;height:44px;min-width:44px;padding:0;font-size:17px;display:flex;align-items:center;justify-content:center}
 .meal-scale-anchor{display:flex;justify-content:space-between;color:var(--dim);font-size:9px;margin:5px 1px 3px}
 .meal-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .meal-scale button{min-width:0;min-height:44px;background:var(--card2);border:1px solid var(--line2);border-radius:10px;color:var(--text);font-size:14px;font-weight:800;cursor:pointer}
@@ -2557,7 +2558,9 @@ function commitUrge(outcome,extraFields={}){
 function urgeToMeal(){
   const u=commitUrge('ate');
   mealState.pendingUrgeId=u.id;
-  renderUrgeUi();
+  // 衝動が強いときにタップ数を増やさない。前回の食事があればそのまま開始へ進む
+  if(latestClosedMeal()){requestMealStart('same');return;}
+  renderUrgeUi();showScreen('scr-meal');
 }
 function beginUrgeItems(targetId=null){
   const u=targetId?D.urgeLogs.find(x=>x.id===targetId&&!x.deletedAt):null;
@@ -2989,7 +2992,7 @@ function renderMealCard(){
   if(mealState.view==='timing'){show(mealTimingHtml());return;}
   if(!s){
     const last=latestClosedMeal(),open=openUrge(),cascade=recentCascadeSession();
-    show(`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':'<button class="btn btn-c" type="button" onclick="showScreen(\'scr-meal\')">はじめる</button>'}<button class="btn btn-g" type="button" onclick="showScreen('scr-meal')">選ぶ</button><button class="btn btn-g" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)" style="width:36px;height:36px;padding:0">⚡</button></div>${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`);return;
+    show(`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':'<button class="btn btn-c" type="button" onclick="showScreen(\'scr-meal\')">はじめる</button>'}<button class="btn btn-g" type="button" onclick="showScreen('scr-meal')">選ぶ</button><button class="btn btn-g meal-urge-btn" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)">⚡</button></div>${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`);return;
   }
   if(mealState.view==='eating')show(mealEatingHtml(s));
   else if(mealState.view==='afterMeal')show(mealAfterMealHtml(s)+cascadeButtonHtml(s));
