@@ -208,6 +208,36 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .cal-event-time{color:var(--gold);min-width:42px;flex-shrink:0}
 .cal-event-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* ===== meal support ===== */
+.meal-card{border-color:rgba(255,201,60,.55);padding:8px 10px}
+.meal-card-idle,.meal-card-row{display:flex;align-items:center;gap:7px}
+.meal-card-idle strong,.meal-card-row .meal-grow{flex:1;min-width:0}
+.meal-card-idle .btn,.meal-card-row .btn{white-space:nowrap;flex-shrink:0;padding:8px 10px;font-size:11px}
+.meal-scale-anchor{display:flex;justify-content:space-between;color:var(--dim);font-size:9px;margin:5px 1px 3px}
+.meal-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.meal-scale button{min-width:0;min-height:44px;background:var(--card2);border:1px solid #5149a5;border-radius:10px;color:var(--text);font-size:14px;font-weight:800;cursor:pointer}
+.meal-scale button[aria-pressed="true"]{background:var(--cyan);border-color:var(--cyan);color:#102b35;box-shadow:0 0 11px rgba(53,224,255,.35)}
+.meal-choice{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.meal-choice button{white-space:nowrap;padding:12px 6px;font-size:13px}
+.meal-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.meal-tags button{background:var(--card2);border:1px solid #5149a5;border-radius:999px;color:var(--text);padding:6px 8px;font-size:10px;white-space:nowrap}
+.meal-tags button.on{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 8px rgba(53,224,255,.22)}
+.meal-fold{margin-top:8px;border-top:1px dashed #3a3480;padding-top:6px}
+.meal-fold-head{background:none;border:none;color:var(--cyan);font-size:11px;font-weight:700;padding:3px 0;text-align:left;cursor:pointer;white-space:nowrap}
+.meal-fold-body{display:none;margin-top:6px}.meal-fold-body.open{display:block}
+.meal-tpl-row,.meal-hist-row{display:flex;align-items:center;gap:7px;padding:7px 1px;border-bottom:1px dashed #3a3480}
+.meal-tpl-row .meal-tpl-name,.meal-hist-row .meal-hist-main{flex:1;min-width:0}
+.meal-tpl-row .meal-tpl-name,.meal-hist-title{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meal-tpl-row button,.meal-hist-row button{white-space:nowrap;flex-shrink:0;padding:7px 8px;font-size:10px}
+.meal-hist-meta{color:var(--dim);font-size:9px;margin-top:2px}
+.meal-rule{display:flex;align-items:center;gap:6px;background:rgba(255,201,60,.08);border-left:3px solid var(--gold);border-radius:8px;padding:6px 8px;margin:4px 0;font-size:11px}
+.meal-rule span{flex:1;min-width:0;overflow-wrap:anywhere}.meal-rule button{background:none;border:none;color:var(--dim);padding:3px;font-size:10px}
+.meal-inline{display:flex;gap:6px;margin-top:7px}.meal-inline input{flex:1;min-width:0}.meal-inline button{white-space:nowrap;flex-shrink:0}
+.meal-editor-items{display:flex;flex-direction:column;gap:5px;margin:7px 0}
+.meal-editor-item{display:grid;grid-template-columns:1fr 82px 28px;gap:5px;align-items:center}
+.meal-editor-item input{min-width:0;padding:6px;font-size:11px}.meal-editor-item button{padding:4px;background:none;border:none;color:var(--pink)}
+@media(max-width:390px){.meal-choice button{font-size:12px}.meal-card-idle{gap:5px}.meal-card-idle .btn{padding:8px 7px}.meal-editor-item{grid-template-columns:1fr 68px 26px}}
+
 /* tab bar */
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:4px;background:rgba(18,16,42,.92);backdrop-filter:blur(10px);border-top:1px solid #322c6e;padding:8px max(8px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-bottom));z-index:50}
 .tabbar button{flex:1;max-width:130px;background:none;border:none;color:var(--dim);font-size:11px;font-weight:700;cursor:pointer;padding:6px 4px;border-radius:12px}
@@ -433,6 +463,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       </div>
       <div id="personalMemoFeed" class="memo-feed"></div>
     </div>
+    <div class="card meal-card" id="mealCard"></div>
     <div class="card" id="habitCard">
       <div class="habit-head"><h2>✅ 今日のチェックリスト</h2><span class="habit-score" id="habitScore">0 / 0</span></div>
       <div class="habit-bar"><div id="habitBarFill" style="width:0%"></div></div>
@@ -472,6 +503,23 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     </div>
   </div>
 
+  <div class="screen" id="scr-meal">
+    <div class="card">
+      <div class="preview-head">
+        <div class="preview-emoji">🍽</div>
+        <div class="preview-title"><h2>食事サポート</h2><p class="muted" id="mealHeadMeta"></p></div>
+        <button class="edit-btn" type="button" onclick="showScreen('scr-home')" style="background:none;border:none;color:var(--cyan);font-size:14px;padding:7px">← 戻る</button>
+      </div>
+      <div id="mealRules"></div>
+      <div id="mealActive"></div>
+      <div id="mealStart"></div>
+    </div>
+    <div class="card">
+      <h2>📗 最近の食事</h2>
+      <div id="mealHistory"></div>
+    </div>
+  </div>
+
   <!-- MANAGE / NOTES -->
   <div class="screen" id="scr-manage">
     <div class="card" id="habitManageCard">
@@ -497,6 +545,15 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <h2>📚 ステップライブラリを管理</h2>
       <p class="muted">各ルーチンに保存されているステップを編集できます。🔗共有ステップの変更は、同じステップを使うすべてのルーチンに反映されます。</p>
       <div id="stepLibraryManageList" style="margin-top:6px"></div>
+    </div>
+    <div class="card" id="mealTemplateManageCard">
+      <h2>🍽 食事テンプレを管理</h2>
+      <p class="muted">「はじめる」を押したときの初期内容になります。品目や量は「✏️ 編集」から設定できます。</p>
+      <div id="mealTemplateManageList" style="margin-top:6px"></div>
+      <div class="habit-add">
+        <input type="text" id="mealTplInput" maxlength="60" placeholder="食事テンプレを追加" onkeydown="submitShortcut(event,addMealTemplate)">
+        <button class="btn btn-c btn-sm" type="button" onclick="addMealTemplate()">＋ 追加</button>
+      </div>
     </div>
     <div class="card" id="allMemoCard">
       <h2>📝 すべてのメモ</h2>
@@ -1062,6 +1119,7 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='scr-home')renderHome();
+  if(id==='scr-meal')renderMeal();
   if(id==='scr-prog')renderProg();
   if(id==='scr-manage')renderManage();
   if(id==='scr-set')renderSet();
@@ -1071,6 +1129,7 @@ function openManage(section){
   tab(btn);
   if(section==='memos')requestAnimationFrame(()=>document.getElementById('allMemoCard').scrollIntoView({behavior:'smooth',block:'start'}));
   if(section==='moods')requestAnimationFrame(()=>document.getElementById('moodManageCard').scrollIntoView({behavior:'smooth',block:'start'}));
+  if(section==='mealTemplates')requestAnimationFrame(()=>document.getElementById('mealTemplateManageCard').scrollIntoView({behavior:'smooth',block:'start'}));
 }
 
 /* ============ HOME ============ */
@@ -1078,6 +1137,7 @@ function renderHome(){
   document.getElementById('hStreak').textContent=streak();
   document.getElementById('hLevel').textContent=levelInfo().level;
   const el=document.getElementById('routineList');el.innerHTML='';
+  renderMealCard();
   renderPersonalNotes();
   renderMoodButtons();
   renderHabits();
@@ -1445,7 +1505,7 @@ function toggleTodayTask(task){
   if(D.todayTaskLogs.length>2000)D.todayTaskLogs.length=2000;
   save();renderHabits();renderActivityTimeline();sfxDone();toast('✅ 今日の項目を記録しました！');
 }
-function renderManage(){renderHabitManager();renderMoodManager();renderStepLibraryManager();renderAllNotes();}
+function renderManage(){renderHabitManager();renderMoodManager();renderStepLibraryManager();renderMealTemplateManager();renderAllNotes();}
 function renderMoodManager(){
   const el=document.getElementById('moodManageList');
   if(!el)return;
@@ -2348,6 +2408,313 @@ function normalizeFoodRule(r){
   n.source=n.source==='suggested'?'suggested':'manual';n.createdAt=mealNumber(n.createdAt,0);
   n.updatedAt=mealNumber(n.updatedAt,n.createdAt);n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);
   return n;
+}
+
+let mealState={
+  waitTimer:null,activeId:null,view:'idle',tagOpen:false,beforeOpen:false,freeOpen:false,tplEditId:null,
+  pendingStart:null,tplDraftItems:[],tplDraftMeta:null,beforeDetailOpen:false,ruleOpen:false
+};
+
+function activeMealSession(){
+  const list=D.mealSessions.filter(s=>!s.deletedAt&&s.status!=='closed').sort((a,b)=>(b.updatedAt||b.startedAt||0)-(a.updatedAt||a.startedAt||0));
+  if(list.length>1){
+    const now=Date.now();
+    for(const s of list.slice(1)){s.status='closed';s.updatedAt=now;}
+    save();
+  }
+  const active=list[0]||null;
+  mealState.activeId=active?active.id:null;
+  return active;
+}
+function syncMealViewFromData(){
+  const previous=mealState.activeId;
+  const s=activeMealSession();
+  if(!s){mealState.view='idle';mealState.activeId=null;return null;}
+  if(previous!==s.id||mealState.view==='idle'){
+    if(s.status==='waiting')mealState.view='waiting';
+    else if(s.extra&&s.extra.ate)mealState.view='extra';
+    else if(s.endedAt)mealState.view='afterMeal';
+    else mealState.view='eating';
+  }
+  return s;
+}
+function touchMeal(s){s.updatedAt=Date.now();save();}
+function cloneMealItems(items){return (Array.isArray(items)?items:[]).map(i=>({name:i.name||'',amount:i.amount||''}));}
+function latestClosedMeal(){
+  return D.mealSessions.filter(s=>!s.deletedAt&&s.status==='closed').sort((a,b)=>(b.startedAt||0)-(a.startedAt||0))[0]||null;
+}
+function startMealSession(templateId){
+  const template=D.mealTemplates.find(t=>t.id===templateId&&!t.deletedAt);
+  if(!template){toast('食事テンプレが見つかりません');return null;}
+  const now=Date.now();
+  const s=normalizeMealSession({id:uid(),startedAt:now,updatedAt:now,status:'eating',label:template.name,
+    templateId:template.id,items:cloneMealItems(template.items),effortLevel:template.effortLevel});
+  D.mealSessions.push(s);template.useCount=(Number(template.useCount)||0)+1;template.lastUsedAt=now;template.updatedAt=now;
+  mealState.activeId=s.id;mealState.view='eating';mealState.pendingStart=null;save();renderMealCard();renderMeal();toast('🍽 食事をはじめました');
+  return s;
+}
+function startMealSessionSameAsLast(){
+  const last=latestClosedMeal();
+  if(!last){showScreen('scr-meal');return null;}
+  const now=Date.now();
+  const s=normalizeMealSession({id:uid(),startedAt:now,updatedAt:now,status:'eating',label:last.label,
+    templateId:last.templateId,items:cloneMealItems(last.items),effortLevel:last.effortLevel});
+  D.mealSessions.push(s);mealState.activeId=s.id;mealState.view='eating';mealState.pendingStart=null;
+  save();renderMealCard();renderMeal();toast('🍽 食事をはじめました');return s;
+}
+function startFreeMealSession(name){
+  const label=String(name||'').trim().slice(0,60);
+  if(!label){toast('何を食べるか入力してね');return null;}
+  const now=Date.now();
+  const s=normalizeMealSession({id:uid(),startedAt:now,updatedAt:now,status:'eating',label,templateId:null,items:[],effortLevel:''});
+  D.mealSessions.push(s);mealState.activeId=s.id;mealState.view='eating';mealState.freeOpen=false;mealState.pendingStart=null;
+  save();renderMealCard();renderMeal();toast('🍽 食事をはじめました');return s;
+}
+function requestMealStart(kind,value){
+  const active=activeMealSession();
+  if(active){mealState.pendingStart={kind,value:value??null};mealState.view='conflict';renderMealCard();renderMeal();return;}
+  executeMealStart(kind,value);
+}
+function executeMealStart(kind,value){
+  if(kind==='same')startMealSessionSameAsLast();
+  else if(kind==='free')startFreeMealSession(value);
+  else startMealSession(value);
+}
+function startFreeMealFromInput(){
+  const input=document.getElementById('mealFreeInput');
+  requestMealStart('free',input?input.value:'');
+}
+function finishPreviousAndStart(){
+  const pending=mealState.pendingStart,old=activeMealSession();
+  if(old){old.status='closed';old.updatedAt=Date.now();if(!old.endedAt)old.endedAt=Date.now();save();}
+  mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
+  if(pending)executeMealStart(pending.kind,pending.value);
+}
+function continueMealSession(){mealState.pendingStart=null;mealState.view='idle';syncMealViewFromData();renderMealCard();renderMeal();}
+function setMealBefore(field,v){
+  const s=activeMealSession();if(!s)return;
+  if(!s.before)s.before={hunger:null,sleepiness:null,stress:null,at:Date.now()};
+  if(['hunger','sleepiness','stress'].includes(field))s.before[field]=mealScore(Number(v));
+  touchMeal(s);renderMealCard();renderMealActive();
+}
+function endMealEating(){
+  const s=activeMealSession();if(!s)return;
+  if(!s.endedAt)s.endedAt=Date.now();mealState.view='afterMeal';touchMeal(s);renderMealCard();renderMealActive();toast('🍽 食べ終わりを記録しました');
+}
+function setAfterMealUrge(v){
+  const s=activeMealSession();if(!s)return;
+  const urge=mealScore(Number(v));
+  if(!s.afterMeal)s.afterMeal={urge,tags:[],at:Date.now()};else{s.afterMeal.urge=urge;s.afterMeal.at=Date.now();}
+  mealState.view='afterMeal';touchMeal(s);renderMealCard();renderMealActive();
+}
+function toggleMealTag(target,tagId){
+  const s=activeMealSession();if(!s||!MEAL_TAGS.some(t=>t.id===tagId))return;
+  const obj=target==='afterWait'?s.afterWait:s.afterMeal;if(!obj)return;
+  obj.tags=Array.isArray(obj.tags)?obj.tags:[];
+  obj.tags=obj.tags.includes(tagId)?obj.tags.filter(x=>x!==tagId):[...obj.tags,tagId];
+  touchMeal(s);renderMealCard();renderMealActive();
+}
+function setMealExtra(ate,when){
+  const s=activeMealSession();if(!s)return;
+  s.extra={ate:typeof ate==='boolean'?ate:null,when:when||null,items:[],at:Date.now()};touchMeal(s);
+}
+function chooseMealExtra(when){setMealExtra(true,when);mealState.view='extra';renderMealCard();renderMealActive();}
+function addExtraItem(name){
+  const s=activeMealSession();if(!s||!s.extra)return;
+  const item=normalizeMealItem({name,amount:''});
+  if(item.name&&!s.extra.items.some(i=>i.name===item.name))s.extra.items.push(item);
+  touchMeal(s);renderMealCard();renderMealActive();
+}
+function closeMealSession(){
+  const s=activeMealSession();if(!s)return;
+  s.status='closed';if(!s.endedAt)s.endedAt=Date.now();s.updatedAt=Date.now();mealState.activeId=null;mealState.view='idle';mealState.pendingStart=null;
+  save();renderMealCard();renderMeal();toast('📗 今回の食事を記録しました');
+}
+function deleteMealSession(id){
+  const s=D.mealSessions.find(x=>x.id===id);if(!s)return;
+  const now=Date.now();s.deletedAt=now;s.updatedAt=now;s.status='closed';s.items=[];s.note='';
+  if(s.afterMeal)s.afterMeal.tags=[];if(s.afterWait)s.afterWait.tags=[];if(s.extra)s.extra.items=[];
+  if(mealState.activeId===id){mealState.activeId=null;mealState.view='idle';}
+  save();renderMealCard();renderMealHistory();renderMealActive();toast('🗑 食事の記録を削除しました');
+}
+function saveSessionAsTemplate(sessionId){
+  const s=D.mealSessions.find(x=>x.id===sessionId&&!x.deletedAt);if(!s)return;
+  if(D.mealTemplates.some(t=>!t.deletedAt&&t.name===s.label)){toast(`🍽 「${s.label}」は登録済みです`);return;}
+  const now=Date.now();D.mealTemplates.push(normalizeMealTemplate({id:uid(),name:s.label,emoji:'🍽',items:cloneMealItems(s.items),
+    effortLevel:s.effortLevel,builtin:false,useCount:0,lastUsedAt:0,createdAt:now,updatedAt:now}));
+  save();renderMeal();renderMealTemplateManager();toast(`🍽 「${s.label}」をテンプレに保存しました`);
+}
+function addMealTemplate(){
+  const input=document.getElementById('mealTplInput'),name=String(input&&input.value||'').trim().slice(0,60);
+  if(!name){toast('食事テンプレ名を入力してね');return;}
+  const now=Date.now(),t=normalizeMealTemplate({id:uid(),name,emoji:'🍽',createdAt:now,updatedAt:now});
+  D.mealTemplates.push(t);if(input)input.value='';mealState.tplEditId=t.id;mealState.tplDraftItems=[];save();renderMealTemplateManager();toast('💾 食事テンプレを保存しました');
+}
+function openMealTemplateEditor(id){
+  const t=D.mealTemplates.find(x=>x.id===id&&!x.deletedAt);if(!t)return;
+  if(mealState.tplEditId===id){mealState.tplEditId=null;mealState.tplDraftItems=[];mealState.tplDraftMeta=null;}
+  else{mealState.tplEditId=id;mealState.tplDraftItems=cloneMealItems(t.items);mealState.tplDraftMeta={name:t.name,emoji:t.emoji,effortLevel:t.effortLevel};}
+  renderMealTemplateManager();
+}
+function captureMealTemplateDraft(){
+  const editor=document.querySelector('.meal-template-editor');if(!editor)return;
+  mealState.tplDraftMeta={name:editor.querySelector('.meal-edit-name').value,emoji:editor.querySelector('.meal-edit-emoji').value,effortLevel:editor.querySelector('.meal-edit-effort').value};
+  mealState.tplDraftItems=[...editor.querySelectorAll('.meal-editor-item[data-existing="1"]')].map(row=>({name:row.querySelector('.meal-item-name').value,amount:row.querySelector('.meal-item-amount').value}));
+}
+function addMealTemplateItem(){
+  const editor=document.querySelector('.meal-template-editor');if(!editor)return;
+  const name=editor.querySelector('.meal-new-item-name').value.trim().slice(0,40),amount=editor.querySelector('.meal-new-item-amount').value.trim().slice(0,20);
+  if(!name){toast('品目名を入力してね');return;}
+  captureMealTemplateDraft();mealState.tplDraftItems.push({name,amount});renderMealTemplateManager();
+}
+function removeMealTemplateItem(index){captureMealTemplateDraft();mealState.tplDraftItems.splice(index,1);renderMealTemplateManager();}
+function saveMealTemplate(id,patch){
+  const t=D.mealTemplates.find(x=>x.id===id&&!x.deletedAt);if(!t)return;
+  const now=Date.now();
+  if(t.builtin){
+    D.mealTemplates.push(normalizeMealTemplate(Object.assign({},t,patch,{id:uid(),builtin:false,useCount:0,lastUsedAt:0,createdAt:now,updatedAt:now,deletedAt:null})));
+  }else Object.assign(t,patch,{updatedAt:now});
+  mealState.tplEditId=null;mealState.tplDraftItems=[];mealState.tplDraftMeta=null;save();renderMealTemplateManager();renderMealStart();toast('💾 食事テンプレを保存しました');
+}
+function saveMealTemplateEditor(id){
+  const editor=document.querySelector('.meal-template-editor');if(!editor)return;
+  const name=editor.querySelector('.meal-edit-name').value.trim().slice(0,60);if(!name){toast('食事テンプレ名を入力してね');return;}
+  const items=[...editor.querySelectorAll('.meal-editor-item[data-existing="1"]')].map(row=>normalizeMealItem({
+    name:row.querySelector('.meal-item-name').value.trim(),amount:row.querySelector('.meal-item-amount').value.trim()
+  })).filter(i=>i.name);
+  saveMealTemplate(id,{name,emoji:editor.querySelector('.meal-edit-emoji').value.trim().slice(0,8)||'🍽',
+    effortLevel:editor.querySelector('.meal-edit-effort').value,items});
+}
+function deleteMealTemplate(id){
+  const t=D.mealTemplates.find(x=>x.id===id);if(!t)return;
+  const now=Date.now();t.deletedAt=now;t.updatedAt=now;t.items=[];
+  if(mealState.tplEditId===id){mealState.tplEditId=null;mealState.tplDraftItems=[];mealState.tplDraftMeta=null;}
+  save();renderMealTemplateManager();renderMealStart();toast('🗑 テンプレを削除しました（過去の記録は残ります）');
+}
+function createPersonalMealTemplates(){
+  const now=Date.now();
+  const mk=(name,emoji,items,effort)=>({id:uid(),name,emoji,items,effortLevel:effort,builtin:false,useCount:0,lastUsedAt:0,createdAt:now,updatedAt:now,deletedAt:null});
+  D.mealTemplates.push(
+    mk('鶏胸肉＋主食＋ほうれん草','🍗',[{name:'鶏胸肉',amount:''},{name:'主食',amount:''},{name:'冷凍ほうれん草',amount:''}],'microwave'),
+    mk('鶏胸肉＋めかぶ＋ゆで卵','🥚',[{name:'鶏胸肉',amount:''},{name:'めかぶ',amount:''},{name:'ゆで卵',amount:''}],'none')
+  );
+  save();renderMeal();toast('🍽 定番の食事を作りました');
+}
+function addFoodRule(){
+  const input=document.getElementById('mealRuleInput'),text=String(input&&input.value||'').trim().slice(0,120);if(!text)return;
+  const now=Date.now();D.foodRules.push(normalizeFoodRule({id:uid(),text,pinned:D.foodRules.filter(r=>!r.deletedAt&&r.pinned).length<2,createdAt:now,updatedAt:now}));
+  mealState.ruleOpen=false;save();renderMealRules();
+}
+function deleteFoodRule(id){const r=D.foodRules.find(x=>x.id===id);if(!r)return;const now=Date.now();r.deletedAt=now;r.updatedAt=now;r.text='';save();renderMealRules();}
+function toggleFoodRulePin(id){
+  const r=D.foodRules.find(x=>x.id===id&&!x.deletedAt);if(!r)return;
+  if(!r.pinned&&D.foodRules.filter(x=>!x.deletedAt&&x.pinned).length>=2){toast('自分ルールは2件まで表示できます');return;}
+  r.pinned=!r.pinned;r.updatedAt=Date.now();save();renderMealRules();
+}
+function mealScaleHtml(current,handlerName){
+  return `<div class="meal-scale-anchor"><span>ぜんぜん</span><span>とても強い</span></div><div class="meal-scale" role="group" aria-label="もっと食べたい気持ちの強さ">${Array.from({length:11},(_,v)=>`<button type="button" aria-pressed="${current===v?'true':'false'}" data-v="${v}" onclick="${handlerName}(${v})">${v}</button>`).join('')}</div>`;
+}
+function mealTagsHtml(target,selected){
+  const chosen=Array.isArray(selected)?selected:[];
+  return `<div class="meal-tags">${MEAL_TAGS.map(t=>`<button type="button" class="${chosen.includes(t.id)?'on':''}" onclick="toggleMealTag('${target}','${t.id}')">${esc(t.label)}</button>`).join('')}</div>`;
+}
+function mealBeforeHtml(s){
+  const b=s.before||{hunger:null,sleepiness:null,stress:null};
+  return `<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.beforeOpen=!mealState.beforeOpen;renderMealCard();renderMealActive()">${mealState.beforeOpen?'▾':'▸'} 食前の状態を記録（任意）</button><div class="meal-fold-body ${mealState.beforeOpen?'open':''}"><p class="muted">いまの空腹は？</p>${mealScaleForBefore('hunger',b.hunger)}<button class="meal-fold-head" type="button" onclick="mealState.beforeDetailOpen=!mealState.beforeDetailOpen;renderMealCard();renderMealActive()">${mealState.beforeDetailOpen?'▾':'▸'} ＋詳しく（眠気・ストレス）</button>${mealState.beforeDetailOpen?`<p class="muted">眠気</p>${mealScaleForBefore('sleepiness',b.sleepiness)}<p class="muted" style="margin-top:6px">ストレス</p>${mealScaleForBefore('stress',b.stress)}`:''}</div></div>`;
+}
+function mealScaleForBefore(field,current){
+  return `<div class="meal-scale" role="group" aria-label="${field==='hunger'?'空腹':field==='sleepiness'?'眠気':'ストレス'}の強さ">${Array.from({length:11},(_,v)=>`<button type="button" aria-pressed="${current===v?'true':'false'}" onclick="setMealBefore('${field}',${v})">${v}</button>`).join('')}</div>`;
+}
+function mealConflictHtml(){
+  return `<div><p style="font-weight:800">いま記録中の食事があります。</p><div class="meal-choice"><button class="btn btn-g" type="button" onclick="finishPreviousAndStart()">先の食事を終える</button><button class="btn btn-c" type="button" onclick="continueMealSession()">続ける</button></div></div>`;
+}
+function mealAfterMealHtml(s){
+  const a=s.afterMeal;
+  if(!a||a.urge===null)return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a?a.urge:null,'setAfterMealUrge')}<button class="text-link" type="button" onclick="closeMealSession()" style="margin-top:8px">入力せず終える</button>`;
+  const low=a.urge<=3;
+  return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a.urge,'setAfterMealUrge')}<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.tagOpen=!mealState.tagOpen;renderMealCard();renderMealActive()">${mealState.tagOpen?'▾':'▸'} なぜそう感じたか（任意）</button><div class="meal-fold-body ${mealState.tagOpen?'open':''}"><p class="muted">思い当たるものがあれば（任意・複数可）</p>${mealTagsHtml('afterMeal',a.tags)}</div></div>${low?'<p class="muted" style="margin-top:8px">記録しました。おつかれさま。</p>':'<p class="muted" style="margin-top:8px">食事はここまで。<br>水かお茶を飲んで、5分後にもう一度きいてみますか？</p>'}<div class="meal-choice"><button class="btn btn-g" type="button" onclick="closeMealSession()">いまは終える</button><button class="btn btn-g" type="button" onclick="chooseMealExtra('before_wait')">🍚 追加で食べる</button></div>`;
+}
+function mealExtraHtml(s){
+  const choices=['鶏胸肉','野菜','めかぶ','ゆで卵','主食','その他'],selected=(s.extra&&s.extra.items||[]).map(i=>i.name);
+  return `<p style="font-weight:800;margin-top:8px">何を足した？（任意）</p><div class="meal-tags">${choices.map(x=>`<button type="button" class="${selected.includes(x)?'on':''}" onclick="addExtraItem('${x}')">${x}</button>`).join('')}</div><p class="muted" style="margin-top:8px">記録しました。次回の最初の量を見直す材料になります。</p><button class="btn btn-p btn-full btn-sm" type="button" onclick="closeMealSession()" style="margin-top:8px">記録して終える</button>`;
+}
+function mealEatingHtml(s){
+  const min=Math.max(0,Math.floor((Date.now()-(s.startedAt||Date.now()))/60000));
+  return `<div class="meal-card-row"><div class="meal-grow"><strong>🍽 食事中 ・ ${min}分経過</strong><div class="muted">${esc(s.label)}</div></div></div><button class="btn btn-p btn-full btn-sm" type="button" onclick="endMealEating()" style="margin-top:7px">🍽 食べ終わった</button>${mealBeforeHtml(s)}${s.templateId===null?`<button class="btn btn-g btn-sm" type="button" onclick="saveSessionAsTemplate('${s.id}')" style="margin-top:7px">＋テンプレに保存</button>`:''}`;
+}
+function renderMealCard(){
+  const el=document.getElementById('mealCard');if(!el)return;
+  const s=syncMealViewFromData();
+  if(mealState.view==='conflict'){el.innerHTML=mealConflictHtml();return;}
+  if(!s){
+    const last=latestClosedMeal();
+    el.innerHTML=`<div class="meal-card-idle"><strong>🍽 食事</strong>${last?'<button class="btn btn-c" type="button" onclick="requestMealStart(\'same\')">前回と同じ</button>':'<button class="btn btn-c" type="button" onclick="showScreen(\'scr-meal\')">はじめる</button>'}<button class="btn btn-g" type="button" onclick="showScreen('scr-meal')">選ぶ</button></div>`;return;
+  }
+  if(mealState.view==='eating')el.innerHTML=mealEatingHtml(s);
+  else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s);
+  else if(mealState.view==='extra')el.innerHTML=mealExtraHtml(s);
+  else el.innerHTML=`<div class="meal-card-row"><div class="meal-grow"><strong>🍽 ${esc(s.label)}</strong><div class="muted">記録を続けられます</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">開く</button></div>`;
+}
+function renderMeal(){
+  syncMealViewFromData();
+  const meta=document.getElementById('mealHeadMeta');if(meta)meta.textContent=activeMealSession()?'記録の途中です':'今の食事を迷わず記録';
+  renderMealRules();renderMealActive();renderMealStart();renderMealHistory();
+}
+function renderMealRules(){
+  const el=document.getElementById('mealRules');if(!el)return;
+  const rules=D.foodRules.filter(r=>!r.deletedAt).sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||(b.updatedAt||0)-(a.updatedAt||0));
+  el.innerHTML=rules.length?`<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.ruleOpen=!mealState.ruleOpen;renderMealRules()">💡 自分ルール ${mealState.ruleOpen?'▾':'▸'}</button>${rules.filter(r=>r.pinned).slice(0,2).map(r=>`<div class="meal-rule"><span>${esc(r.text)}</span></div>`).join('')}<div class="meal-fold-body ${mealState.ruleOpen?'open':''}">${rules.map(r=>`<div class="meal-rule"><span>${esc(r.text)}</span><button type="button" onclick="toggleFoodRulePin('${r.id}')">${r.pinned?'固定中':'固定'}</button><button type="button" onclick="deleteFoodRule('${r.id}')">✕</button></div>`).join('')}<div class="meal-inline"><input id="mealRuleInput" type="text" maxlength="120" placeholder="自分ルールを追加" onkeydown="submitShortcut(event,addFoodRule)"><button class="btn btn-c btn-sm" type="button" onclick="addFoodRule()">追加</button></div></div></div>`:`<button class="text-link" type="button" onclick="mealState.ruleOpen=true;renderMealRules()">💡 自分ルールを追加</button>${mealState.ruleOpen?'<div class="meal-inline"><input id="mealRuleInput" type="text" maxlength="120" placeholder="例：まず水を1杯" onkeydown="submitShortcut(event,addFoodRule)"><button class="btn btn-c btn-sm" type="button" onclick="addFoodRule()">追加</button></div>':''}`;
+}
+function renderMealActive(){
+  const el=document.getElementById('mealActive');if(!el)return;
+  if(mealState.view==='conflict'){el.innerHTML=mealConflictHtml();return;}
+  const s=syncMealViewFromData();if(!s){el.innerHTML='';return;}
+  if(mealState.view==='eating')el.innerHTML=mealEatingHtml(s);
+  else if(mealState.view==='afterMeal')el.innerHTML=mealAfterMealHtml(s);
+  else if(mealState.view==='extra')el.innerHTML=mealExtraHtml(s);
+  else el.innerHTML='';
+}
+function renderMealStart(){
+  const el=document.getElementById('mealStart');if(!el)return;
+  if(activeMealSession()){el.innerHTML='';return;}
+  const templates=D.mealTemplates.filter(t=>!t.deletedAt).sort((a,b)=>(b.builtin?0:1)-(a.builtin?0:1)||(b.useCount||0)-(a.useCount||0)||(b.lastUsedAt||0)-(a.lastUsedAt||0));
+  const personal=templates.filter(t=>!t.builtin).length;
+  el.innerHTML=`<h2 style="margin-top:10px">何を食べる？</h2>${templates.map(t=>`<div class="meal-tpl-row"><span>${esc(t.emoji)}</span><span class="meal-tpl-name">${esc(t.name)}</span><button class="btn btn-c btn-sm" type="button" onclick="requestMealStart('template','${t.id}')">はじめる</button></div>`).join('')}<button class="btn btn-g btn-full btn-sm" type="button" onclick="mealState.freeOpen=!mealState.freeOpen;renderMealStart()" style="margin-top:8px">✏️ 自由入力ではじめる</button>${mealState.freeOpen?'<div class="meal-inline"><input type="text" id="mealFreeInput" maxlength="60" placeholder="何を食べる？（例：コンビニ弁当）" onkeydown="submitShortcut(event,startFreeMealFromInput)"><button class="btn btn-c btn-sm" type="button" onclick="startFreeMealFromInput()">はじめる</button></div>':''}${!personal?'<button class="btn btn-g btn-sm" type="button" onclick="createPersonalMealTemplates()" style="margin-top:8px">定番の食事をつくる</button>':''}<button class="text-link" type="button" onclick="openManage('mealTemplates')" style="display:block;margin-top:7px">テンプレを編集 →</button>`;
+}
+function mealSessionSummary(s){
+  const parts=[];if(s.afterMeal&&s.afterMeal.urge!==null)parts.push(`食後${s.afterMeal.urge}`);
+  if(s.waits&&s.waits.length){const w=s.waits[s.waits.length-1];parts.push(`${Math.round((w.plannedSec||0)/60)}分`);}
+  if(s.afterWait&&s.afterWait.urge!==null)parts.push(String(s.afterWait.urge));
+  if(s.extra&&s.extra.ate===true)parts.push('追加あり');else if(s.extra&&s.extra.ate===false)parts.push('追加なし');
+  return parts.length?parts.join(' → '):'記録済み';
+}
+function renderMealHistory(){
+  const el=document.getElementById('mealHistory');if(!el)return;el.innerHTML='';
+  const list=D.mealSessions.filter(s=>!s.deletedAt&&s.status==='closed').sort((a,b)=>(b.startedAt||0)-(a.startedAt||0)).slice(0,10);
+  if(!list.length){el.innerHTML='<p class="muted">まだ食事の記録はありません。まずは1回、記録してみましょう。</p>';return;}
+  for(const s of list){
+    const d=new Date(s.startedAt||0),row=document.createElement('div');row.className='meal-hist-row';
+    row.innerHTML=`<div class="meal-hist-main"><div class="meal-hist-title">${esc(s.label)}</div><div class="meal-hist-meta">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}　${esc(mealSessionSummary(s))}</div></div><button class="btn btn-g btn-sm meal-save-tpl" type="button">＋テンプレに保存</button><button class="btn btn-g btn-sm meal-delete" type="button">✕</button>`;
+    row.querySelector('.meal-save-tpl').onclick=()=>saveSessionAsTemplate(s.id);
+    row.querySelector('.meal-delete').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteMealSession(s.id));el.appendChild(row);
+  }
+}
+function renderMealTemplateManager(){
+  const list=document.getElementById('mealTemplateManageList');if(!list)return;list.innerHTML='';
+  const templates=D.mealTemplates.filter(t=>!t.deletedAt).sort((a,b)=>(b.builtin?0:1)-(a.builtin?0:1)||(b.useCount||0)-(a.useCount||0));
+  if(!templates.length)list.innerHTML='<p class="muted">食事テンプレはまだありません。自由入力からでも始められます。</p>';
+  for(const t of templates){
+    const row=document.createElement('div');row.className='meal-tpl-row';
+    row.innerHTML=`<span>${esc(t.emoji)}</span><span class="meal-tpl-name">${esc(t.name)}${t.builtin?' <small class="muted">同梱</small>':''}</span><button class="btn btn-g btn-sm meal-edit" type="button">✏️ 編集</button><button class="btn btn-g btn-sm meal-delete" type="button">✕</button>`;
+    row.querySelector('.meal-edit').onclick=()=>openMealTemplateEditor(t.id);
+    row.querySelector('.meal-delete').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteMealTemplate(t.id));list.appendChild(row);
+    if(mealState.tplEditId===t.id){
+      const editor=document.createElement('div');editor.className='habit-editor meal-template-editor';
+      const meta=mealState.tplDraftMeta||{name:t.name,emoji:t.emoji,effortLevel:t.effortLevel};
+      editor.innerHTML=`<div class="habit-editor-grid"><div class="field"><label>絵文字</label><input class="meal-edit-emoji" type="text" maxlength="8" value="${esc(meta.emoji)}"></div><div class="field"><label>名前</label><input class="meal-edit-name" type="text" maxlength="60" value="${esc(meta.name)}"></div></div><div class="field"><label>手間レベル</label><select class="meal-edit-effort"><option value="">未指定</option>${MEAL_EFFORTS.map(e=>`<option value="${e.id}" ${meta.effortLevel===e.id?'selected':''}>${esc(e.label)}</option>`).join('')}</select></div><div class="field"><label>品目</label><div class="meal-editor-items">${mealState.tplDraftItems.map((i,index)=>`<div class="meal-editor-item" data-existing="1"><input class="meal-item-name" type="text" maxlength="40" value="${esc(i.name)}" placeholder="品目"><input class="meal-item-amount" type="text" maxlength="20" value="${esc(i.amount)}" placeholder="量"><button type="button" onclick="removeMealTemplateItem(${index})">✕</button></div>`).join('')}</div><div class="meal-editor-item"><input class="meal-new-item-name" type="text" maxlength="40" placeholder="品目を追加"><input class="meal-new-item-amount" type="text" maxlength="20" placeholder="量"><button type="button" onclick="addMealTemplateItem()">＋</button></div></div><div class="habit-editor-actions"><button class="btn btn-c btn-sm" type="button" onclick="saveMealTemplateEditor('${t.id}')">💾 保存</button><button class="btn btn-g btn-sm" type="button" onclick="openMealTemplateEditor('${t.id}')">キャンセル</button></div>`;
+      list.appendChild(editor);
+    }
+  }
 }
 /* ============ 🍽 MEAL SUPPORT END ============ */
 
