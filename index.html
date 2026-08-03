@@ -249,6 +249,21 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .urge-recall-head{font-size:10px;font-weight:800;color:var(--dim);margin-bottom:3px}
 .urge-recall-row{font-size:11px;line-height:1.55;overflow-wrap:anywhere}
 .urge-recall-row+.urge-recall-row{border-top:1px dashed var(--line);padding-top:3px;margin-top:3px}
+.loc-card{border-color:rgba(53,224,255,.5)}
+.loc-head{display:flex;align-items:center;gap:8px}.loc-head strong{flex:1;min-width:0}
+.loc-head .btn{white-space:nowrap;flex-shrink:0;padding:8px 10px;font-size:11px}
+.loc-definition{font-size:11px;line-height:1.6;margin-top:7px;padding:7px 9px;background:rgba(53,224,255,.07);border-left:3px solid var(--cyan);border-radius:8px}
+.loc-grounding{font-size:11px;line-height:1.65;margin-top:7px;padding:8px 9px;background:rgba(255,201,60,.09);border-left:3px solid var(--gold);border-radius:8px}
+.loc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
+.loc-stat{min-width:0;text-align:center;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:6px 3px}
+.loc-stat b{display:block;font-size:16px;color:var(--cyan)}.loc-stat span{font-size:9px;color:var(--dim);white-space:nowrap}
+.loc-insights{margin-top:7px;font-size:10px;line-height:1.6}.loc-insights div{padding:3px 0;border-bottom:1px dashed var(--line)}
+.loc-section{margin-top:9px;padding-top:7px;border-top:1px dashed var(--line)}.loc-question{font-size:11px;font-weight:800;margin-bottom:4px}
+.loc-range-row{display:grid;grid-template-columns:minmax(112px,1fr) 1.25fr 30px;align-items:center;gap:6px;margin:7px 0;font-size:10px}
+.loc-range-row input{min-width:0;padding:0}.loc-range-row output{text-align:center;font-weight:800;color:var(--cyan)}
+.loc-form-actions{display:flex;gap:7px;margin-top:10px}.loc-form-actions .btn{flex:1;white-space:nowrap;padding:10px 5px;font-size:12px}
+.loc-history{margin-top:8px}.loc-history-row{display:flex;align-items:center;gap:6px;padding:5px 0;border-top:1px dashed var(--line);font-size:10px}
+.loc-history-main{flex:1;min-width:0}.loc-history-main b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.loc-history-row button{flex-shrink:0}
 .meal-editor-items{display:flex;flex-direction:column;gap:5px;margin:7px 0}
 .meal-editor-item{display:grid;grid-template-columns:1fr 82px 28px;gap:5px;align-items:center}
 .meal-editor-item input{min-width:0;padding:6px;font-size:11px}.meal-editor-item button{padding:4px;background:none;border:none;color:var(--pink)}
@@ -257,7 +272,7 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 @keyframes mealWaitDone{to{box-shadow:0 0 24px rgba(61,255,168,.58)}}
 .meal-wait-actions{display:flex;gap:4px;margin-top:5px}.meal-wait-actions button{flex:1;min-width:0;font-size:10px;white-space:nowrap;padding:7px 2px;border-radius:9px}
 body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-bottom:calc(105px + env(safe-area-inset-bottom))}
-@media(max-width:390px){.meal-choice button{font-size:12px}.meal-card-idle{gap:5px}.meal-card-idle .btn{padding:8px 7px}.meal-editor-item{grid-template-columns:1fr 68px 26px}}
+@media(max-width:390px){.meal-choice button{font-size:12px}.meal-card-idle{gap:5px}.meal-card-idle .btn{padding:8px 7px}.meal-editor-item{grid-template-columns:1fr 68px 26px}.loc-range-row{grid-template-columns:minmax(100px,1fr) 1.1fr 26px}.loc-head .btn{padding:8px 7px}}
 
 /* tab bar */
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:4px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-top:1px solid var(--line2);padding:8px max(8px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-bottom));z-index:50}
@@ -526,6 +541,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   <!-- MEAL -->
   <div class="screen" id="scr-meal">
     <div class="card meal-card" id="mealCard"></div>
+    <div class="card loc-card" id="locCard"></div>
     <div class="card" id="recallCard"></div>
     <div class="card">
       <h2>📗 最近の食事</h2>
@@ -656,8 +672,9 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <button class="btn btn-p btn-sm" onclick="exportChatGPTTimeline()">🤖 ChatGPT用CSV</button>
         <button class="btn btn-p btn-sm" onclick="exportMealCsv()">🍽 食事CSV</button>
         <button class="btn btn-p btn-sm" onclick="exportUrgeCsv()">⚡ 衝動CSV</button>
+        <button class="btn btn-p btn-sm" onclick="exportLocCsv()">🧭 LOC CSV</button>
       </div>
-      <p class="muted" style="margin-top:8px">ChatGPT用CSVには、ルーチン完了・チェック完了・気分・自由記述メモと、設定に応じて食事・起床・衝動を時系列で収録します。設定、APIキー、同期合言葉、内部IDは含めません。</p>
+      <p class="muted" style="margin-top:8px">ChatGPT用CSVには、ルーチン完了・チェック完了・気分・自由記述メモと、設定に応じて食事・起床・衝動・LOCを時系列で収録します。設定、APIキー、同期合言葉、内部IDは含めません。</p>
       <input type="file" id="csvFile" accept=".csv,text/csv" style="display:none" onchange="importTexts(this)">
     </div>
     <div class="card" id="mealPrefsCard">
@@ -673,6 +690,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <p class="muted">☁️ 同期をONにすると、食事の記録（内容・数値・タグ・メモ）もGoogle Driveに保存されます。</p>
       <button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'⚠️ ほんとに削除？',deleteAllMealSessions)">食事の記録だけ削除</button>
       <button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'⚠️ ほんとに削除？',deleteAllUrgeLogs)">衝動の記録だけ削除</button>
+      <button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'⚠️ ほんとに削除？',deleteAllLocLogs)">LOCの記録だけ削除</button>
     </div>
     <div class="card">
       <h2>🔊 音声設定</h2>
@@ -900,13 +918,32 @@ const URGE_SETTLERS=[
   {id:'wait',label:'⏳ 時間'},{id:'move',label:'🚶 動いた'},
   {id:'distract',label:'🎮 別のこと'},{id:'other',label:'その他'}
 ];
+const LOC_ONSETS=[
+  {id:'before_seeing',label:'見る・炊く前'},{id:'seeing',label:'見る・炊く時'},
+  {id:'serving',label:'よそう時'},{id:'first_bite',label:'食べ始め'},
+  {id:'mid_meal',label:'食事の途中'},{id:'near_end',label:'一杯の終わり際'},
+  {id:'refill_thought',label:'おかわりを考えた時'},{id:'after_refill',label:'おかわり後'},
+  {id:'after_meal',label:'食事終了後'},{id:'unknown',label:'分からない'}
+];
+const LOC_FEATURES=[
+  {id:'hard_to_stop',label:'止めたいのに続いた'},{id:'faster',label:'速度が上がった'},
+  {id:'narrow_awareness',label:'意識が狭い・記憶が薄い'},{id:'past_full',label:'満腹でも動作が続いた'},
+  {id:'driven',label:'食べ物に引っぱられた'}
+];
+const LOC_TRIGGERS=[
+  {id:'food_running_out',label:'米・食べ物が減る'},{id:'meal_ending',label:'食事が終わる'},
+  {id:'next_meal_fear',label:'次まで持たない不安'},{id:'food_visible',label:'残りが見える'},
+  {id:'easy_refill',label:'すぐ追加できる'},{id:'strong_hunger',label:'強い空腹'},
+  {id:'restriction_rebound',label:'制限の反動'},{id:'negative_affect',label:'不安・ストレス・疲れ'},
+  {id:'unknown',label:'分からない'}
+];
 const MEAL_CASCADE_WINDOW_MS=90*60*1000;
 const URGE_OPEN_EXPIRE_MS=6*60*60*1000;
 
 const mealScore=v=>Number.isInteger(v)&&v>=0&&v<=10?v:null;
 const liveLogs=arr=>(Array.isArray(arr)?arr:[]).filter(x=>x&&!x.deletedAt);
 function tombstoneLog(arr,id){const it=arr.find(x=>x&&x.id===id);if(it){it.deletedAt=Date.now();it.updatedAt=it.deletedAt;}}
-const CURRENT_SCHEMA=4;
+const CURRENT_SCHEMA=5;
 
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
@@ -937,12 +974,14 @@ function migrateData(d){
     if(!Array.isArray(d.foodItems))d.foodItems=[];
     if(!Array.isArray(d.wakeLogs))d.wakeLogs=[];
   }
+  if(from<5&&!Array.isArray(d.locLogs))d.locLogs=[];
   d.mealSessions=(Array.isArray(d.mealSessions)?d.mealSessions:[]).map(normalizeMealSession);
   d.mealTemplates=(Array.isArray(d.mealTemplates)?d.mealTemplates:[]).map(normalizeMealTemplate);
   d.foodRules=(Array.isArray(d.foodRules)?d.foodRules:[]).map(normalizeFoodRule);
   d.urgeLogs=(Array.isArray(d.urgeLogs)?d.urgeLogs:[]).map(normalizeUrgeLog);
   d.foodItems=(Array.isArray(d.foodItems)?d.foodItems:[]).map(normalizeFoodItem).filter(f=>f.name||f.deletedAt);
   d.wakeLogs=(Array.isArray(d.wakeLogs)?d.wakeLogs:[]).map(normalizeWakeLog);
+  d.locLogs=(Array.isArray(d.locLogs)?d.locLogs:[]).map(normalizeLocLog);
   d.mealPrefs=Object.assign(defaultMealPrefs(),d.mealPrefs||{});
   purgeMealTombstones(d);
   if(d.mealSessions.length>1000){
@@ -951,12 +990,13 @@ function migrateData(d){
   }
   if(d.urgeLogs.length>2000){d.urgeLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.urgeLogs=d.urgeLogs.slice(-2000);}
   if(d.wakeLogs.length>400){d.wakeLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.wakeLogs=d.wakeLogs.slice(-400);}
+  if(d.locLogs.length>1000){d.locLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.locLogs=d.locLogs.slice(-1000);}
   d.schemaVersion=CURRENT_SCHEMA;
   return d;
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -974,11 +1014,11 @@ const seed=()=>({
   moods:defaultMoods(),moodLogs:[],
   habits:[],habitLogs:[],
   todayTasks:[],todayTaskLogs:[],
-  schemaVersion:3,
+  schemaVersion:5,
   mealSessions:[],
   mealTemplates:builtinMealTemplates(),
   foodRules:[],
-  urgeLogs:[],foodItems:[],wakeLogs:[],
+  urgeLogs:[],foodItems:[],wakeLogs:[],locLogs:[],
   mealPrefs:defaultMealPrefs(),
   logs:[], xp:0, combo:0,
   settings:{rate:1.0,voiceVolume:1,sfxVolume:.45,moti:true,sound:true}
@@ -2558,6 +2598,19 @@ function normalizeWakeLog(w){
   n.id=String(n.id||uid());n.date=String(n.date||'').slice(0,10);n.at=mealNumber(n.at,0);
   n.updatedAt=mealNumber(n.updatedAt,n.at||Date.now());n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);return n;
 }
+function normalizeLocLog(log){
+  const n=Object.assign({id:uid(),at:0,updatedAt:0,deletedAt:null,mealSessionId:null,strength:null,onset:null,
+    hunger:null,scarcityFear:null,secureMore:null,endingDistress:null,distress:null,restriction:null,
+    features:[],triggers:[],place:null,alone:null,food:'',note:''},log||{});
+  n.id=String(n.id||uid());n.at=mealNumber(n.at,0);n.updatedAt=mealNumber(n.updatedAt,n.at||Date.now());
+  n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);n.mealSessionId=n.mealSessionId==null?null:String(n.mealSessionId);
+  for(const k of ['strength','hunger','scarcityFear','secureMore','endingDistress','distress','restriction'])n[k]=mealScore(n[k]);
+  n.onset=LOC_ONSETS.some(x=>x.id===n.onset)?n.onset:null;
+  n.features=[...new Set((Array.isArray(n.features)?n.features:[]).filter(id=>LOC_FEATURES.some(x=>x.id===id)))];
+  n.triggers=[...new Set((Array.isArray(n.triggers)?n.triggers:[]).filter(id=>LOC_TRIGGERS.some(x=>x.id===id)))];
+  if(!['home','out',null].includes(n.place))n.place=null;if(typeof n.alone!=='boolean')n.alone=null;
+  n.food=String(n.food||'').trim().slice(0,100);n.note=String(n.note||'').trim().slice(0,280);return n;
+}
 
 function openUrge(){return D.urgeLogs.find(u=>u.outcome==='open'&&!u.deletedAt)||null;}
 function expireOldOpenUrges(){
@@ -2586,7 +2639,8 @@ function recordWake(){
 let mealState={
   waitTimer:null,activeId:null,view:'idle',tagOpen:false,beforeOpen:false,freeOpen:false,tplEditId:null,
   pendingStart:null,tplDraftItems:[],tplDraftMeta:null,beforeDetailOpen:false,ruleOpen:false,finishedWaitId:null,
-  urgeOpen:false,urgeDraft:null,pendingUrgeId:null,foodItemInputOpen:false,learnedItems:new Set(),foodEditId:null
+  urgeOpen:false,urgeDraft:null,pendingUrgeId:null,foodItemInputOpen:false,learnedItems:new Set(),foodEditId:null,
+  locOpen:false,locDraft:null,locInfoOpen:true,locDetailOpen:false
 };
 
 function touchUrge(u){if(!u)return;u.updatedAt=Date.now();save();}
@@ -2998,7 +3052,7 @@ function mealAfterMealHtml(s){
   if(!a||a.urge===null)return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a?a.urge:null,'setAfterMealUrge')}<button class="text-link" type="button" onclick="closeMealSession()" style="margin-top:8px">入力せず終える</button>`;
   const low=a.urge<=3;
   const choices=low?`<button class="btn btn-g" type="button" onclick="closeMealSession()">終える</button><button class="btn btn-g" type="button" onclick="startMealWait(${D.mealPrefs.defaultWaitSec||300})">それでも少し待つ</button>`:`<button class="btn btn-g" type="button" onclick="startMealWait(300)">⏳ 5分待つ</button><button class="btn btn-g" type="button" onclick="startMealWait(600)">⏳ 10分待つ</button><button class="btn btn-g" type="button" onclick="closeMealSession()">いまは終える</button><button class="btn btn-g" type="button" onclick="chooseMealExtra('before_wait')">🍚 追加で食べる</button>`;
-  return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a.urge,'setAfterMealUrge')}<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.tagOpen=!mealState.tagOpen;renderMealCard();renderMealActive()">${mealState.tagOpen?'▾':'▸'} なぜそう感じたか（任意）</button><div class="meal-fold-body ${mealState.tagOpen?'open':''}"><p class="muted">思い当たるものがあれば（任意・複数可）</p>${mealTagsHtml('afterMeal',a.tags)}</div></div>${low?'<p class="muted" style="margin-top:8px">記録しました。おつかれさま。</p>':'<p class="muted" style="margin-top:8px">食事はここまで。<br>水かお茶を飲んで、5分後にもう一度きいてみますか？</p>'}<div class="meal-choice">${choices}</div>`;
+  return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a.urge,'setAfterMealUrge')}<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.tagOpen=!mealState.tagOpen;renderMealCard();renderMealActive()">${mealState.tagOpen?'▾':'▸'} なぜそう感じたか（任意）</button><div class="meal-fold-body ${mealState.tagOpen?'open':''}"><p class="muted">思い当たるものがあれば（任意・複数可）</p>${mealTagsHtml('afterMeal',a.tags)}</div></div>${low?'<p class="muted" style="margin-top:8px">記録しました。おつかれさま。</p>':'<p class="muted" style="margin-top:8px">食事はここまで。<br>水かお茶を飲んで、5分後にもう一度きいてみますか？</p>'}<div class="meal-choice">${choices}</div><button class="text-link" type="button" onclick="startLocFlow('${s.id}')" style="margin-top:8px">🧭 止められない感じ（LOC）も記録</button>`;
 }
 function mealAfterWaitHtml(s){
   const a=s.afterWait,last=s.afterMeal&&s.afterMeal.urge;
@@ -3041,6 +3095,103 @@ function urgeFlowHtml(){
   if(d.mode==='outcome')return `<p style="font-weight:800">このあとはどうする？</p>${urgeRecallHtml(d.strength,Date.now(),2,d.targetId,true)}${mealContextHtml(d.place,d.watching,'setUrgeContext')}<div class="meal-choice"><button class="btn btn-g" type="button" onclick="urgeToMeal()">🍽 食事にする</button><button class="btn btn-g" type="button" onclick="beginUrgeItems()">🥨 つまんだ</button><button class="btn btn-g" type="button" onclick="commitUrge('open')">👀 様子を見る</button></div><button class="text-link" type="button" onclick="closeUrgeFlow()" style="margin-top:8px">やめる</button>`;
   return `<p style="font-weight:800">いま、食べたい気持ちは？</p>${mealScaleHtml(d.strength,'setUrgeStrength')}<button class="text-link" type="button" onclick="closeUrgeFlow()" style="margin-top:8px">やめる</button>`;
 }
+
+function locOnsetLabel(id){const x=LOC_ONSETS.find(v=>v.id===id);return x?x.label:'未入力';}
+function locTriggerLabel(id){const x=LOC_TRIGGERS.find(v=>v.id===id);return x?x.label:id;}
+function locRecentMeal(){
+  const active=activeMealSession();if(active)return active;
+  const recent=latestClosedMeal();return recent&&Date.now()-(recent.endedAt||recent.updatedAt||0)<=MEAL_CASCADE_WINDOW_MS?recent:null;
+}
+function locMealFood(s){
+  if(!s)return '';
+  const items=mealItemsLabel(s.items);return [s.label&&s.label!=='食事'?s.label:'',items].filter(Boolean).join('：').slice(0,100);
+}
+function startLocFlow(sessionId=null){
+  const s=sessionId?D.mealSessions.find(x=>x.id===sessionId&&!x.deletedAt):locRecentMeal(),before=s&&s.before;
+  mealState.locOpen=true;mealState.locDetailOpen=false;
+  mealState.locDraft={mealSessionId:s?s.id:null,strength:null,onset:null,hunger:before?before.hunger:null,
+    scarcityFear:null,secureMore:null,endingDistress:null,distress:null,restriction:null,features:[],triggers:[],
+    place:s&&s.place!==null?s.place:(D.mealPrefs.lastPlace??null),alone:null,food:locMealFood(s),note:''};
+  renderLocCard();showScreen('scr-meal');
+  requestAnimationFrame(()=>document.getElementById('locCard').scrollIntoView({behavior:'smooth',block:'start'}));
+}
+function closeLocFlow(){mealState.locOpen=false;mealState.locDraft=null;renderLocCard();}
+function setLocStrength(v){if(!mealState.locDraft)return;mealState.locDraft.strength=mealScore(Number(v));renderLocCard();}
+function setLocOnset(id){if(!mealState.locDraft||!LOC_ONSETS.some(x=>x.id===id))return;mealState.locDraft.onset=id;renderLocCard();}
+function setLocContext(field,value){
+  const d=mealState.locDraft;if(!d)return;
+  if(field==='place'&&['home','out'].includes(value))d.place=value;
+  else if(field==='alone'&&typeof value==='boolean')d.alone=value;else return;renderLocCard();
+}
+function setLocRange(field,value,output){
+  const d=mealState.locDraft;if(!d||!['hunger','scarcityFear','secureMore','endingDistress','distress','restriction'].includes(field))return;
+  d[field]=mealScore(Number(value));if(output)output.textContent=String(d[field]);
+}
+function setLocText(field,value){const d=mealState.locDraft;if(!d||!['food','note'].includes(field))return;d[field]=String(value||'').slice(0,field==='food'?100:280);}
+function toggleLocArray(field,id){
+  const d=mealState.locDraft,options=field==='features'?LOC_FEATURES:field==='triggers'?LOC_TRIGGERS:null;if(!d||!options||!options.some(x=>x.id===id))return;
+  d[field]=d[field].includes(id)?d[field].filter(x=>x!==id):[...d[field],id];renderLocCard();
+}
+function locStrengthScale(current){
+  return `<div class="meal-scale-anchor"><span>制御喪失なし</span><span>完全に止められない</span></div><div class="meal-scale" role="group" aria-label="制御喪失感の強さ">${Array.from({length:11},(_,v)=>`<button type="button" aria-pressed="${current===v?'true':'false'}" onclick="setLocStrength(${v})">${v}</button>`).join('')}</div>`;
+}
+function locChipHtml(items,selected,handler){
+  const chosen=Array.isArray(selected)?selected:[];
+  return `<div class="meal-tags">${items.map(x=>`<button type="button" class="${chosen.includes(x.id)?'on':''}" aria-pressed="${chosen.includes(x.id)?'true':'false'}" onclick="${handler}('${x.id}')">${esc(x.label)}</button>`).join('')}</div>`;
+}
+function locRangeHtml(label,field,value){
+  const shown=value===null?'—':value,slider=value===null?0:value;
+  return `<label class="loc-range-row"><span>${esc(label)}</span><input type="range" min="0" max="10" step="1" value="${slider}" aria-label="${esc(label)}" oninput="setLocRange('${field}',this.value,this.nextElementSibling)"><output>${shown}</output></label>`;
+}
+function commitLoc(){
+  const d=mealState.locDraft;if(!d)return;if(d.strength===null){toast('制御喪失感の強さを選んでね');return;}
+  const now=Date.now(),log=normalizeLocLog(Object.assign({},d,{id:uid(),at:now,updatedAt:now,deletedAt:null}));
+  D.locLogs.unshift(log);mealState.locOpen=false;mealState.locDraft=null;save();renderLocCard();renderActivityTimeline();toast('🧭 LOCを記録しました');
+}
+function scrubLocLog(log,now){log.deletedAt=now;log.updatedAt=now;log.features=[];log.triggers=[];log.food='';log.note='';}
+function deleteLocLog(id){const log=D.locLogs.find(x=>x.id===id);if(!log)return;scrubLocLog(log,Date.now());save();renderLocCard();renderActivityTimeline();toast('🗑 LOC記録を削除しました');}
+function deleteAllLocLogs(){const now=Date.now();for(const log of D.locLogs)if(!log.deletedAt)scrubLocLog(log,now);mealState.locOpen=false;mealState.locDraft=null;save();renderLocCard();renderActivityTimeline();toast('🗑 LOC記録を削除しました');}
+function locAverage(list,field='strength'){
+  const values=list.map(x=>x[field]).filter(Number.isFinite);return values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
+}
+function locTop(list,getter){
+  const count=new Map();for(const item of list){const values=getter(item);for(const v of (Array.isArray(values)?values:[values]))if(v)count.set(v,(count.get(v)||0)+1);}
+  return [...count.entries()].sort((a,b)=>b[1]-a[1])[0]||null;
+}
+function locAnalysisHtml(){
+  const cutoff=Date.now()-28*24*60*60*1000,list=D.locLogs.filter(x=>!x.deletedAt&&x.at>=cutoff),avg=locAverage(list),strong=list.filter(x=>Number.isFinite(x.strength)&&x.strength>=7).length;
+  const stats=`<div class="loc-stats"><div class="loc-stat"><b>${list.length}</b><span>28日間の記録</span></div><div class="loc-stat"><b>${avg===null?'—':avg.toFixed(1)}</b><span>平均LOC感</span></div><div class="loc-stat"><b>${strong}</b><span>7以上の回数</span></div></div>`;
+  if(!list.length)return stats+'<p class="muted" style="margin-top:7px">まず1回。量の多さではなく「止め方を選べなかった感じ」を記録します。</p>';
+  const onset=locTop(list,x=>x.onset),trigger=locTop(list,x=>x.triggers),home=list.filter(x=>x.place==='home'),rice=list.filter(x=>/(米|ごはん|ご飯|ライス)/i.test(x.food||''));
+  const insights=[];
+  if(onset)insights.push(`よく始まる時点：${locOnsetLabel(onset[0])}（${onset[1]}/${list.length}件）`);
+  if(trigger)insights.push(`多い手がかり：${locTriggerLabel(trigger[0])}（${trigger[1]}件）`);
+  const homeAvg=locAverage(home),riceAvg=locAverage(rice);
+  if(home.length)insights.push(`家での記録：${home.length}/${list.length}件${home.length>=2&&homeAvg!==null?`・平均 ${homeAvg.toFixed(1)}`:''}`);
+  if(rice.length)insights.push(`米・ごはんを含む記録：${rice.length}/${list.length}件${rice.length>=2&&riceAvg!==null?`・平均 ${riceAvg.toFixed(1)}`:''}`);
+  if(list.length<3)insights.push('3件ほどたまると、繰り返す時点や手がかりが見えやすくなります');
+  return stats+`<div class="loc-insights">${insights.map(x=>`<div>🔎 ${esc(x)}</div>`).join('')}</div><p class="muted" style="margin-top:5px">これは関連の手がかりで、原因や診断の判定ではありません。</p>`;
+}
+function locInfoHtml(){
+  return `<div class="loc-definition"><b>LOC = Loss of Control Eating</b><br>食べた量にかかわらず、「始めたら止め方を選べない」「予定した所で区切れない」「食べ物に引っぱられる」という主観的な制御喪失が中心。単なる食べすぎとは別の手がかりです。</div><div class="loc-grounding"><b>思い出すこと</b><br>米はなくならない。追加は禁止されていない。<br>一杯目の終了と、食事全体の終了は別。<br>成功は一膳で止めることではなく、自動的なおかわりの前に一度だけ選べたこと。</div><p class="muted" style="margin-top:7px">記録は自分を責めたり、米を禁止・削減するためのものではありません。繰り返す、苦痛が強い、隠れて食べる、埋め合わせ行動がある場合は、摂食障害に詳しい医療者へ記録を見せて相談を。これは診断ツールではありません。</p><p class="muted" style="margin-top:5px"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10084033/" target="_blank" rel="noopener">LOCの研究レビュー</a>・<a href="https://www.nice.org.uk/guidance/ng69/chapter/recommendations" target="_blank" rel="noopener">NICEガイドライン</a></p>`;
+}
+function locFormHtml(){
+  const d=mealState.locDraft||{};
+  const onset=locChipHtml(LOC_ONSETS,d.onset?[d.onset]:[],'setLocOnset');
+  const context=`<div class="meal-tags"><button type="button" class="${d.place==='home'?'on':''}" onclick="setLocContext('place','home')">🏠 家</button><button type="button" class="${d.place==='out'?'on':''}" onclick="setLocContext('place','out')">🚪 外</button><button type="button" class="${d.alone===true?'on':''}" onclick="setLocContext('alone',true)">👤 一人</button><button type="button" class="${d.alone===false?'on':''}" onclick="setLocContext('alone',false)">👥 誰かと</button></div>`;
+  const detail=mealState.locDetailOpen?`<div class="loc-section"><p class="loc-question">その時の状態（任意・0〜10）</p>${locRangeHtml('食べる前の空腹','hunger',d.hunger)}${locRangeHtml('次まで持たない不安','scarcityFear',d.scarcityFear)}${locRangeHtml('もっと確保したい感じ','secureMore',d.secureMore)}${locRangeHtml('食事終了のつらさ','endingDistress',d.endingDistress)}${locRangeHtml('この出来事の苦痛','distress',d.distress)}${locRangeHtml('最近の制限感','restriction',d.restriction)}<p class="loc-question" style="margin-top:9px">起きていたこと（複数可）</p>${locChipHtml(LOC_FEATURES,d.features,'toggleLocFeature')}<div class="field" style="margin-top:9px"><label>食べていたもの</label><input type="text" maxlength="100" value="${esc(d.food||'')}" placeholder="例：白米、鶏肉" oninput="setLocText('food',this.value)"></div><div class="field"><label>メモ</label><textarea rows="2" maxlength="280" placeholder="終わり際に焦った、など" oninput="setLocText('note',this.value)">${esc(d.note||'')}</textarea></div></div>`:'';
+  return `<div class="loc-section"><p class="loc-question">止められない・選べない感じは？（必須）</p>${locStrengthScale(d.strength)}<p class="loc-question" style="margin-top:9px">どの時点で始まった？（任意）</p>${onset}<p class="loc-question" style="margin-top:9px">場所・人（任意）</p>${context}<p class="loc-question" style="margin-top:9px">手がかり（複数可・任意）</p>${locChipHtml(LOC_TRIGGERS,d.triggers,'toggleLocTrigger')}<button class="meal-fold-head" type="button" onclick="mealState.locDetailOpen=!mealState.locDetailOpen;renderLocCard()" style="margin-top:8px">${mealState.locDetailOpen?'▾':'▸'} ＋詳しく記録</button>${detail}<div class="loc-form-actions"><button class="btn btn-p" type="button" onclick="commitLoc()">🧭 記録する</button><button class="btn btn-g" type="button" onclick="closeLocFlow()">やめる</button></div></div>`;
+}
+function toggleLocFeature(id){toggleLocArray('features',id);}
+function toggleLocTrigger(id){toggleLocArray('triggers',id);}
+function locHistoryHtml(){
+  const list=D.locLogs.filter(x=>!x.deletedAt).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,3);if(!list.length)return '';
+  return `<div class="loc-history"><p class="urge-recall-head">最近のLOC記録</p>${list.map(log=>{const d=new Date(log.at),meta=[locOnsetLabel(log.onset),log.food].filter(x=>x&&x!=='未入力').join('・');return `<div class="loc-history-row"><div class="loc-history-main"><b>${d.getMonth()+1}/${d.getDate()} ${hhmm(log.at)}　LOC ${log.strength===null?'—':log.strength}</b><span class="muted">${esc(meta||'詳細なし')}</span></div><button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'削除？',()=>deleteLocLog('${log.id}'))">✕</button></div>`;}).join('')}</div>`;
+}
+function renderLocCard(){
+  const el=document.getElementById('locCard');if(!el)return;
+  el.innerHTML=`<div class="loc-head"><strong>🧭 LOCメモ</strong><button class="btn btn-c btn-sm" type="button" onclick="startLocFlow()">＋ いま記録</button></div><p class="muted" style="margin-top:5px">量ではなく「止め方を選べなかった感じ」を残す</p>${mealState.locOpen?locFormHtml():locAnalysisHtml()}<button class="meal-fold-head" type="button" onclick="mealState.locInfoOpen=!mealState.locInfoOpen;renderLocCard()" style="margin-top:8px">${mealState.locInfoOpen?'▾':'▸'} LOCとは？・思い出すこと</button>${mealState.locInfoOpen?locInfoHtml():''}${!mealState.locOpen?locHistoryHtml():''}`;
+}
 function openUrgeHtml(u){
   return `<div class="urge-row"><p style="font-weight:800">さっきの衝動${u.strength===null?'':`(${u.strength})`}はどうなった？</p><div class="meal-choice"><button class="btn btn-g" type="button" onclick="resolveOpenUrge('settled')">😌 収まった</button><button class="btn btn-g" type="button" onclick="resolveOpenUrge('ate')">🥨 食べた</button><button class="btn btn-g" type="button" onclick="resolveOpenUrge('still')">まだ続いてる</button></div></div>`;
 }
@@ -3050,7 +3201,7 @@ function wakePromptHtml(){
 }
 function mealEatingHtml(s){
   const min=Math.max(0,Math.floor((Date.now()-(s.startedAt||Date.now()))/60000));
-  return `<div class="meal-card-row"><div class="meal-grow"><strong>🍽 食事中 ・ ${min}分経過</strong><div class="muted">${esc(s.label)}</div></div></div>${mealContextHtml(s.place,s.watching,'setMealContext')}<button class="btn btn-p btn-full btn-sm" type="button" onclick="endMealEating()" style="margin-top:7px">🍽 食べ終わった</button>${foodItemChipsHtml('addSessionItem')}${mealBeforeHtml(s)}${s.templateId===null?`<button class="btn btn-g btn-sm" type="button" onclick="saveSessionAsTemplate('${s.id}')" style="margin-top:7px">＋テンプレに保存</button>`:''}`;
+  return `<div class="meal-card-row"><div class="meal-grow"><strong>🍽 食事中 ・ ${min}分経過</strong><div class="muted">${esc(s.label)}</div></div></div>${mealContextHtml(s.place,s.watching,'setMealContext')}<div class="meal-choice"><button class="btn btn-p" type="button" onclick="endMealEating()">🍽 食べ終わった</button><button class="btn btn-g" type="button" onclick="startLocFlow('${s.id}')">🧭 LOCを記録</button></div>${foodItemChipsHtml('addSessionItem')}${mealBeforeHtml(s)}${s.templateId===null?`<button class="btn btn-g btn-sm" type="button" onclick="saveSessionAsTemplate('${s.id}')" style="margin-top:7px">＋テンプレに保存</button>`:''}`;
 }
 function renderMealCard(){
   const el=document.getElementById('mealCard');if(!el)return;
@@ -3079,7 +3230,7 @@ function renderMealCard(){
 }
 function renderMeal(){
   syncMealViewFromData();
-  renderMealCard();renderRecallCard();renderMealHistory();
+  renderMealCard();renderLocCard();renderRecallCard();renderMealHistory();
 }
 function renderMealRules(){
   const el=document.getElementById('mealRules');if(!el)return;
@@ -3323,6 +3474,7 @@ function mealTimelineItems(cutoff,now){
     }
     if(s.extra&&s.extra.ate===true)push('meal','🍚','追加で食べた',mealItemsLabel(s.extra.items)||'（内容は未記録）',s.extra.at);
   }
+  if(detail)for(const log of D.locLogs)if(!log.deletedAt)push('meal','🧭',`LOC ${log.strength===null?'':log.strength}`,locOnsetLabel(log.onset),log.at);
   return items;
 }
 function mealTimelineRows(){
@@ -3350,6 +3502,10 @@ function mealTimelineRows(){
   if(prefs.csvIncludeUrges){
     for(const w of D.wakeLogs)if(!w.deletedAt)rows.push({stamp:w.at,dateTime:timelineDateTime(w.at),type:'起床',content:'起床',routine:'',step:'',detail:''});
     for(const u of D.urgeLogs)if(!u.deletedAt)rows.push({stamp:u.at,dateTime:timelineDateTime(u.at),type:'衝動',content:`食べたい${u.strength===null?'':` ${u.strength}`}`,routine:'',step:'',detail:urgeTimelineDetail(u)});
+  }
+  for(const log of D.locLogs)if(!log.deletedAt){
+    const details=[`開始:${locOnsetLabel(log.onset)}`,log.hunger!==null?`空腹${log.hunger}`:'',log.scarcityFear!==null?`次まで不安${log.scarcityFear}`:'',log.secureMore!==null?`確保したい${log.secureMore}`:'',log.endingDistress!==null?`終了のつらさ${log.endingDistress}`:'',log.distress!==null?`苦痛${log.distress}`:'',log.restriction!==null?`制限感${log.restriction}`:'',log.triggers.length?`手がかり:${log.triggers.map(locTriggerLabel).join(',')}`:'',log.features.length?`特徴:${log.features.map(id=>{const x=LOC_FEATURES.find(v=>v.id===id);return x?x.label:id;}).join(',')}`:'',log.place==='home'?'家':log.place==='out'?'外':'',log.alone===true?'一人':log.alone===false?'誰かと':'',log.note].filter(Boolean);
+    rows.push({stamp:log.at,dateTime:timelineDateTime(log.at),type:'LOC',content:`制御喪失感 ${log.strength===null?'':log.strength}${log.food?`：${log.food}`:''}`,routine:'',step:'',detail:details.join('／')});
   }
   return rows;
 }
@@ -3386,7 +3542,18 @@ function buildUrgeCsv(){
   return lines.join('\n');
 }
 function exportUrgeCsv(){download('urge_logs.csv',buildUrgeCsv());toast('⚡ 衝動CSVを書き出しました');}
-const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs'];
+function buildLocCsv(){
+  const head=['日時','LOC強さ','始まった時点','食前空腹','次まで持たない不安','もっと確保したい感じ','食事終了のつらさ','苦痛','最近の制限感','特徴','手がかり','場所','一人','食べていたもの','メモ'],lines=[head.join(',')];
+  const score=v=>v===null||v===undefined?'':v,list=D.locLogs.filter(x=>!x.deletedAt).sort((a,b)=>(a.at||0)-(b.at||0));
+  for(const log of list){
+    const features=log.features.map(id=>{const x=LOC_FEATURES.find(v=>v.id===id);return x?x.label:id;}).join('／');
+    const row=[timelineDateTime(log.at),score(log.strength),locOnsetLabel(log.onset),score(log.hunger),score(log.scarcityFear),score(log.secureMore),score(log.endingDistress),score(log.distress),score(log.restriction),features,log.triggers.map(locTriggerLabel).join('／'),log.place==='home'?'家':log.place==='out'?'外':'',log.alone===true?'はい':log.alone===false?'いいえ':'',log.food,log.note];
+    lines.push(row.map(timelineCsvEsc).join(','));
+  }
+  return lines.join('\n');
+}
+function exportLocCsv(){download('loc_logs.csv',buildLocCsv());toast('🧭 LOC CSVを書き出しました');}
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs'];
 function mergeMealCollections(local,remote){
   for(const k of MERGE_COLLECTIONS){
     const l=Array.isArray(local[k])?local[k]:[],r=Array.isArray(remote[k])?remote[k]:[],map=new Map();
