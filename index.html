@@ -230,6 +230,22 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .meal-idle-tools button{white-space:nowrap}
 .meal-mood-card{padding:8px 10px;border-color:rgba(255,77,141,.28)}
 .meal-mood-card .mood-quick-head{margin-bottom:5px}
+.meal-plan-card{padding:8px 10px;border-color:rgba(53,224,255,.35)}
+.meal-plan-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.meal-plan-head strong{font-size:13px;color:var(--cyan)}
+.meal-plan-date{color:var(--gold);font-size:9px;font-weight:700;white-space:nowrap}
+.meal-plan-help{font-size:9px;color:var(--dim);margin-top:2px}
+.meal-plan-slot{border-top:1px dashed var(--line);margin-top:7px;padding-top:7px}
+.meal-plan-slot-head{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.meal-plan-slot-head strong{flex:1;min-width:0;font-size:12px}
+.meal-plan-confirm{background:var(--card2);border:1px solid var(--line2);border-radius:999px;color:var(--dim);font-size:9px;font-weight:700;padding:4px 8px;white-space:nowrap;cursor:pointer}
+.meal-plan-confirm.confirmed{border-color:var(--mint);color:var(--mint);box-shadow:0 0 8px rgba(61,255,168,.2)}
+.meal-plan-confirm:disabled{opacity:.42;cursor:default}
+.meal-plan-options{display:flex;flex-wrap:wrap;gap:5px}
+.meal-plan-option{display:flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--line2);border-radius:999px;padding:6px 8px;font-size:10px;cursor:pointer}
+.meal-plan-option.selected{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 8px rgba(53,224,255,.2)}
+.meal-plan-option input{width:auto;margin:0;accent-color:var(--cyan);flex-shrink:0}
+.meal-plan-option span{white-space:nowrap}
 .meal-scale-anchor{display:flex;justify-content:space-between;color:var(--dim);font-size:9px;margin:5px 1px 3px}
 .meal-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
 .meal-scale button{min-width:0;min-height:44px;background:var(--card2);border:1px solid var(--line2);border-radius:10px;color:var(--text);font-size:14px;font-weight:800;cursor:pointer}
@@ -547,6 +563,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   <!-- MEAL -->
   <div class="screen" id="scr-meal">
     <div class="card meal-card" id="mealCard"></div>
+    <div class="card meal-plan-card" id="mealPlanCard"></div>
     <div class="card meal-mood-card" id="mealMoodCard">
       <div class="mood-quick-head"><span class="mood-quick-title">🌡️ 今の気分</span><span class="mood-last" id="mealMoodLast"></span><button class="text-link" type="button" onclick="openManage('moods')">編集 →</button></div>
       <div class="mood-buttons" id="mealMoodButtons"></div>
@@ -924,6 +941,18 @@ const MEAL_WAIT_ACTIONS=[
   {id:'water',label:'水を飲んだ'},{id:'dishes',label:'片づけた'},
   {id:'tea',label:'お茶を飲んだ'},{id:'walk',label:'歩いた'},{id:'other',label:'その他'}
 ];
+const MEAL_PLAN_SLOTS=[
+  {id:'breakfast',emoji:'🌅',label:'朝',options:[
+    {id:'mekabu_set',label:'めかぶセット'},{id:'bread_set',label:'パンセット'}
+  ]},
+  {id:'lunch',emoji:'☀️',label:'昼',options:[
+    {id:'bento',label:'弁当'},{id:'pasta',label:'パスタ'},{id:'cup_noodle_pro',label:'カップヌードルPRO'}
+  ]},
+  {id:'dinner',emoji:'🌙',label:'夜',options:[
+    {id:'sundubu',label:'スンドゥブ'},{id:'pork_edamame_veg',label:'豚肉・枝豆・野菜'},
+    {id:'chicken_fried_rice',label:'鶏むね肉・チャーハン'}
+  ]}
+];
 const URGE_SETTLERS=[
   {id:'water',label:'💧 水'},{id:'tea',label:'🍵 お茶'},{id:'coffee',label:'☕ コーヒー'},
   {id:'wait',label:'⏳ 時間'},{id:'move',label:'🚶 動いた'},
@@ -954,7 +983,7 @@ const URGE_OPEN_EXPIRE_MS=6*60*60*1000;
 const mealScore=v=>Number.isInteger(v)&&v>=0&&v<=10?v:null;
 const liveLogs=arr=>(Array.isArray(arr)?arr:[]).filter(x=>x&&!x.deletedAt);
 function tombstoneLog(arr,id){const it=arr.find(x=>x&&x.id===id);if(it){it.deletedAt=Date.now();it.updatedAt=it.deletedAt;}}
-const CURRENT_SCHEMA=5;
+const CURRENT_SCHEMA=6;
 
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
@@ -986,6 +1015,7 @@ function migrateData(d){
     if(!Array.isArray(d.wakeLogs))d.wakeLogs=[];
   }
   if(from<5&&!Array.isArray(d.locLogs))d.locLogs=[];
+  if(from<6&&!Array.isArray(d.mealPlans))d.mealPlans=[];
   d.mealSessions=(Array.isArray(d.mealSessions)?d.mealSessions:[]).map(normalizeMealSession);
   d.mealTemplates=(Array.isArray(d.mealTemplates)?d.mealTemplates:[]).map(normalizeMealTemplate);
   d.foodRules=(Array.isArray(d.foodRules)?d.foodRules:[]).map(normalizeFoodRule);
@@ -993,6 +1023,7 @@ function migrateData(d){
   d.foodItems=(Array.isArray(d.foodItems)?d.foodItems:[]).map(normalizeFoodItem).filter(f=>f.name||f.deletedAt);
   d.wakeLogs=(Array.isArray(d.wakeLogs)?d.wakeLogs:[]).map(normalizeWakeLog);
   d.locLogs=(Array.isArray(d.locLogs)?d.locLogs:[]).map(normalizeLocLog);
+  d.mealPlans=(Array.isArray(d.mealPlans)?d.mealPlans:[]).map(normalizeMealPlan).filter(p=>p.date||p.deletedAt);
   d.mealPrefs=Object.assign(defaultMealPrefs(),d.mealPrefs||{});
   purgeMealTombstones(d);
   if(d.mealSessions.length>1000){
@@ -1002,12 +1033,13 @@ function migrateData(d){
   if(d.urgeLogs.length>2000){d.urgeLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.urgeLogs=d.urgeLogs.slice(-2000);}
   if(d.wakeLogs.length>400){d.wakeLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.wakeLogs=d.wakeLogs.slice(-400);}
   if(d.locLogs.length>1000){d.locLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.locLogs=d.locLogs.slice(-1000);}
+  if(d.mealPlans.length>400){d.mealPlans.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));d.mealPlans=d.mealPlans.slice(-400);}
   d.schemaVersion=CURRENT_SCHEMA;
   return d;
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','personalNotes','moodLogs','habitLogs','todayTaskLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -1025,11 +1057,11 @@ const seed=()=>({
   moods:defaultMoods(),moodLogs:[],
   habits:[],habitLogs:[],
   todayTasks:[],todayTaskLogs:[],
-  schemaVersion:5,
+  schemaVersion:6,
   mealSessions:[],
   mealTemplates:builtinMealTemplates(),
   foodRules:[],
-  urgeLogs:[],foodItems:[],wakeLogs:[],locLogs:[],
+  urgeLogs:[],foodItems:[],wakeLogs:[],locLogs:[],mealPlans:[],
   mealPrefs:defaultMealPrefs(),
   logs:[], xp:0, combo:0,
   settings:{rate:1.0,voiceVolume:1,sfxVolume:.45,moti:true,sound:true}
@@ -2625,6 +2657,19 @@ function normalizeLocLog(log){
   if(!['home','out',null].includes(n.place))n.place=null;if(typeof n.alone!=='boolean')n.alone=null;
   n.food=String(n.food||'').trim().slice(0,100);n.note=String(n.note||'').trim().slice(0,280);return n;
 }
+function normalizeMealPlan(plan){
+  const n=Object.assign({id:'',date:'',slots:{},createdAt:0,updatedAt:0,deletedAt:null},plan||{});
+  n.date=String(n.date||'').slice(0,10);n.id=String(n.id||`meal-plan-${n.date||uid()}`);
+  const source=n.slots&&typeof n.slots==='object'?n.slots:{},slots={};
+  for(const slot of MEAL_PLAN_SLOTS){
+    const raw=source[slot.id]&&typeof source[slot.id]==='object'?source[slot.id]:{};
+    const valid=new Set(slot.options.map(option=>option.id));
+    const selected=[...new Set((Array.isArray(raw.selected)?raw.selected:[]).filter(id=>valid.has(id)))];
+    slots[slot.id]={selected,confirmed:!!raw.confirmed&&selected.length>0};
+  }
+  n.slots=slots;n.createdAt=mealNumber(n.createdAt,0);n.updatedAt=mealNumber(n.updatedAt,n.createdAt||Date.now());
+  n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);return n;
+}
 
 function openUrge(){return D.urgeLogs.find(u=>u.outcome==='open'&&!u.deletedAt)||null;}
 function expireOldOpenUrges(){
@@ -3253,9 +3298,42 @@ function renderMealCard(){
   else if(mealState.view==='stale')show(mealStaleHtml(s));
   else show(`<div class="meal-card-row"><div class="meal-grow"><strong>🍽 ${esc(s.label)}</strong><div class="muted">記録を続けられます</div></div><button class="btn btn-c" type="button" onclick="showScreen('scr-meal')">開く</button></div>`);
 }
+function mealPlanForToday(create=false){
+  const date=localDateKey(new Date());
+  let plan=D.mealPlans.find(item=>item&&!item.deletedAt&&item.date===date)||null;
+  if(!plan&&create){
+    plan=normalizeMealPlan({id:`meal-plan-${date}`,date,createdAt:Date.now(),updatedAt:Date.now()});
+    D.mealPlans.push(plan);
+  }
+  return plan||normalizeMealPlan({id:`meal-plan-${date}`,date,createdAt:0,updatedAt:0});
+}
+function toggleMealPlanOption(slotId,optionId,checked){
+  const slot=MEAL_PLAN_SLOTS.find(item=>item.id===slotId);
+  if(!slot||!slot.options.some(option=>option.id===optionId))return;
+  const plan=mealPlanForToday(true),state=plan.slots[slotId];
+  state.selected=checked?[...new Set([...state.selected,optionId])]:state.selected.filter(id=>id!==optionId);
+  state.confirmed=false;plan.updatedAt=Date.now();save();renderMealPlanCard();
+}
+function toggleMealPlanConfirmed(slotId){
+  const slot=MEAL_PLAN_SLOTS.find(item=>item.id===slotId);if(!slot)return;
+  const plan=mealPlanForToday(true),state=plan.slots[slotId];
+  if(!state.selected.length){toast(`${slot.label}の候補を選んでね`);return;}
+  state.confirmed=!state.confirmed;plan.updatedAt=Date.now();save();renderMealPlanCard();
+  toast(state.confirmed?`✅ ${slot.label}の食事を確定しました`:`↩️ ${slot.label}を検討中に戻しました`);
+}
+function renderMealPlanCard(){
+  const el=document.getElementById('mealPlanCard');if(!el)return;
+  const plan=mealPlanForToday(),now=new Date(),week=['日','月','火','水','木','金','土'][now.getDay()];
+  const slots=MEAL_PLAN_SLOTS.map(slot=>{
+    const state=plan.slots[slot.id],selected=state.selected;
+    const options=slot.options.map(option=>`<label class="meal-plan-option ${selected.includes(option.id)?'selected':''}"><input type="checkbox" ${selected.includes(option.id)?'checked':''} onchange="toggleMealPlanOption('${slot.id}','${option.id}',this.checked)"><span>${esc(option.label)}</span></label>`).join('');
+    return `<section class="meal-plan-slot"><div class="meal-plan-slot-head"><strong>${slot.emoji} ${slot.label}</strong><button class="meal-plan-confirm ${state.confirmed?'confirmed':''}" type="button" ${selected.length?'':'disabled'} onclick="toggleMealPlanConfirmed('${slot.id}')">${state.confirmed?'✅ 確定済み':'確定する'}</button></div><div class="meal-plan-options">${options}</div></section>`;
+  }).join('');
+  el.innerHTML=`<div class="meal-plan-head"><strong>🗂️ 今日の食事カード</strong><span class="meal-plan-date">${now.getMonth()+1}/${now.getDate()}（${week}）</span></div><p class="meal-plan-help">候補は複数選択OK。決まった時間帯だけ確定できます。</p>${slots}`;
+}
 function renderMeal(){
   syncMealViewFromData();
-  renderMealCard();renderMoodButtons();renderMoodActivityPicker();renderLocCard();renderRecallCard();renderMealHistory();
+  renderMealCard();renderMealPlanCard();renderMoodButtons();renderMoodActivityPicker();renderLocCard();renderRecallCard();renderMealHistory();
 }
 function renderMealRules(){
   const el=document.getElementById('mealRules');if(!el)return;
@@ -3578,7 +3656,7 @@ function buildLocCsv(){
   return lines.join('\n');
 }
 function exportLocCsv(){download('loc_logs.csv',buildLocCsv());toast('🧭 LOC CSVを書き出しました');}
-const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs'];
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','personalNotes','moodLogs','habitLogs','todayTaskLogs'];
 function mergeMealCollections(local,remote){
   for(const k of MERGE_COLLECTIONS){
     const l=Array.isArray(local[k])?local[k]:[],r=Array.isArray(remote[k])?remote[k]:[],map=new Map();
