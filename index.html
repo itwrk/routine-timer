@@ -2144,7 +2144,7 @@ function slamIn(){
 function loadStep(speakIt){
   const s=run.r.steps[run.idx];
   run.left=s.sec;run.leftMs=s.sec*1000;run.stepElapsedMs=0;run.lastTickAt=Date.now();
-  run.lastSignalElapsed=0;run.halfDone=false;run.currentRecorded=false;run.usedCountUp=run.timerMode==='up';
+  run.lastSignalElapsed=0;run.halfDone=false;run.halfSpeechActive=false;run.currentRecorded=false;run.usedCountUp=run.timerMode==='up';
   document.getElementById('runEmoji').textContent=s.emoji||'✅';
   document.getElementById('runStep').textContent=s.name;
   document.getElementById('runProg').textContent=`ステップ ${run.idx+1} / ${run.r.steps.length}`;
@@ -2329,11 +2329,15 @@ function tick(){
   const s=run.r.steps[run.idx];
   const elapsed=Math.floor((run.stepElapsedMs||0)/1000);
   // 半分経過アナウンス（短いステップも含め、1回だけ）
+  let halfAnnouncedNow=false;
   if(run.timerMode==='down'&&!run.halfDone&&run.leftMs<=s.sec*500){
-    run.halfDone=true;speak(`${s.name}。あと半分です！`);
+    run.halfDone=true;run.halfSpeechActive=true;halfAnnouncedNow=true;
+    speak(`${s.name}。あと半分です！`,()=>{if(run)run.halfSpeechActive=false;});
   }
-  // ラスト10秒カウントダウン音（3秒前からは強め）
+  // ラスト10秒は数字を読み上げ、効果音も重ねる（3秒前からは強め）
   if(run.timerMode==='down'&&run.left!==previousLeft&&run.left<=10&&run.left>0){
+    // 半分案内は最後まで読み、終わった次の秒から数字に戻る
+    if(!halfAnnouncedNow&&!run.halfSpeechActive)speak(String(run.left));
     if(run.left<=3)beep(1175,.09,'square',.14);
     else sfxTick();
   }
@@ -2369,7 +2373,7 @@ function togglePause(){
   if(!run.paused){advanceRunClock();run.paused=true;}
   else{run.paused=false;run.lastTickAt=Date.now();}
   document.getElementById('btnPause').textContent=run.paused?'▶ 再開':'⏸ 一時停止';
-  if(run.paused)speechSynthesis.cancel();
+  if(run.paused){speechSynthesis.cancel();run.halfSpeechActive=false;}
 }
 function skipStep(){
   run.skips++;D.combo=0;renderCombo();
