@@ -50,6 +50,7 @@ h1{font-size:14px;letter-spacing:.06em;white-space:nowrap}
 .rcard .duration{color:var(--gold);font-family:'DotGothic16',monospace;font-size:9px;white-space:nowrap;flex-shrink:0}
 .rcard .stepnames{color:var(--dim);font-size:9px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rcard .edit-btn{background:none;border:none;color:var(--dim);font-size:15px;cursor:pointer;padding:6px;flex-shrink:0}
+.rcard .rescue-btn{color:var(--pink)}
 
 button{font-family:inherit;transform-origin:center;transition:transform .18s cubic-bezier(.2,1.7,.35,1),filter .12s,box-shadow .18s}
 button:active{transform:scale(.86);filter:brightness(1.4) saturate(1.25)}
@@ -191,6 +192,63 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .activity-item.mood .activity-text{font-weight:800;color:var(--pink)}
 .activity-mood-tag{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;background:rgba(255,77,141,.08);border:1px solid rgba(255,77,141,.22);border-radius:999px;color:var(--text);font-size:9px;font-weight:700;line-height:1.5;white-space:nowrap;vertical-align:middle}
 .activity-item.meal .activity-icon{border-color:var(--gold);box-shadow:0 0 8px rgba(255,201,60,.18)}
+
+/* past-you memory / gentle return */
+.memory-card{position:relative;overflow:hidden;border-color:rgba(130,87,230,.42);background:linear-gradient(135deg,#fff 0%,#f7efff 58%,#edfaff 100%);box-shadow:0 6px 24px rgba(130,87,230,.16)}
+.memory-card::after{content:'';position:absolute;width:90px;height:90px;right:-36px;top:-42px;border-radius:50%;background:radial-gradient(circle,rgba(53,224,255,.25),transparent 68%);pointer-events:none}
+.memory-card.found{animation:memoryFound .38s cubic-bezier(.18,1.5,.35,1)}
+@keyframes memoryFound{0%{transform:scale(.96);filter:brightness(1.2)}100%{transform:none;filter:none}}
+.memory-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;position:relative;z-index:1}
+.memory-kicker{font-family:'DotGothic16',monospace;color:var(--purple);font-size:10px;letter-spacing:.08em;white-space:nowrap}
+.memory-source{color:var(--dim);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.memory-reason{color:var(--gold);font-size:10px;font-weight:800;margin-bottom:3px}
+.memory-quote{font-size:13px;line-height:1.55;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
+.memory-date{color:var(--dim);font-size:9px;margin-top:4px}
+.memory-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:7px}
+.memory-actions button{min-width:0;white-space:nowrap;padding:7px 3px;font-size:9px;border-radius:9px}
+.memory-empty{display:flex;align-items:center;gap:8px}
+.memory-empty p{flex:1;min-width:0}
+.memory-empty button{white-space:nowrap;flex-shrink:0;padding:8px 9px;font-size:10px}
+.journey-card{border-color:rgba(14,171,114,.45);background:linear-gradient(135deg,#fff,#effcf6)}
+.journey-card.due{border-color:var(--pink);box-shadow:0 0 18px rgba(255,77,141,.22);animation:journeyGlow 1.3s ease-in-out infinite alternate}
+@keyframes journeyGlow{to{box-shadow:0 0 24px rgba(255,77,141,.38)}}
+.journey-title{color:var(--mint);font-size:12px;font-weight:800}
+.journey-card.due .journey-title{color:var(--pink)}
+.journey-copy{font-size:12px;line-height:1.5;margin-top:2px}
+.journey-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.journey-actions button{white-space:nowrap;padding:8px 5px;font-size:10px}
+
+/* gentle start rescue sheet */
+#rescueModal{position:fixed;inset:0;background:rgba(18,16,42,.72);backdrop-filter:blur(5px);z-index:230;display:none;align-items:flex-end;justify-content:center}
+#rescueModal.show{display:flex}
+#rescueModal .sheet{background:linear-gradient(160deg,#fff,#f2effc);border:1px solid var(--line2);border-radius:22px 22px 0 0;width:100%;max-width:520px;padding:18px 14px calc(18px + env(safe-area-inset-bottom));animation:sheetUp .28s cubic-bezier(.18,1.2,.35,1)}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+.rescue-kicker{font-family:'DotGothic16',monospace;color:var(--pink);font-size:11px;letter-spacing:.08em}
+.rescue-title{font-size:19px;font-weight:800;margin-top:4px}
+.rescue-copy{font-size:13px;line-height:1.65;margin-top:6px;color:var(--text)}
+.rescue-routine{display:flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:8px 10px;margin-top:9px;font-size:12px;font-weight:800}
+.rescue-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
+.rescue-actions button{min-width:0;white-space:nowrap;padding:11px 4px;font-size:11px}
+.rescue-close{width:100%;margin-top:7px;background:none;border:none;color:var(--dim);font-size:11px;padding:7px;cursor:pointer}
+.micro-win{text-align:center}
+.micro-win .micro-badge{font-family:'DotGothic16',monospace;color:var(--gold);font-size:28px;text-shadow:0 0 14px rgba(255,201,60,.55)}
+
+/* personal insights */
+.insight-list{display:flex;flex-direction:column;gap:7px}
+.insight-item{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:10px;padding:8px 9px}
+.insight-item:nth-child(2){border-left-color:var(--pink)}
+.insight-item:nth-child(3){border-left-color:var(--gold)}
+.insight-copy{font-size:12px;line-height:1.55;font-weight:700}
+.insight-evidence{color:var(--dim);font-size:9px;margin-top:3px}
+.insight-foot{color:var(--dim);font-size:9px;line-height:1.5;margin-top:7px}
+.memory-settings-status{margin-top:7px;padding:7px 8px;background:var(--card2);border-radius:9px;font-size:11px;line-height:1.5}
+.memory-settings-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.memory-settings-actions button{white-space:nowrap}
+.privacy-note{border-left:3px solid var(--mint);padding-left:8px;margin-top:7px}
+.res-memory{margin-top:11px;padding:9px 10px;text-align:left;background:linear-gradient(135deg,#fff8dd,#f7efff);border:1px solid rgba(217,154,6,.42);border-radius:12px}
+.res-memory-kicker{font-family:'DotGothic16',monospace;color:var(--gold);font-size:9px;letter-spacing:.06em}
+.res-memory-text{font-size:11px;line-height:1.5;font-weight:700;margin-top:3px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.res-memory-date{color:var(--dim);font-size:8px;margin-top:3px}
 
 /* saved step library manager */
 .step-lib-row{display:flex;align-items:flex-start;gap:8px;padding:8px 2px;border-bottom:1px dashed var(--line)}
@@ -518,6 +576,11 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 #scr-home h2{font-size:14px;margin-bottom:6px}
 #scr-home .rcard{padding:7px 8px;margin-bottom:5px}
 #scr-home>.btn-full{padding:9px!important;white-space:nowrap}
+@media(max-width:390px){
+  .memory-quote{font-size:12px;-webkit-line-clamp:3}.memory-actions button{font-size:8px;padding:7px 2px}
+  #rescueModal .sheet{padding:14px 9px calc(14px + env(safe-area-inset-bottom))}.rescue-title{font-size:17px}.rescue-actions button{font-size:10px;padding:10px 3px}
+  .rescard{max-height:92dvh;overflow-y:auto;padding:16px 12px}.restitle{font-size:35px}
+}
 </style>
 </head>
 <body>
@@ -532,6 +595,8 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 
   <!-- HOME -->
   <div class="screen active" id="scr-home">
+    <div class="card memory-card" id="memoryCard" aria-live="polite"></div>
+    <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
     <div class="card memo-composer">
       <div class="memo-section-head"><h2>📝 ひとことメモ</h2><button class="text-link" type="button" onclick="openManage('memos')">すべて見る →</button></div>
       <div class="memo-inputrow">
@@ -582,8 +647,9 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div id="previewSteps"></div>
       <div class="preview-actions">
         <button class="btn btn-g" type="button" onclick="showScreen('scr-home')">← 戻る</button>
-        <button class="btn btn-p" type="button" id="previewStart" onclick="startSelectedRoutine()">▶ このルーチンを開始</button>
+        <button class="btn btn-p" type="button" id="previewStart" onclick="startSelectedRoutine()">▶ ふつうに始める</button>
       </div>
+      <button class="btn btn-g btn-full btn-sm" type="button" id="previewRescue" onclick="openRescue(selectedRoutineId)" style="margin-top:7px;white-space:nowrap">🫠 いまは重い…</button>
     </div>
   </div>
 
@@ -640,6 +706,11 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     <div class="card">
       <h2>🌱 アクティビティ（直近28日）</h2>
       <div class="heat" id="heat"></div>
+    </div>
+    <div class="card" id="insightsCard">
+      <h2>🧭 あなたの攻略メモ</h2>
+      <div id="insights" class="insight-list"></div>
+      <p class="insight-foot">保存されている記録から見つけた仮説です。ちがったらスルーでOK。</p>
     </div>
     <div class="card">
       <h2>📜 最近のログ</h2>
@@ -701,6 +772,19 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     <div class="card" id="allMemoCard">
       <h2>📝 すべてのメモ</h2>
       <div id="allMemoFeed" class="memo-timeline"></div>
+    </div>
+
+    <div class="card" id="memoryImportCard">
+      <h2>📓 過去の日記をタイムカプセルに</h2>
+      <p class="muted">ObsidianなどのMarkdown（<b>## 2024-08-08</b> 形式）を読み込むと、同じ日付・同じ時間ごろの言葉がホームに現れます。</p>
+      <div id="memoryImportStatus" class="memory-settings-status">まだ日記を読み込んでいません。</div>
+      <div class="memory-settings-actions">
+        <button class="btn btn-c btn-sm" type="button" onclick="document.getElementById('diaryFile').click()">📓 日記MDを読む</button>
+        <button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'もう一度で消去',clearDiaryMemories)">日記だけ消去</button>
+      </div>
+      <input type="file" id="diaryFile" accept=".md,.txt,text/markdown,text/plain" style="display:none" onchange="importDiaryFile(this)">
+      <div class="field" style="margin-top:9px"><label><input type="checkbox" id="includeDeepMemories" onchange="setIncludeDeepMemories(this.checked)" style="width:auto;margin-right:6px">健康・人間関係など深い内容も候補にする</label></div>
+      <p class="muted privacy-note">🔒 日記はこの端末のブラウザ保存領域だけ（暗号化はされず、同じブラウザ利用者には見える可能性があります）。Google Drive同期・バックアップJSON・AI送信・公開HTMLには含めません。iPhoneではiCloud Driveから同じファイルを選べます。</p>
     </div>
 
     <!-- SETTINGS -->
@@ -845,7 +929,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   </div>
   <div class="runbtns">
     <button class="btn btn-g" id="btnPause" onclick="togglePause()">⏸ 一時停止</button>
-    <button class="btn btn-g" onclick="skipStep()">⏭ スキップ</button>
+    <button class="btn btn-g" id="btnSkipStep" onclick="skipStep()">⏭ スキップ</button>
     <button class="btn btn-p" id="btnDoneStep" onclick="doneStep()">✅ できた！</button>
   </div>
   <div class="moti" id="runMoti">…</div>
@@ -892,9 +976,14 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div><div class="rv" id="resTotal">-</div><div class="rl">通算完了</div></div>
     </div>
     <div class="ressub" id="resSub"></div>
+    <div class="res-memory" id="resMemory" hidden></div>
     <button class="btn btn-p btn-full" style="margin-top:16px" onclick="closeResult()">🏠 ホームへ</button>
-    <p class="muted" style="text-align:center;margin-top:10px"><span id="resCount">60</span>秒後に自動でホームに戻ります</p>
+    <p class="muted" style="text-align:center;margin-top:10px"><span id="resCount">20</span>秒後に自動でホームに戻ります</p>
   </div>
+</div>
+
+<div id="rescueModal" onclick="if(event.target===this)closeRescue()">
+  <div class="sheet" id="rescueSheet"></div>
 </div>
 
 <div id="libModal" onclick="if(event.target===this)this.classList.remove('show')">
@@ -921,8 +1010,24 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 <script>
 /* ============ data ============ */
 const KEY='rvt_v1';
+const HISTORY_KEY='rvt_history_v1';
 const uid=()=>Math.random().toString(36).slice(2,9);
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+function defaultHistory(){return{v:1,moments:[],seen:{},includeSensitive:false,importedAt:0,sourceName:''};}
+function normalizeHistory(raw){
+  const h=Object.assign(defaultHistory(),raw||{});
+  h.moments=(Array.isArray(h.moments)?h.moments:[]).map(m=>{
+    const n=Object.assign({id:'',date:'',time:'',at:0,text:'',tags:[],valence:0,private:false,distress:false,sensitive:false,quality:'memory',hiddenUntil:0,loved:0},m||{});
+    n.private=!!n.private||isPrivateMemoryText(n.text);n.distress=!!n.distress||isDistressingMemoryText(n.text);n.sensitive=n.private||n.distress;return n;
+  }).filter(m=>m.id&&m.date&&m.text);
+  h.seen=h.seen&&typeof h.seen==='object'?h.seen:{};
+  h.includeSensitive=!!h.includeSensitive;
+  return h;
+}
+let H;
+try{H=normalizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY))||defaultHistory());}
+catch(e){H=defaultHistory();}
+function saveHistory(){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(H));return true;}catch(e){if(typeof toast==='function')toast('⚠️ 端末の保存容量が足りません');return false;}}
 function normalizeHabit(h){
   const normalized=Object.assign({guide:'',link:'',scheduleMode:'daily',weekdays:[0,1,2,3,4,5,6],showDate:'',startTime:'',endTime:''},h||{});
   normalized.weekdays=Array.isArray(normalized.weekdays)?normalized.weekdays.map(Number).filter(n=>n>=0&&n<=6):[0,1,2,3,4,5,6];
@@ -1011,7 +1116,12 @@ const URGE_OPEN_EXPIRE_MS=6*60*60*1000;
 const mealScore=v=>Number.isInteger(v)&&v>=0&&v<=10?v:null;
 const liveLogs=arr=>(Array.isArray(arr)?arr:[]).filter(x=>x&&!x.deletedAt);
 function tombstoneLog(arr,id){const it=arr.find(x=>x&&x.id===id);if(it){it.deletedAt=Date.now();it.updatedAt=it.deletedAt;}}
-const CURRENT_SCHEMA=6;
+function normalizeJourneyLog(log){
+  const n=Object.assign({id:uid(),at:Date.now(),updatedAt:0,type:'support',choice:'',routineId:'',routineName:'',dueAt:0,returnedAt:0,completedAt:0,stepIndex:0,stepRecords:[],skips:0,deletedAt:null},log||{});
+  n.stepRecords=Array.isArray(n.stepRecords)?n.stepRecords.map(x=>Object.assign({},x)):[];
+  return n;
+}
+const CURRENT_SCHEMA=7;
 
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
@@ -1026,6 +1136,7 @@ function normalizeData(raw){
   d.habitLogs=Array.isArray(d.habitLogs)?d.habitLogs:[];
   d.todayTasks=Array.isArray(d.todayTasks)?d.todayTasks:[];
   d.todayTaskLogs=Array.isArray(d.todayTaskLogs)?d.todayTaskLogs:[];
+  d.journeyLogs=(Array.isArray(d.journeyLogs)?d.journeyLogs:[]).map(normalizeJourneyLog);
   delete d.badges;
   return migrateData(d);
 }
@@ -1044,6 +1155,7 @@ function migrateData(d){
   }
   if(from<5&&!Array.isArray(d.locLogs))d.locLogs=[];
   if(from<6&&!Array.isArray(d.mealPlans))d.mealPlans=[];
+  if(from<7&&!Array.isArray(d.journeyLogs))d.journeyLogs=[];
   d.mealSessions=(Array.isArray(d.mealSessions)?d.mealSessions:[]).map(normalizeMealSession);
   d.mealTemplates=(Array.isArray(d.mealTemplates)?d.mealTemplates:[]).map(normalizeMealTemplate);
   d.foodRules=(Array.isArray(d.foodRules)?d.foodRules:[]).map(normalizeFoodRule);
@@ -1062,12 +1174,13 @@ function migrateData(d){
   if(d.wakeLogs.length>400){d.wakeLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.wakeLogs=d.wakeLogs.slice(-400);}
   if(d.locLogs.length>1000){d.locLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.locLogs=d.locLogs.slice(-1000);}
   if(d.mealPlans.length>400){d.mealPlans.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));d.mealPlans=d.mealPlans.slice(-400);}
+  if(d.journeyLogs.length>1000){d.journeyLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.journeyLogs=d.journeyLogs.slice(-1000);}
   d.schemaVersion=CURRENT_SCHEMA;
   return d;
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','personalNotes','moodLogs','habitLogs','todayTaskLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -1085,7 +1198,8 @@ const seed=()=>({
   moods:defaultMoods(),moodLogs:[],
   habits:[],habitLogs:[],
   todayTasks:[],todayTaskLogs:[],
-  schemaVersion:6,
+  journeyLogs:[],
+  schemaVersion:7,
   mealSessions:[],
   mealTemplates:builtinMealTemplates(),
   foodRules:[],
@@ -1352,6 +1466,8 @@ function renderHome(){
   renderMoodActivityPicker();
   renderHabits();
   renderActivityTimeline();
+  renderMemoryCard();
+  renderJourneyCard();
   if(!D.routines.length)el.innerHTML='<div class="card muted">まだルーチンがありません。「記録」画面から作ってみよう！</div>';
   const sorted=[...D.routines].sort((a,b)=>(b.lastRun||0)-(a.lastRun||0));
   for(const r of sorted){
@@ -1361,10 +1477,12 @@ function renderHome(){
     div.innerHTML=`<div class="em">${esc(r.emoji||'📝')}</div>
       <div class="info"><div class="rcard-titleline"><div class="name">${esc(r.name||'名前なしルーチン')}</div><span class="duration">約${Math.round(total/60)}分</span></div>
       <div class="stepnames" title="${esc(stepNames)}">${esc(stepNames)}</div></div>
-      <button class="edit-btn" type="button" title="編集" aria-label="${esc(r.name||'ルーチン')}を編集">✏️</button>`;
+      <button class="edit-btn rescue-btn" type="button" title="動き出しを手伝う" aria-label="${esc(r.name||'ルーチン')}の動き出しを手伝う">🛟</button>
+      <button class="edit-btn routine-edit-btn" type="button" title="編集" aria-label="${esc(r.name||'ルーチン')}を編集">✏️</button>`;
     div.onclick=()=>openRoutinePreview(r.id);
     div.onkeydown=e=>{if(e.target===div&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openRoutinePreview(r.id);}};
-    div.querySelector('.edit-btn').onclick=e=>{e.stopPropagation();openEdit(r.id);};
+    div.querySelector('.rescue-btn').onclick=e=>{e.stopPropagation();openRescue(r.id);};
+    div.querySelector('.routine-edit-btn').onclick=e=>{e.stopPropagation();openEdit(r.id);};
     el.appendChild(div);
   }
   const hc=document.getElementById('hitokotoChips');hc.innerHTML='';
@@ -1408,6 +1526,7 @@ function renderRoutinePreview(){
     save();renderRoutinePreview();sfxSlam();
   });
   document.getElementById('previewStart').disabled=!r.steps.length;
+  document.getElementById('previewRescue').disabled=!r.steps.length;
 }
 function startSelectedRoutine(){
   const id=selectedRoutineId;
@@ -1917,6 +2036,287 @@ function addHitokoto(){
   D.hitokoto.push(v);document.getElementById('hitokotoInput').value='';save();renderHome();toast('💬 追加しました');
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ============ PAST YOU / LOCAL DIARY ============ */
+const MEMORY_THEMES=[
+  {id:'learn',label:'学ぶ・知る',re:/心理|学習|勉強|レポート|授業|読書|本を|研究|大学|概念|知りたい/,copy:'「学ぶ・知る」の話題が何度も出てくるよ。好奇心は、かなり強い燃料みたい。'},
+  {id:'body',label:'身体・休息',re:/眠|疲|休|空腹|お腹|体調|身体|散歩|歩い|照明|寒い|暑い/,copy:'眠さ・疲れ・空腹・場所を細かく感じ取っている日が多め。根性より、まず身体を整える方が近道かも。'},
+  {id:'tiny',label:'小さく始める',re:/1ミリ|一文|少しだけ|設定だけ|ついでに|コツコツ|できた|終わった|終えた|なんとかなる/,copy:'「少しだけ」「ついでに」から動けた記録があるよ。入口を小さくする作戦は相性がよさそう。'},
+  {id:'digital',label:'デジタル寄り道',re:/Twitter|ツイッター|YouTube|ユーチューブ|ゲーム|ネットサーフィン|スクロール|SNS|動画/,copy:'デジタルの刺激へ寄り道した記録もあるよ。気づけた時点で、もう戻り始めてる。'},
+  {id:'voice',label:'声・視覚',re:/音声入力|音声|声で|ビジュアル|画像|文字に起こ/,copy:'文字が重い時は、声や見える形にすると進みやすかったみたい。音声メモで十分。'}
+];
+function stableHash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36);}
+function cleanDiaryText(text){
+  return String(text||'').replace(/\[deleted::[^\]]*\]/g,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/^\s*[-*]\s*(?:\[[ xX]\]\s*)?/,'').replace(/[`*_>#]/g,'').replace(/\s+/g,' ').trim();
+}
+function isPrivateMemoryText(text){return /癌|病院|通院|診断|生理|血が|エッチ|セックス|配偶者|家族|母親|父親|両親|カウンセリング|体重|食べすぎ|食べ過ぎ|恋愛|好きな人/.test(text);}
+function isDistressingMemoryText(text){return /死|自殺|消えたい|グリーフ|陰口|嫌い|別れ|トラウマ|不安|苦痛|つらい|辛い|しんどい|自己嫌悪|人間関係|罪悪感|自分を責め|寂し|腹立|ショック/.test(text);}
+function isSensitiveMemoryText(text){return isPrivateMemoryText(text)||isDistressingMemoryText(text);}
+function isLowQualityDiaryText(text){return /Fetching Title|スクーリング時間割|\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2}|テストメモ|表示されない|表示でき|追加でき|投稿でき|コードブロック|^task\b/i.test(text);}
+function memoryTags(text){return MEMORY_THEMES.filter(t=>t.re.test(text)).map(t=>t.id);}
+function memoryValence(text){
+  const good=(text.match(/良かった|よかった|楽しい|最高|嬉し|できた|終わった|終えた|ワクワク|気持ちいい|好き|発見|ありがとう|楽しみ/g)||[]).length;
+  const hard=(text.match(/つら|辛|不安|嫌|疲|眠|だる|怒|泣|面倒|できない/g)||[]).length;
+  return good>hard?1:hard>good?-1:0;
+}
+function diaryMoment(date,time,text){
+  const cleaned=cleanDiaryText(text);
+  if(cleaned.length<5||isLowQualityDiaryText(cleaned)||/^(test|テスト|投稿|こんにちは|あ+|ー+)[.!。！]*$/i.test(cleaned))return null;
+  const short=cleaned.slice(0,240),safeTime=/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time||'')?time:'';
+  const at=new Date(`${date}T${safeTime||'12:00'}:00`).getTime();
+  if(!Number.isFinite(at))return null;
+  const privateMemory=isPrivateMemoryText(short),distress=isDistressingMemoryText(short);
+  return{id:'m'+stableHash(`${date}|${safeTime}|${short}`),date,time:safeTime,at,text:short,tags:memoryTags(short),valence:memoryValence(short),private:privateMemory,distress,sensitive:privateMemory||distress,quality:'memory',hiddenUntil:0,loved:0};
+}
+function parseDiaryMarkdown(raw){
+  const lines=String(raw||'').replace(/\r/g,'').split('\n'),sections=[];let date='',buffer=[];
+  const flush=()=>{if(date)sections.push({date,lines:[...buffer]});buffer=[];};
+  for(const line of lines){
+    const heading=line.match(/^##\s*(\d{4}-\d{2}-\d{2})(?:\s|$)/);
+    if(heading){flush();date=heading[1];continue;}
+    if(date)buffer.push(line);
+  }
+  flush();
+  const out=[];
+  for(const section of sections){
+    let current=null,prose=[],inFence=false;
+    const pushCurrent=()=>{if(!current)return;const m=diaryMoment(section.date,current.time,current.parts.join(' '));if(m)out.push(m);current=null;};
+    for(const rawLine of section.lines){
+      if(/\[deleted::/.test(rawLine))continue;
+      const line=rawLine.replace(/\t/g,' ').trim();
+      if(/^```/.test(line)){inFence=!inFence;continue;}if(inFence||/^<!--/.test(line))continue;
+      if(/^[-*]\s+\[[ xX]\]\s+/.test(line)){pushCurrent();continue;}
+      const marker=/(^|\s+|[^0-9:\s])-\s+(?:(?:20\d{2})[-:])?([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\s*/g,matches=[];let match;
+      while((match=marker.exec(line)))matches.push({index:match.index+match[1].length,end:marker.lastIndex,time:`${String(Number(match[2])).padStart(2,'0')}:${match[3]}`});
+      if(matches.length){
+        const before=line.slice(0,matches[0].index).trim();
+        if(before){if(current)current.parts.push(before);else prose.push(before);}
+        for(let i=0;i<matches.length;i++){
+          pushCurrent();
+          const body=line.slice(matches[i].end,i+1<matches.length?matches[i+1].index:line.length).trim();
+          current={time:matches[i].time,parts:body?[body]:[]};
+        }
+      }else if(line){
+        if(current)current.parts.push(line);else prose.push(line);
+      }else if(!current&&prose.length&&prose[prose.length-1]!=='\n')prose.push('\n');
+    }
+    pushCurrent();
+    for(const paragraph of prose.join(' ').split(/\s*\n\s*/)){
+      const m=diaryMoment(section.date,'',paragraph);if(m)out.push(m);
+    }
+  }
+  return[...new Map(out.map(m=>[m.id,m])).values()].sort((a,b)=>a.at-b.at);
+}
+function importDiaryFile(input){
+  const file=input&&input.files&&input.files[0];if(!file)return;
+  if(file.size>1024*1024){toast('⚠️ 1MB以下のMarkdownを選んでください');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const parsed=parseDiaryMarkdown(reader.result),old=new Map(H.moments.map(m=>[m.id,m]));
+    if(!parsed.length){toast('⚠️ 日付見出し（## YYYY-MM-DD）の記録が見つかりませんでした');input.value='';return;}
+    H.moments=parsed.map(m=>{const prev=old.get(m.id);return prev?Object.assign(m,{hiddenUntil:prev.hiddenUntil||0,loved:prev.loved||0}):m;});
+    H.includeSensitive=false;H.importedAt=Date.now();H.sourceName=file.name;if(!saveHistory()){input.value='';return;}input.value='';memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';
+    renderMemorySettings();renderMemoryCard();
+    const days=new Set(H.moments.map(m=>m.date)).size,deep=H.moments.filter(m=>m.sensitive).length;
+    toast(`📓 ${days}日・${H.moments.length}件を発掘！${deep?`（深い内容${deep}件は非表示）`:''}`);sfxDone();burst();
+  };
+  reader.onerror=()=>{toast('⚠️ 日記を読み込めませんでした');input.value='';};
+  reader.readAsText(file,'utf-8');
+}
+function clearDiaryMemories(){H.moments=[];H.seen={};H.includeSensitive=false;H.importedAt=0;H.sourceName='';saveHistory();memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';renderMemorySettings();renderMemoryCard();toast('🧹 日記のタイムカプセルをこの端末から消しました');}
+function setIncludeDeepMemories(on){H.includeSensitive=!!on;saveHistory();memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';renderMemoryCard();renderMemorySettings();toast(on?'深い内容も候補に入れました':'深い内容を候補から外しました');}
+function renderMemorySettings(){
+  const status=document.getElementById('memoryImportStatus'),check=document.getElementById('includeDeepMemories');if(!status||!check)return;
+  check.checked=!!H.includeSensitive;
+  if(!H.moments.length){status.textContent='まだ日記を読み込んでいません。';return;}
+  const days=new Set(H.moments.map(m=>m.date)).size,deep=H.moments.filter(m=>m.sensitive).length;
+  status.innerHTML=`<b>${days}日・${H.moments.length}件</b>の記憶を端末内に保存中${deep?`（深い内容 ${deep}件）`:''}<br><span class="muted">${esc(H.sourceName||'Markdown')} ・ ${new Date(H.importedAt).toLocaleDateString('ja-JP')} 読み込み</span>`;
+}
+function dateTimeParts(stamp){
+  const d=new Date(stamp);return{date:localDateKey(d),time:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+}
+function allMemoryEvents(){
+  const list=H.moments.map(m=>Object.assign({source:'過去の日記'},m));
+  for(const note of liveLogs(D.personalNotes)){
+    const at=Number(note.createdAt)||0;if(!at)continue;const p=dateTimeParts(at),text=String(note.text||'').slice(0,240);
+    const privateMemory=isPrivateMemoryText(text),distress=isDistressingMemoryText(text);
+    list.push({id:'note-'+note.id,date:p.date,time:p.time,at,text,source:note.source==='run'?'実行中メモ':'ひとことメモ',tags:memoryTags(text),valence:memoryValence(text),private:privateMemory,distress,sensitive:privateMemory||distress,quality:'memory'});
+  }
+  for(const log of D.logs){
+    const at=activityLogStamp(log);if(!at)continue;const p=dateTimeParts(at),text=`${log.routine||'ルーチン'}を ${Number(log.done)||0}/${Number(log.total)||0} ステップ完了`;
+    list.push({id:'run-'+stableHash(`${p.date}|${p.time}|${text}`),date:p.date,time:p.time,at,text,source:'ルーチン記録',tags:['win'],valence:1,private:false,distress:false,sensitive:false,quality:'memory'});
+  }
+  for(const log of liveLogs(D.habitLogs)){
+    const at=activityLogStamp(log);if(!at)continue;const p=dateTimeParts(at),text=`「${log.habitName||'チェック項目'}」をできた`;
+    list.push({id:'habit-'+log.id,date:p.date,time:p.time,at,text,source:'チェック記録',tags:['win'],valence:1,private:false,distress:false,sensitive:false,quality:'memory'});
+  }
+  for(const log of liveLogs(D.todayTaskLogs)){
+    const at=activityLogStamp(log);if(!at)continue;const p=dateTimeParts(at),text=`「${log.taskName||'今日の項目'}」をできた`;
+    list.push({id:'task-'+log.id,date:p.date,time:p.time,at,text,source:'今日のチェック',tags:['win'],valence:1,private:false,distress:false,sensitive:false,quality:'memory'});
+  }
+  return list;
+}
+function dayOfYear(d){return Math.floor((Date.UTC(2000,d.getMonth(),d.getDate())-Date.UTC(2000,0,1))/864e5);}
+function circularDayDiff(a,b){const diff=Math.abs(dayOfYear(a)-dayOfYear(b));return Math.min(diff,366-diff);}
+function clockDistance(a,b){const diff=Math.abs(a-b);return Math.min(diff,1440-diff);}
+function memoryReason(memory,now=new Date()){
+  const d=new Date(memory.at),years=now.getFullYear()-d.getFullYear(),sameDate=d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
+  if(sameDate&&years>0)return`${years}年前の今日`;
+  const dayDiff=circularDayDiff(d,now),minutes=memory.time?clockDistance(d.getHours()*60+d.getMinutes(),now.getHours()*60+now.getMinutes()):9999;
+  if(dayDiff<=3&&years>0)return`${years}年前の今ごろ`;
+  if(minutes<=60)return'同じくらいの時間';
+  if(minutes<=120)return`同じころの${now.getHours()<5?'深夜':now.getHours()<11?'朝':now.getHours()<17?'午後':now.getHours()<22?'夜':'深夜'}`;
+  if(dayDiff<=14)return'季節が近い日の記録';
+  return'過去のあなたから';
+}
+function rankedMemories(options={}){
+  const now=new Date(),nowMs=now.getTime(),nowMin=now.getHours()*60+now.getMinutes(),quietHours=now.getHours()>=22||now.getHours()<5;
+  return allMemoryEvents().filter(m=>m.at<nowMs-20*60*60*1000&&(!m.sensitive||H.includeSensitive)&&(!quietHours||!m.distress)&&(!options.positive||(m.valence>0&&!m.sensitive&&!m.distress))).filter(m=>{
+    const state=H.seen[m.id]||{};return Number(m.hiddenUntil||state.hiddenUntil||0)<=nowMs;
+  }).map(m=>{
+    const d=new Date(m.at),sameDate=d.getMonth()===now.getMonth()&&d.getDate()===now.getDate(),dd=circularDayDiff(d,now),tm=m.time?clockDistance(d.getHours()*60+d.getMinutes(),nowMin):9999,state=H.seen[m.id]||{};
+    let score=sameDate?260:dd<=3?135:dd<=14?55:0;
+    score+=tm<=60?125:tm<=120?70:tm<=240?18:0;
+    if(d.getDay()===now.getDay())score+=12;
+    if(options.positive&&m.valence>0)score+=80;
+    if(options.help&&(m.tags||[]).some(t=>['tiny','voice','body'].includes(t)))score+=70;
+    if(m.valence>0)score+=20;else if(m.valence<0)score-=25;
+    if(state.lastShownAt&&nowMs-state.lastShownAt<14*864e5)score-=90;
+    score+=(Number(m.loved||state.loved)||0)*18;
+    score+=(parseInt(stableHash(`${m.id}|${today()}|${Math.floor(now.getHours()/3)}`),36)%37)/37;
+    return{memory:m,score};
+  }).sort((a,b)=>b.score-a.score).map(x=>x.memory);
+}
+let memoryDeckIndex=0,lastMemoryShownId='',pinnedMemoryId='';
+function recordMemoryShown(memory){
+  if(!memory||lastMemoryShownId===memory.id)return;lastMemoryShownId=memory.id;
+  const prev=H.seen[memory.id]||{};H.seen[memory.id]={lastShownAt:Date.now(),count:(Number(prev.count)||0)+1,hiddenUntil:prev.hiddenUntil||0,loved:prev.loved||0};saveHistory();
+}
+function currentMemory(options={}){
+  const deck=rankedMemories(options);if(!deck.length)return null;
+  if(!options.positive&&pinnedMemoryId){const pinned=deck.find(m=>m.id===pinnedMemoryId);if(pinned)return pinned;}
+  const memory=deck[memoryDeckIndex%deck.length];if(!options.positive)pinnedMemoryId=memory.id;return memory;
+}
+function renderMemoryCard(){
+  const el=document.getElementById('memoryCard');if(!el)return;const memory=currentMemory();el.classList.remove('found');
+  if(!memory){
+    el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><span class="memory-source">端末内だけ</span></div><div class="memory-empty"><p class="muted">日記を読み込むか、メモや完了記録が育つと、同じころの過去がここに現れるよ。</p><button class="btn btn-c btn-sm" type="button" onclick="document.getElementById('diaryFile').click()">📓 読み込む</button></div>`;return;
+  }
+  recordMemoryShown(memory);
+  const stamp=new Date(memory.at),date=`${stamp.getFullYear()}/${stamp.getMonth()+1}/${stamp.getDate()}${memory.time?` ${memory.time}`:''}`;
+  el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><span class="memory-source">${esc(memory.source||'過去の記録')}</span></div><div class="memory-reason">✦ ${esc(memoryReason(memory))}</div><div class="memory-quote">「${esc(memory.text)}」</div><div class="memory-date">${date}</div><div class="memory-actions"><button class="btn btn-p btn-sm" type="button" onclick="cycleMemory()">🎰 もう1枚</button><button class="btn btn-g btn-sm" type="button" onclick="loveMemory('${memory.id}')">💖 なつかしい</button><button class="btn btn-g btn-sm" type="button" onclick="hideMemory('${memory.id}')">🙈 30日隠す</button></div>`;
+}
+function cycleMemory(){memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';renderMemoryCard();const el=document.getElementById('memoryCard');el.classList.add('found');sfxDone();setTimeout(()=>el.classList.remove('found'),450);}
+function loveMemory(id){
+  const local=H.moments.find(m=>m.id===id),state=H.seen[id]||{};if(local)local.loved=(Number(local.loved)||0)+1;state.loved=(Number(state.loved)||0)+1;H.seen[id]=state;saveHistory();toast('💖 この記憶、また出すね');sfxJackpot();burst();
+}
+function hideMemory(id){
+  const until=Date.now()+30*864e5,local=H.moments.find(m=>m.id===id),state=H.seen[id]||{};if(local)local.hiddenUntil=until;state.hiddenUntil=until;H.seen[id]=state;saveHistory();toast('🙈 30日間そっとしまいました');cycleMemory();
+}
+
+/* ============ PERSONAL INSIGHTS ============ */
+function timeBandFromTime(time){const raw=String(time||''),match=raw.match(/^(\d{1,2}):/);if(!match)return null;const h=Number(match[1]);if(h<5)return'深夜';if(h<11)return'朝';if(h<17)return'昼〜午後';if(h<22)return'夕方〜夜';return'深夜';}
+function median(values){const list=values.map(Number).filter(Number.isFinite).sort((a,b)=>a-b);if(!list.length)return 0;const i=Math.floor(list.length/2);return list.length%2?list[i]:(list[i-1]+list[i])/2;}
+function themeDateCount(id){const theme=MEMORY_THEMES.find(t=>t.id===id);return theme?new Set(H.moments.filter(m=>theme.re.test(m.text)).map(m=>m.date)).size:0;}
+function buildPersonalInsights(){
+  const insights=[];
+  if(D.logs.length>=3){
+    const bands={};for(const log of D.logs){const band=timeBandFromTime(log.time);if(band)bands[band]=(bands[band]||0)+1;}
+    const top=Object.entries(bands).sort((a,b)=>b[1]-a[1])[0];
+    if(top)insights.push({copy:`保存記録では「${top[0]}」の完了がいちばん多め。動く時間を決めるなら、ここが候補かも。`,evidence:`ルーチン完了 ${top[1]} / ${D.logs.length}件`});
+  }
+  const supports=liveLogs(D.journeyLogs).filter(x=>x.type==='support'&&['micro','start','postpone'].includes(x.choice));
+  if(supports.length){const returned=supports.filter(x=>x.returnedAt||x.completedAt).length;insights.push({copy:returned?`重いと感じたあとも、${returned}回は行動へ戻れてる。立ち止まることと、やめることは同じじゃないよ。`:'「重い」と気づいた記録が育ち始めたよ。次は最初の1個だけで十分。',evidence:`動き出しサポート ${supports.length}件`});}
+  if(H.moments.length){
+    const themes=MEMORY_THEMES.map(t=>({theme:t,count:themeDateCount(t.id)})).filter(x=>x.count).sort((a,b)=>b.count-a.count);
+    if(themes[0])insights.push({copy:themes[0].theme.copy,evidence:`過去日記 ${themes[0].count}日で登場`});
+    const bodyDates=new Set(H.moments.filter(m=>MEMORY_THEMES[1].re.test(m.text)).map(m=>m.date)),digitalDates=new Set(H.moments.filter(m=>MEMORY_THEMES[3].re.test(m.text)).map(m=>m.date));
+    const overlap=[...bodyDates].filter(d=>digitalDates.has(d)).length;
+    if(overlap>=2)insights.push({copy:'疲れ・眠さの言葉と、デジタルへの寄り道が同じ日に出ることがあったよ。意志より先に、電池残量を見てもよさそう。',evidence:`同じ日に出た記録 ${overlap}日`});
+  }
+  const stepMap=new Map();for(const log of D.logs)for(const s of Array.isArray(log.stepTimes)?log.stepTimes:[]){if(!s.name||s.outcome==='skipped')continue;const x=stepMap.get(s.name)||[];x.push(s);stepMap.set(s.name,x);}
+  const stepHint=[...stepMap.entries()].filter(([,v])=>v.length>=3).map(([name,v])=>({name,v,actual:median(v.map(x=>x.actualSec)),planned:median(v.map(x=>x.plannedSec))})).filter(x=>x.planned&&x.actual<x.planned*.8).sort((a,b)=>(a.actual/a.planned)-(b.actual/b.planned))[0];
+  if(stepHint)insights.push({copy:`「${stepHint.name}」は、予定より実際の方が短め。始める前の想像ほど長くないのかも。`,evidence:`中央値 ${Math.round(stepHint.actual)}秒 / 予定${Math.round(stepHint.planned)}秒・${stepHint.v.length}件`});
+  if(!insights.length)insights.push({copy:'まだ決めつけないで観察中。メモや完了が3回ほどたまると、動きやすい時間などのヒントが育つよ。',evidence:'小さな記録も分析に使います'});
+  return insights.slice(0,3);
+}
+function renderInsights(){const el=document.getElementById('insights');if(!el)return;el.innerHTML=buildPersonalInsights().map(x=>`<div class="insight-item"><div class="insight-copy">${esc(x.copy)}</div><div class="insight-evidence">🔎 ${esc(x.evidence)}</div></div>`).join('');}
+
+/* ============ GENTLE START / RETURN ============ */
+let rescueState=null;
+function latestUnresolvedJourney(){
+  return liveLogs(D.journeyLogs).filter(x=>!x.returnedAt&&!x.completedAt&&x.choice!=='dismissed'&&(x.type==='stopped'||x.choice==='postpone'||x.choice==='rest')).sort((a,b)=>(b.updatedAt||b.at)-(a.updatedAt||a.at))[0]||null;
+}
+function rescueAdvice(){
+  const hour=new Date().getHours(),body=themeDateCount('body'),voice=themeDateCount('voice');
+  if((hour>=22||hour<5)&&body)return'眠い時間なら、意志の弱さじゃなくて電池の残量かも。今日は最初の1個で十分。';
+  if(voice)return'文字や段取りが重い日は、声に出すだけでもいい。前のあなたにも「声」が助けになった日があるよ。';
+  return'やる気が足りないんじゃなくて、入口がちょっと大きいだけかも。いちばん小さい入口にしよう。なんとかなると思うよ。';
+}
+function openRescue(routineId){
+  const routine=D.routines.find(r=>r.id===routineId);if(!routine)return;
+  if(!routine.steps||!routine.steps.length){toast('🧩 まずステップを1個だけ追加してね');return;}
+  const now=Date.now(),log=normalizeJourneyLog({id:uid(),at:now,updatedAt:now,type:'support',choice:'',routineId:routine.id,routineName:routine.name});D.journeyLogs.unshift(log);save();
+  rescueState={mode:'choose',routineId:routine.id,logId:log.id};renderRescueSheet();document.getElementById('rescueModal').classList.add('show');sfxSlam();
+}
+function renderRescueSheet(){
+  const sheet=document.getElementById('rescueSheet');if(!sheet||!rescueState)return;
+  if(rescueState.mode==='micro-win'){
+    sheet.innerHTML=`<div class="micro-win"><div class="micro-badge">ENTRY BREAK!!</div><div class="rescue-title">10秒、できた！</div><p class="rescue-copy">入口はもう突破したよ。ここで終えても成功。このまま行けそうなら、勢いを借りよう。</p><div class="rescue-actions"><button class="btn btn-p" type="button" onclick="continueMicroRun()">▶ このまま続ける</button><button class="btn btn-g" type="button" onclick="finishMicroRun()">🌱 今日はここまで</button></div></div>`;return;
+  }
+  const routine=D.routines.find(r=>r.id===rescueState.routineId);if(!routine)return;
+  sheet.innerHTML=`<div class="rescue-kicker">🛟 START RESCUE</div><div class="rescue-title">重いって気づけた。それも攻略データ。</div><p class="rescue-copy">${esc(rescueAdvice())}</p><div class="rescue-routine"><span>${esc(routine.emoji||'📝')}</span><span>${esc(routine.name)}</span></div><div class="rescue-actions"><button class="btn btn-p" type="button" onclick="startFromRescue(true)">⚡ 10秒だけ</button><button class="btn btn-c" type="button" onclick="startFromRescue(false)">▶ そのまま開始</button><button class="btn btn-g" type="button" onclick="postponeFromRescue(15)">🕰 15分後</button><button class="btn btn-g" type="button" onclick="postponeFromRescue(0)">🌙 今日は休む</button></div><button class="rescue-close" type="button" onclick="closeRescue()">いまは閉じる</button>`;
+}
+function closeRescue(){
+  if(rescueState&&rescueState.mode==='micro-win')return;
+  if(rescueState&&rescueState.logId){const log=D.journeyLogs.find(x=>x.id===rescueState.logId);if(log&&!log.choice){log.choice='dismissed';log.updatedAt=Date.now();save();}}
+  rescueState=null;document.getElementById('rescueModal').classList.remove('show');
+}
+function startFromRescue(micro){
+  if(!rescueState)return;const routineId=rescueState.routineId,log=D.journeyLogs.find(x=>x.id===rescueState.logId),logId=rescueState.logId;
+  if(log){log.choice=micro?'micro':'start';log.startedAt=Date.now();log.updatedAt=log.startedAt;save();}
+  rescueState=null;document.getElementById('rescueModal').classList.remove('show');startRun(routineId,{micro,journeyId:logId,source:'support'});
+}
+function restUntilTomorrow(){const d=new Date();d.setDate(d.getDate()+1);d.setHours(9,0,0,0);return d.getTime();}
+function postponeFromRescue(minutes){
+  if(!rescueState)return;const log=D.journeyLogs.find(x=>x.id===rescueState.logId),dueAt=minutes?Date.now()+minutes*60000:restUntilTomorrow();
+  if(log){log.choice=minutes?'postpone':'rest';log.dueAt=dueAt;log.updatedAt=Date.now();save();}
+  rescueState=null;document.getElementById('rescueModal').classList.remove('show');showScreen('scr-home');renderJourneyCard();toast(minutes?`🕰 ${minutes}分後を目安に、ホームに残しておくね`:'🌙 今日は休む作戦。明日また会おう');
+}
+function journeyTimeLabel(stamp){const ms=stamp-Date.now();if(ms>0&&ms<3600000)return`あと${Math.max(1,Math.ceil(ms/60000))}分`;const d=new Date(stamp);return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function renderJourneyCard(){
+  const el=document.getElementById('journeyCard');if(!el)return;const log=latestUnresolvedJourney();
+  if(!log){el.hidden=true;el.innerHTML='';return;}el.hidden=false;const due=!log.dueAt||log.dueAt<=Date.now();el.classList.toggle('due',due);
+  if(log.type==='stopped'&&!due)el.innerHTML=`<div class="journey-title">🫧 いまは休む作戦</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の続き・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 今なら続ける</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">＋15分</button></div>`;
+  else if(log.type==='stopped')el.innerHTML=`<div class="journey-title">🌱 止まったところも消えてない</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の途中から、最初の1個だけ戻れるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">🕰 15分のばす</button></div>`;
+  else el.innerHTML=`<div class="journey-title">${due?'🔔 戻りどきが来たよ':'🫧 休むのも作戦'}</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}',true)">${due?'⚡ 10秒だけ':'▶ 今なら10秒'}</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">＋15分</button></div>`;
+}
+function delayJourney(id,minutes){const log=D.journeyLogs.find(x=>x.id===id);if(!log)return;log.dueAt=Date.now()+minutes*60000;log.updatedAt=Date.now();save();renderJourneyCard();toast('🫧 15分のばしたよ。責めなくて大丈夫');}
+function resumeJourney(id,micro=false){
+  const log=D.journeyLogs.find(x=>x.id===id);if(!log)return;const options={journeyId:log.id,source:'return',micro:!!micro};
+  if(log.type==='stopped'){options.startIndex=Math.max(0,Number(log.stepIndex)||0);options.stepRecords=(log.stepRecords||[]).map(x=>Object.assign({},x));options.skips=Number(log.skips)||0;}
+  startRun(log.routineId,options);
+}
+function claimJourneyForStart(routineId,requestedId){
+  const now=Date.now();let log=requestedId&&D.journeyLogs.find(x=>x.id===requestedId);
+  if(!log)log=liveLogs(D.journeyLogs).filter(x=>x.routineId===routineId&&!x.returnedAt&&!x.completedAt&&x.choice!=='dismissed'&&now-(x.updatedAt||x.at)<7*864e5).sort((a,b)=>(b.updatedAt||b.at)-(a.updatedAt||a.at))[0];
+  if(!log)return'';log.returnedAt=now;log.updatedAt=now;save();return log.id;
+}
+function markJourneyComplete(id){const log=id&&D.journeyLogs.find(x=>x.id===id);if(log){log.completedAt=Date.now();log.updatedAt=log.completedAt;save();}}
+function completeMicroEntry(){
+  if(!run||!run.microEntry||run.microEntryDone)return;
+  advanceRunClock();run.microEntryDone=true;run.paused=true;D.xp+=3;run.xp=(run.xp||0)+3;
+  const log=run.journeyId&&D.journeyLogs.find(x=>x.id===run.journeyId);if(log){log.entryClearedAt=Date.now();log.updatedAt=log.entryClearedAt;}
+  save();renderCombo(3);xpPop(3,'⚡入口突破');showMicroWin();
+}
+function showMicroWin(){if(!run)return;rescueState={mode:'micro-win'};renderRescueSheet();document.getElementById('rescueModal').classList.add('show');sfxJackpot();burst();}
+function continueMicroRun(){if(!run)return;document.getElementById('rescueModal').classList.remove('show');rescueState=null;run.microEntry=false;run.microEntryDone=false;run.paused=false;loadStep(true);toast('🔥 その勢い、借りていこう！');}
+function finishMicroRun(){
+  if(!run)return;const journeyId=run.journeyId;
+  document.getElementById('rescueModal').classList.remove('show');rescueState=null;clearInterval(timer);timer=null;speechSynthesis.cancel();
+  const log=journeyId&&D.journeyLogs.find(x=>x.id===journeyId);if(log){log.tinyEndedAt=Date.now();log.updatedAt=log.tinyEndedAt;save();}
+  document.getElementById('run').classList.remove('active');run=null;renderHome();jackpot('ENTRY CLEAR!!','10秒の入口突破 +3XP');toast('🌱 今日はここまでで成功。ちゃんと記録したよ');
+}
 /* confirm()代替：2度押し確認（アプリ内ビューはダイアログ不可のため） */
 function twoTap(btn,confirmLabel,fn){
   if(btn.dataset.armed){clearTimeout(+btn.dataset.tm);delete btn.dataset.armed;fn();return;}
@@ -2130,10 +2530,15 @@ const CIRC=2*Math.PI*43;
 document.getElementById('ringFg').style.strokeDasharray=CIRC;
 let run=null,timer=null;
 
-function startRun(id){
+function startRun(id,options={}){
   const r=D.routines.find(x=>x.id===id);
   if(!r||!r.steps.length){toast('ステップを追加してから開始してね');return;}
-  run={r,idx:0,left:0,leftMs:0,paused:false,skips:0,startedAt:Date.now(),timerMode:'down',stepRecords:[]};
+  const startIndex=Math.min(r.steps.length-1,Math.max(0,Number(options.startIndex)||0));
+  const stepRecords=(Array.isArray(options.stepRecords)?options.stepRecords:[]).map(x=>Object.assign({},x));
+  const priorSkips=Number.isFinite(Number(options.skips))?Number(options.skips):stepRecords.filter(x=>x.outcome==='skipped').length;
+  const journeyId=claimJourneyForStart(r.id,options.journeyId||'');
+  showScreen('scr-home');
+  run={r,idx:startIndex,left:0,leftMs:0,paused:false,skips:priorSkips,startedAt:Date.now(),timerMode:'down',stepRecords,microEntry:!!options.micro,microEntryDone:false,source:options.source||'normal',journeyId};
   D.combo=D.combo||0;
   document.getElementById('run').classList.add('active');
   document.getElementById('runTitle').textContent=`${r.emoji} ${r.name}`;
@@ -2157,11 +2562,11 @@ function slamIn(){
 }
 function loadStep(speakIt){
   const s=run.r.steps[run.idx];
-  run.left=s.sec;run.leftMs=s.sec*1000;run.stepElapsedMs=0;run.lastTickAt=Date.now();
+  run.targetSec=run.microEntry?10:s.sec;run.left=run.targetSec;run.leftMs=run.targetSec*1000;run.stepElapsedMs=0;run.lastTickAt=Date.now();
   run.lastSignalElapsed=0;run.halfDone=false;run.halfSpeechActive=false;run.currentRecorded=false;run.usedCountUp=run.timerMode==='up';
   document.getElementById('runEmoji').textContent=s.emoji||'✅';
   document.getElementById('runStep').textContent=s.name;
-  document.getElementById('runProg').textContent=`ステップ ${run.idx+1} / ${run.r.steps.length}`;
+  document.getElementById('runProg').textContent=run.microEntry?'⚡ 10秒だけの入口':`ステップ ${run.idx+1} / ${run.r.steps.length}`;
   document.getElementById('runNoteContext').textContent=`${run.r.name} › ${s.name}`;
   document.getElementById('runNoteInput').value='';
   slamIn();
@@ -2189,8 +2594,8 @@ function loadStep(speakIt){
   run.ckDone=new Set();
   renderRunCk(s);
   if(speakIt){
-    const dur=s.sec>=60?`${Math.round(s.sec/60)}分`:`${s.sec}秒`;
-    const modeGuide=run.timerMode==='up'?'実時間計測です。終わったら次へを押してください。':`${dur}です。`;
+    const dur=run.targetSec>=60?`${Math.round(run.targetSec/60)}分`:`${run.targetSec}秒`;
+    const modeGuide=run.microEntry?'まず10秒だけです。':run.timerMode==='up'?'実時間計測です。終わったら次へを押してください。':`${dur}です。`;
     speak(`${s.name}、${modeGuide}`,()=>{ if(D.settings.moti&&moti&&run)speak(moti); });
   }
 }
@@ -2301,6 +2706,13 @@ function renderUpcoming(){
 }
 function updateRemain(){
   if(!run)return;
+  if(run.microEntry){
+    document.getElementById('runRemainLabel').textContent='⚡ 助走';
+    document.getElementById('runRemain').textContent=`あと${run.left}秒`;
+    document.getElementById('runFinishLabel').textContent='🌱 合格';
+    document.getElementById('runFinish').textContent='10秒でOK';
+    return;
+  }
   if(run.timerMode==='up'){
     document.getElementById('runRemainLabel').textContent='⏱ モード';
     document.getElementById('runRemain').textContent='実時間計測中';
@@ -2327,9 +2739,9 @@ function advanceRunClock(){
   run.left=Math.max(0,Math.ceil((run.leftMs||0)/1000));
 }
 function updateRing(){
-  const s=run.r.steps[run.idx];
   const countUp=run.timerMode==='up';
-  const ratio=countUp?Math.min((run.stepElapsedMs||0)/(s.sec*1000),1):Math.max(0,(run.leftMs||0)/(s.sec*1000));
+  const targetSec=Math.max(1,Number(run.targetSec)||run.r.steps[run.idx].sec);
+  const ratio=countUp?Math.min((run.stepElapsedMs||0)/(targetSec*1000),1):Math.max(0,(run.leftMs||0)/(targetSec*1000));
   document.getElementById('ringFg').style.strokeDashoffset=CIRC*(1-ratio);
   const shown=countUp?Math.floor((run.stepElapsedMs||0)/1000):run.left;
   const m=Math.floor(shown/60),ss=shown%60;
@@ -2344,7 +2756,7 @@ function tick(){
   const elapsed=Math.floor((run.stepElapsedMs||0)/1000);
   // 半分経過アナウンス（短いステップも含め、1回だけ）
   let halfAnnouncedNow=false;
-  if(run.timerMode==='down'&&!run.halfDone&&run.leftMs<=s.sec*500){
+  if(run.timerMode==='down'&&!run.halfDone&&run.leftMs<=(Number(run.targetSec)||s.sec)*500){
     run.halfDone=true;run.halfSpeechActive=true;halfAnnouncedNow=true;
     speak(`${s.name}。あと半分です！`,()=>{if(run)run.halfSpeechActive=false;});
   }
@@ -2362,20 +2774,26 @@ function tick(){
     if(iv&&Math.floor(elapsed/iv)>Math.floor((run.lastSignalElapsed||0)/iv))beep(660,.12,'sine',.09);
   }
   run.lastSignalElapsed=elapsed;
-  if(run.timerMode==='down'&&run.leftMs<=0){speak('時間です！');doneStep(true);return;}
+  if(run.timerMode==='down'&&run.leftMs<=0){
+    if(run.microEntry){speak('10秒できた！');completeMicroEntry();}
+    else{speak('時間です！');doneStep(true);}
+    return;
+  }
   updateRing();updateRemain();
 }
 function updateTimerModeUi(){
   if(!run)return;
   const countUp=run.timerMode==='up';
   const down=document.getElementById('btnModeDown'),up=document.getElementById('btnModeUp');
+  down.disabled=!!run.microEntry;up.disabled=!!run.microEntry;
+  document.getElementById('btnSkipStep').disabled=!!run.microEntry;
   down.classList.toggle('on',!countUp);up.classList.toggle('on',countUp);
   down.setAttribute('aria-pressed',String(!countUp));up.setAttribute('aria-pressed',String(countUp));
-  document.getElementById('btnDoneStep').textContent=countUp?'✅ 次のステップへ':'✅ できた！';
+  document.getElementById('btnDoneStep').textContent=run.microEntry?'⚡ 入口できた':countUp?'✅ 次のステップへ':'✅ できた！';
   document.getElementById('countUpStepTools').style.display=countUp?'block':'none';
 }
 function setTimerMode(mode){
-  if(!run||!['down','up'].includes(mode)||run.timerMode===mode)return;
+  if(!run||run.microEntry||!['down','up'].includes(mode)||run.timerMode===mode)return;
   advanceRunClock();
   run.timerMode=mode;run.lastTickAt=Date.now();
   if(mode==='up')run.usedCountUp=true;
@@ -2399,6 +2817,7 @@ function xpPop(gain,label){
   document.body.appendChild(p);setTimeout(()=>p.remove(),700);
 }
 function doneStep(auto=false){
+  if(run&&run.microEntry){completeMicroEntry();return;}
   D.combo=(D.combo||0)+1;
   const base=10,comboBonus=Math.min(D.combo-1,5)*2;
   let gain=base+comboBonus;
@@ -2415,6 +2834,7 @@ function doneStep(auto=false){
 }
 function finishAll(){
   if(!run)return;
+  if(run.microEntry){completeMicroEntry();return;}
   recordCurrentStep('done');
   for(let i=run.idx+1;i<run.r.steps.length;i++){
     const s=run.r.steps[i];
@@ -2466,6 +2886,7 @@ function finishRun(){
   const log={date:today(),time:new Date().toTimeString().slice(0,5),routine:r.name,done:doneCount,total:r.steps.length,skips,durationMin:Math.round(durationSec/60),durationSec,stepTimes:run.stepRecords.map(x=>Object.assign({},x))};
   D.logs.unshift(log);
   if(D.logs.length>500)D.logs.length=500;
+  markJourneyComplete(run.journeyId);
   save();
   sendNotion(log);
   const mode=D.settings.calLog||'off';
@@ -2490,9 +2911,15 @@ function showResult({log,perfect,bonus,xpGained,durSec}){
   document.getElementById('resStreak').textContent=streak();
   document.getElementById('resTotal').textContent=D.logs.length;
   document.getElementById('resSub').textContent=perfect?`ノースキップ完走ボーナス +${bonus}XP！`:(log.skips?`⏭ スキップ ${log.skips}件`:'');
+  const reward=rankedMemories({positive:true})[0]||null,resMemory=document.getElementById('resMemory');
+  resMemory.hidden=false;
+  if(reward){
+    recordMemoryShown(reward);const d=new Date(reward.at);
+    resMemory.innerHTML=`<div class="res-memory-kicker">🎁 PAST YOU UNLOCKED</div><div class="res-memory-text">「${esc(reward.text)}」</div><div class="res-memory-date">${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ・ ${esc(memoryReason(reward))}</div>`;
+  }else resMemory.innerHTML='<div class="res-memory-kicker">🎁 FUTURE MEMORY SAVED</div><div class="res-memory-text">今日の「できた」が、未来のあなたのタイムカプセルに入りました。</div>';
   document.getElementById('result').classList.add('show');
-  // 60秒カウントダウンで自動ホーム
-  let left=60;
+  // 20秒カウントダウンで自動ホーム（記憶カードを読める長さ）
+  let left=20;
   document.getElementById('resCount').textContent=left;
   clearInterval(resCountTimer);
   resCountTimer=setInterval(()=>{
@@ -2507,14 +2934,19 @@ function closeResult(){
   renderHome();
 }
 function endRun(){
+  if(!run)return;
+  advanceRunClock();const stopped=run,now=Date.now();
+  const log=normalizeJourneyLog({id:uid(),at:now,updatedAt:now,type:'stopped',choice:'stopped',routineId:stopped.r.id,routineName:stopped.r.name,stepIndex:stopped.idx,stepRecords:stopped.stepRecords.map(x=>Object.assign({},x)),skips:stopped.skips,elapsedSec:Math.max(0,Math.round((now-stopped.startedAt)/1000)),parentJourneyId:stopped.journeyId||''});
+  D.journeyLogs.unshift(log);save();
   clearInterval(timer);timer=null;speechSynthesis.cancel();
-  document.getElementById('run').classList.remove('active');run=null;
-  toast('⏹ 中断しました（ログには記録されません）');
+  document.getElementById('run').classList.remove('active');run=null;renderHome();
+  toast('🌱 止まったところも保存したよ。できた分は消えない');
 }
 
 /* ============ PROGRESS ============ */
 function renderProg(){
   const li=levelInfo();
+  renderInsights();
   document.getElementById('pRuns').textContent=D.logs.length;
   document.getElementById('pNotes').textContent=liveLogs(D.personalNotes).length;
   document.getElementById('pChecks').textContent=liveLogs(D.habitLogs).length+liveLogs(D.todayTaskLogs).length;
@@ -3728,7 +4160,7 @@ function buildLocCsv(){
   return lines.join('\n');
 }
 function exportLocCsv(){download('loc_logs.csv',buildLocCsv());toast('🧭 LOC CSVを書き出しました');}
-const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','personalNotes','moodLogs','habitLogs','todayTaskLogs'];
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs'];
 function mergeMealCollections(local,remote){
   for(const k of MERGE_COLLECTIONS){
     const l=Array.isArray(local[k])?local[k]:[],r=Array.isArray(remote[k])?remote[k]:[],map=new Map();
@@ -3938,6 +4370,7 @@ function askCalLog(log,startMs,endMs){
 
 /* ============ SETTINGS / CSV ============ */
 function renderSet(){
+  renderMemorySettings();
   document.getElementById('setRate').value=D.settings.rate;
   document.getElementById('setVoiceVolume').value=D.settings.voiceVolume;
   document.getElementById('setSfxVolume').value=D.settings.sfxVolume;
@@ -4107,7 +4540,7 @@ function restoreAll(input){
   const rd=new FileReader();
   rd.onload=()=>{
     try{
-      D=normalizeData(JSON.parse(rd.result));
+      D=normalizeData(JSON.parse(rd.result.replace(/^\uFEFF/,'')));
       save();stopMealWaitTimer();renderHome();restoreMealState();toast('✅ 復元しました');
     }catch(e){toast('⚠️ 読み込みに失敗しました');}
     input.value='';
@@ -4150,7 +4583,7 @@ window.addEventListener('focus',autoPullOnFocus);
 window.addEventListener('pageshow',autoPullOnFocus);
 setInterval(()=>{
   const home=document.getElementById('scr-home');
-  if(home&&home.classList.contains('active'))renderHabits();
+  if(home&&home.classList.contains('active')){renderHabits();renderJourneyCard();}
 },30000);
 if(D.settings.autoSync&&(D.settings.syncUrl||'').trim())syncPull(true);
 </script>
