@@ -325,9 +325,14 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .meal-plan-option input{width:auto;margin:0;accent-color:var(--cyan);flex-shrink:0}
 .meal-plan-option span{white-space:nowrap}
 .meal-scale-anchor{display:flex;justify-content:space-between;color:var(--dim);font-size:9px;margin:5px 1px 3px}
-.meal-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.meal-scale{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
 .meal-scale button{min-width:0;min-height:44px;background:var(--card2);border:1px solid var(--line2);border-radius:10px;color:var(--text);font-size:14px;font-weight:800;cursor:pointer}
 .meal-scale button[aria-pressed="true"]{background:var(--cyan);border-color:var(--cyan);color:#102b35;box-shadow:0 0 11px rgba(53,224,255,.35)}
+.quick-urge{margin:6px 0 8px;padding-top:6px;border-top:1px dashed var(--line)}
+.quick-urge-title{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:3px;font-size:10px;font-weight:800;color:var(--pink)}
+.quick-urge-title span:last-child{font-size:8px;color:var(--dim);font-weight:700;white-space:nowrap}
+.quick-urge .meal-scale{gap:4px}
+.quick-urge .meal-scale button{min-height:34px;font-size:12px;border-radius:9px}
 .meal-choice{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
 .meal-choice button{white-space:nowrap;padding:12px 6px;font-size:13px}
 .meal-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
@@ -1139,6 +1144,7 @@ const MEAL_CASCADE_WINDOW_MS=90*60*1000;
 const URGE_OPEN_EXPIRE_MS=6*60*60*1000;
 
 const mealScore=v=>Number.isInteger(v)&&v>=0&&v<=10?v:null;
+const urgeScore=v=>Number.isInteger(Number(v))&&Number(v)>=1?Math.min(5,Number(v)):null;
 const liveLogs=arr=>(Array.isArray(arr)?arr:[]).filter(x=>x&&!x.deletedAt);
 function tombstoneLog(arr,id){const it=arr.find(x=>x&&x.id===id);if(it){it.deletedAt=Date.now();it.updatedAt=it.deletedAt;}}
 function normalizeJourneyLog(log){
@@ -3078,11 +3084,11 @@ function normalizeMealSession(s){
     hunger:mealScore(n.before.hunger),sleepiness:mealScore(n.before.sleepiness),stress:mealScore(n.before.stress),at:mealNumber(n.before.at,n.startedAt)
   };else n.before=null;
   if(n.afterMeal&&typeof n.afterMeal==='object')n.afterMeal={
-    urge:mealScore(n.afterMeal.urge),tags:normalizeMealTags(n.afterMeal.tags),at:mealNumber(n.afterMeal.at,n.endedAt||n.startedAt)
+    urge:urgeScore(n.afterMeal.urge),tags:normalizeMealTags(n.afterMeal.tags),at:mealNumber(n.afterMeal.at,n.endedAt||n.startedAt)
   };else n.afterMeal=null;
   n.waits=Array.isArray(n.waits)?n.waits.map(normalizeMealWait):[];
   if(n.afterWait&&typeof n.afterWait==='object')n.afterWait={
-    urge:mealScore(n.afterWait.urge),change:['eased','slightly','same','stronger'].includes(n.afterWait.change)?n.afterWait.change:null,
+    urge:urgeScore(n.afterWait.urge),change:['eased','slightly','same','stronger'].includes(n.afterWait.change)?n.afterWait.change:null,
     tags:normalizeMealTags(n.afterWait.tags),at:mealNumber(n.afterWait.at,n.updatedAt)
   };else n.afterWait=null;
   if(n.extra&&typeof n.extra==='object')n.extra={
@@ -3113,7 +3119,7 @@ function normalizeUrgeLog(u){
   const n=Object.assign({id:uid(),at:0,updatedAt:0,deletedAt:null,strength:null,phase:'standalone',mealSessionId:null,
     outcome:null,resolvedAt:null,settledBy:[],items:[],tags:[],place:null,watching:null,note:'',rechecks:[]},u||{});
   n.id=String(n.id||uid());n.at=mealNumber(n.at,0);n.updatedAt=mealNumber(n.updatedAt,n.at||Date.now());
-  n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);n.strength=mealScore(n.strength);
+  n.deletedAt=n.deletedAt==null?null:mealNumber(n.deletedAt,null);n.strength=urgeScore(n.strength);
   if(!['standalone','cascade'].includes(n.phase))n.phase='standalone';
   n.mealSessionId=n.mealSessionId==null?null:String(n.mealSessionId);
   if(!['ate','settled','open',null].includes(n.outcome))n.outcome=null;
@@ -3203,10 +3209,11 @@ function startUrgeFlow(phase='standalone',mealSessionId=null){
     place:D.mealPrefs.lastPlace??null,watching:D.mealPrefs.lastWatching??null};
   renderUrgeUi();
 }
+function startUrgeWithStrength(v){startUrgeFlow('standalone',null);setUrgeStrength(v);}
 function closeUrgeFlow(){mealState.urgeOpen=false;mealState.urgeDraft=null;renderUrgeUi();}
 function setUrgeStrength(v){
   if(!mealState.urgeDraft)return;
-  mealState.urgeDraft.strength=mealScore(Number(v));mealState.urgeDraft.mode='outcome';renderUrgeUi();
+  mealState.urgeDraft.strength=urgeScore(Number(v));mealState.urgeDraft.mode='outcome';renderUrgeUi();
 }
 function setUrgeContext(field,value){
   const d=mealState.urgeDraft;if(!d)return;const now=Date.now();
@@ -3218,7 +3225,7 @@ function setUrgeContext(field,value){
 function commitUrge(outcome,extraFields={}){
   const draft=mealState.urgeDraft||{},now=Date.now();
   const u=normalizeUrgeLog(Object.assign({id:uid(),at:now,updatedAt:now,deletedAt:null,
-    strength:mealScore(draft.strength),phase:draft.phase||'standalone',mealSessionId:draft.mealSessionId||null,
+    strength:urgeScore(draft.strength),phase:draft.phase||'standalone',mealSessionId:draft.mealSessionId||null,
     outcome,resolvedAt:(outcome==='ate'||outcome==='settled')?now:null,
     place:draft.place??D.mealPrefs.lastPlace??null,watching:draft.watching??D.mealPrefs.lastWatching??null},extraFields));
   D.urgeLogs.unshift(u);
@@ -3419,7 +3426,7 @@ function endMealEating(){
 }
 function setAfterMealUrge(v){
   const s=activeMealSession();if(!s)return;
-  const urge=mealScore(Number(v));
+  const urge=urgeScore(Number(v));
   if(!s.afterMeal)s.afterMeal={urge,tags:[],at:Date.now()};else{s.afterMeal.urge=urge;s.afterMeal.at=Date.now();}
   mealState.view='afterMeal';touchMeal(s);renderMealCard();renderMealActive();
 }
@@ -3441,7 +3448,7 @@ function endMealWait(endedBy){
   s.status='eating';mealState.view='afterWait';stopMealWaitTimer();touchMeal(s);renderMealWaitBar(0);renderMealCard();renderMealActive();
 }
 function setAfterWaitUrge(v){
-  const s=activeMealSession();if(!s)return;const urge=mealScore(Number(v));
+  const s=activeMealSession();if(!s)return;const urge=urgeScore(Number(v));
   if(!s.afterWait)s.afterWait={urge,change:null,tags:[],at:Date.now()};else{s.afterWait.urge=urge;s.afterWait.at=Date.now();}
   mealState.view='afterWait';touchMeal(s);renderMealCard();renderMealActive();
 }
@@ -3580,8 +3587,9 @@ function toggleFoodRulePin(id){
   r.pinned=!r.pinned;r.updatedAt=Date.now();save();renderMealRules();
 }
 function mealScaleHtml(current,handlerName){
-  return `<div class="meal-scale-anchor"><span>ぜんぜん</span><span>とても強い</span></div><div class="meal-scale" role="group" aria-label="もっと食べたい気持ちの強さ">${Array.from({length:11},(_,v)=>`<button type="button" aria-pressed="${current===v?'true':'false'}" data-v="${v}" onclick="${handlerName}(${v})">${v}</button>`).join('')}</div>`;
+  return `<div class="meal-scale-anchor"><span>少し</span><span>とても強い</span></div><div class="meal-scale" role="group" aria-label="もっと食べたい気持ちの強さ（5段階）">${Array.from({length:5},(_,i)=>i+1).map(v=>`<button type="button" aria-pressed="${current===v?'true':'false'}" data-v="${v}" onclick="${handlerName}(${v})">${v}</button>`).join('')}</div>`;
 }
+function quickUrgeHtml(){return `<div class="quick-urge"><div class="quick-urge-title"><span>⚡ 食べたい気持ちの強さ</span><span>1〜5（MAX 5）</span></div><div class="meal-scale" role="group" aria-label="食べたい気持ちの強さをすぐ記録">${[1,2,3,4,5].map(v=>`<button type="button" onclick="startUrgeWithStrength(${v})">${v}</button>`).join('')}</div></div>`;}
 function mealTagsHtml(target,selected){
   const chosen=Array.isArray(selected)?selected:[];
   return `<div class="meal-tags">${MEAL_TAGS.map(t=>`<button type="button" class="${chosen.includes(t.id)?'on':''}" onclick="toggleMealTag('${target}','${t.id}')">${esc(t.label)}</button>`).join('')}</div>`;
@@ -3602,7 +3610,7 @@ function mealTimingHtml(){
 function mealAfterMealHtml(s){
   const a=s.afterMeal;
   if(!a||a.urge===null)return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a?a.urge:null,'setAfterMealUrge')}<button class="text-link" type="button" onclick="closeMealSession()" style="margin-top:8px">入力せず終える</button>`;
-  const low=a.urge<=3;
+  const low=a.urge<=2;
   const choices=low?`<button class="btn btn-g" type="button" onclick="closeMealSession()">終える</button><button class="btn btn-g" type="button" onclick="startMealWait(${D.mealPrefs.defaultWaitSec||300})">それでも少し待つ</button>`:`<button class="btn btn-g" type="button" onclick="startMealWait(300)">⏳ 5分待つ</button><button class="btn btn-g" type="button" onclick="startMealWait(600)">⏳ 10分待つ</button><button class="btn btn-g" type="button" onclick="closeMealSession()">いまは終える</button><button class="btn btn-g" type="button" onclick="chooseMealExtra('before_wait')">🍚 追加で食べる</button>`;
   return `<p style="font-weight:800;margin-top:8px">いま、もっと食べたい気持ちは？</p>${mealScaleHtml(a.urge,'setAfterMealUrge')}<div class="meal-fold"><button class="meal-fold-head" type="button" onclick="mealState.tagOpen=!mealState.tagOpen;renderMealCard();renderMealActive()">${mealState.tagOpen?'▾':'▸'} なぜそう感じたか（任意）</button><div class="meal-fold-body ${mealState.tagOpen?'open':''}"><p class="muted">思い当たるものがあれば（任意・複数可）</p>${mealTagsHtml('afterMeal',a.tags)}</div></div>${low?'<p class="muted" style="margin-top:8px">記録しました。おつかれさま。</p>':'<p class="muted" style="margin-top:8px">食事はここまで。<br>水かお茶を飲んで、5分後にもう一度きいてみますか？</p>'}<div class="meal-choice">${choices}</div><button class="text-link" type="button" onclick="startLocFlow('${s.id}')" style="margin-top:8px">🧭 止められない感じ（LOC）も記録</button>`;
 }
@@ -3813,7 +3821,7 @@ function renderMealCard(){
     const freeButton='<button class="text-link" type="button" onclick="mealState.freeOpen=!mealState.freeOpen;renderMealCard()">✏️ 内容を入力</button>';
     const freeInput=mealState.freeOpen?'<div class="meal-inline"><input type="text" id="mealFreeInput" maxlength="60" placeholder="何を食べる？（例：コンビニ弁当）" onkeydown="submitShortcut(event,startFreeMealFromInput)"><button class="btn btn-c btn-sm" type="button" onclick="startFreeMealFromInput()">はじめる</button></div>':'';
     const lastButton=last?'<button class="text-link" type="button" onclick="requestMealStart(\'same\')">↻ 前回と同じ内容</button>':'';
-    show(`<div class="meal-card-idle"><strong>🍽 食事</strong><button class="btn btn-g meal-urge-btn" type="button" aria-label="食べたい衝動を記録" onclick="startUrgeFlow('standalone',null)">⚡</button></div><div class="meal-choice meal-quick-start"><button class="btn btn-c" type="button" onclick="requestQuickMealStart('before')">🍽 これから食べる</button><button class="btn btn-c" type="button" onclick="requestQuickMealStart('during')">🍚 食べてる</button></div><div class="meal-idle-tools">${lastButton}${freeButton}</div>${freeInput}${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`);return;
+    show(`<div class="meal-card-idle"><strong>🍽 食事</strong></div>${quickUrgeHtml()}<div class="meal-choice meal-quick-start"><button class="btn btn-c" type="button" onclick="requestQuickMealStart('before')">🍽 これから食べる</button><button class="btn btn-c" type="button" onclick="requestQuickMealStart('during')">🍚 食べてる</button></div><div class="meal-idle-tools">${lastButton}${freeButton}</div>${freeInput}${open?openUrgeHtml(open):''}${cascade?cascadeButtonHtml(cascade):''}`);return;
   }
   if(mealState.view==='eating')show(mealEatingHtml(s));
   else if(mealState.view==='afterMeal')show(mealAfterMealHtml(s)+cascadeButtonHtml(s));
