@@ -204,6 +204,13 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .memory-reason{color:var(--gold);font-size:10px;font-weight:800;margin-bottom:3px}
 .memory-quote{font-size:13px;line-height:1.55;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
 .memory-date{color:var(--dim);font-size:9px;margin-top:4px}
+.memory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;position:relative;z-index:1}
+.memory-item{min-width:0;padding:7px;background:rgba(255,255,255,.68);border:1px solid rgba(130,87,230,.22);border-radius:10px}
+.memory-item .memory-reason{font-size:8px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.memory-item .memory-quote{font-size:10px;line-height:1.4;-webkit-line-clamp:3}
+.memory-item .memory-date{font-size:7px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.memory-item-actions{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:5px}
+.memory-item-actions button{min-width:0;min-height:28px;padding:3px 1px;border-radius:7px;font-size:8px;white-space:nowrap}
 .memory-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:7px}
 .memory-actions button{min-width:0;min-height:40px;white-space:nowrap;padding:7px 3px;font-size:10px;border-radius:9px}
 .memory-actions button:last-child{grid-column:1/-1}
@@ -577,6 +584,23 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 #scr-home h2{font-size:14px;margin-bottom:6px}
 #scr-home .rcard{padding:7px 8px;margin-bottom:5px}
 #scr-home>.btn-full{padding:9px!important;white-space:nowrap}
+@media(min-width:900px){
+  :root{--ring-size:min(24vw,220px)}
+  #app{max-width:1440px;padding:14px 20px 86px}
+  .top{position:sticky;top:0;z-index:40;padding:6px 8px;margin-bottom:8px;background:rgba(246,244,251,.88);backdrop-filter:blur(10px);border-radius:12px}
+  .screen.active{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
+  .screen.active>.card,.screen.active>.sect,.screen.active>.btn-full,.screen.active>.statgrid{margin:0}
+  #routineList{display:contents}
+  #scr-home #memoryCard{grid-column:span 2}
+  #scr-home .memo-composer{grid-row:span 2}
+  #scr-home #activityTimelineCard{grid-column:span 2}
+  #scr-preview>.card,#scr-edit>.card{grid-column:1 / span 2}
+  #scr-set>.btn-full{grid-column:1/-1}
+  #scr-set>.card{break-inside:avoid}
+  #scr-prog .statgrid{grid-column:1/-1}
+  .card{margin-bottom:0}
+  .memory-item .memory-quote{font-size:11px;-webkit-line-clamp:4}
+}
 @media(max-width:390px){
   .memory-quote{font-size:12px;-webkit-line-clamp:3}.memory-actions button{font-size:10px;padding:7px 2px}
   #rescueModal .sheet{padding:14px 9px calc(14px + env(safe-area-inset-bottom))}.rescue-title{font-size:17px}.rescue-actions button{font-size:10px;padding:10px 3px}
@@ -2198,13 +2222,13 @@ function currentMemory(options={}){
   const memory=deck[memoryDeckIndex%deck.length];if(!options.positive)pinnedMemoryId=memory.id;return memory;
 }
 function renderMemoryCard(){
-  const el=document.getElementById('memoryCard');if(!el)return;const memory=currentMemory();el.classList.remove('found');
-  if(!memory){
+  const el=document.getElementById('memoryCard');if(!el)return;const deck=rankedMemories(),memories=deck.slice(memoryDeckIndex,memoryDeckIndex+3);el.classList.remove('found');
+  if(!memories.length){
     el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><span class="memory-source">端末内だけ</span></div><div class="memory-empty"><p class="muted">日記を読み込むか、メモや完了記録が育つと、同じころの過去がここに現れるよ。</p><button class="btn btn-c btn-sm" type="button" onclick="document.getElementById('diaryFile').click()">📓 読み込む</button></div>`;return;
   }
-  recordMemoryShown(memory);
-  const stamp=new Date(memory.at),date=`${stamp.getFullYear()}/${stamp.getMonth()+1}/${stamp.getDate()}${memory.time?` ${memory.time}`:''}`;
-  el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><span class="memory-source">${esc(memory.source||'過去の記録')}</span></div><div class="memory-reason">✦ ${esc(memoryReason(memory))}</div><div class="memory-quote">「${esc(memory.text)}」</div><div class="memory-date">${date}</div><div class="memory-actions"><button class="btn btn-p btn-sm" type="button" onclick="cycleMemory()">🎰 もう1枚</button><button class="btn btn-g btn-sm" type="button" onclick="loveMemory('${memory.id}')">💖 なつかしい</button><button class="btn btn-g btn-sm" type="button" onclick="hideMemory('${memory.id}')">🙈 30日隠す</button></div>`;
+  memories.forEach(recordMemoryShown);
+  const cards=memories.map(memory=>{const stamp=new Date(memory.at),date=`${stamp.getFullYear()}/${stamp.getMonth()+1}/${stamp.getDate()}${memory.time?` ${memory.time}`:''}`;return `<article class="memory-item"><div class="memory-reason">✦ ${esc(memoryReason(memory))}</div><div class="memory-quote">「${esc(memory.text)}」</div><div class="memory-date">${date} ・ ${esc(memory.source||'過去の記録')}</div><div class="memory-item-actions"><button class="btn btn-p" type="button" onclick="loveMemory('${memory.id}')" aria-label="なつかしい">💖 好き</button><button class="btn btn-g" type="button" onclick="hideMemory('${memory.id}')" aria-label="30日隠す">🙈 隠す</button></div></article>`;}).join('');
+  el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><button class="text-link" type="button" onclick="cycleMemory()">🎰 入れ替え</button></div><div class="memory-grid">${cards}</div>`;
 }
 function cycleMemory(){memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';renderMemoryCard();const el=document.getElementById('memoryCard');el.classList.add('found');sfxDone();setTimeout(()=>el.classList.remove('found'),450);}
 function loveMemory(id){
