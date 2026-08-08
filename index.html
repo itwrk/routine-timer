@@ -204,8 +204,9 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .memory-reason{color:var(--gold);font-size:10px;font-weight:800;margin-bottom:3px}
 .memory-quote{font-size:13px;line-height:1.55;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
 .memory-date{color:var(--dim);font-size:9px;margin-top:4px}
-.memory-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:7px}
-.memory-actions button{min-width:0;white-space:nowrap;padding:7px 3px;font-size:9px;border-radius:9px}
+.memory-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:7px}
+.memory-actions button{min-width:0;min-height:40px;white-space:nowrap;padding:7px 3px;font-size:10px;border-radius:9px}
+.memory-actions button:last-child{grid-column:1/-1}
 .memory-empty{display:flex;align-items:center;gap:8px}
 .memory-empty p{flex:1;min-width:0}
 .memory-empty button{white-space:nowrap;flex-shrink:0;padding:8px 9px;font-size:10px}
@@ -577,7 +578,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 #scr-home .rcard{padding:7px 8px;margin-bottom:5px}
 #scr-home>.btn-full{padding:9px!important;white-space:nowrap}
 @media(max-width:390px){
-  .memory-quote{font-size:12px;-webkit-line-clamp:3}.memory-actions button{font-size:8px;padding:7px 2px}
+  .memory-quote{font-size:12px;-webkit-line-clamp:3}.memory-actions button{font-size:10px;padding:7px 2px}
   #rescueModal .sheet{padding:14px 9px calc(14px + env(safe-area-inset-bottom))}.rescue-title{font-size:17px}.rescue-actions button{font-size:10px;padding:10px 3px}
   .rescard{max-height:92dvh;overflow-y:auto;padding:16px 12px}.restitle{font-size:35px}
 }
@@ -1213,9 +1214,8 @@ try{D=normalizeData(JSON.parse(localStorage.getItem(KEY))||seed());}
 catch(e){D=normalizeData(seed());}
 localStorage.setItem(KEY,JSON.stringify(D));
 /* ── 同期設定のプリセット ──
-   ここに書いておけば、どの端末で開いても入力不要（ファイル自体に埋め込み）。
-   例: const PRESET_SYNC={url:'https://script.google.com/macros/s/xxxx/exec',key:'anchan-0721',auto:true}; */
-const PRESET_SYNC={url:'https://script.google.com/macros/s/AKfycbxatFVReQMHQ82U_GWCVR4AtOW10bjUlydxG5NBG1J_Sgwr9BhqY-TBiU40Sxhs_Pq4Tg/exec',key:''  /* 公開リポジトリのため合言葉は埋め込まない。初回だけURL #sync=...|はる で設定 */,auto:true};
+   URLは配布してよいが、合言葉は必ず端末側だけに保存する。 */
+const PRESET_SYNC={url:'https://script.google.com/macros/s/AKfycbxatFVReQMHQ82U_GWCVR4AtOW10bjUlydxG5NBG1J_Sgwr9BhqY-TBiU40Sxhs_Pq4Tg/exec',key:''  /* 公開リポジトリのため合言葉は埋め込まない。初回だけURL #sync=...|合言葉 で設定 */,auto:true};
 if(PRESET_SYNC.url&&!(D.settings.syncUrl||'').trim()){
   D.settings.syncUrl=PRESET_SYNC.url;D.settings.syncKey=PRESET_SYNC.key;D.settings.autoSync=PRESET_SYNC.auto;
 }
@@ -2222,14 +2222,14 @@ function buildPersonalInsights(){
   const insights=[];
   if(D.logs.length>=3){
     const bands={};for(const log of D.logs){const band=timeBandFromTime(log.time);if(band)bands[band]=(bands[band]||0)+1;}
-    const top=Object.entries(bands).sort((a,b)=>b[1]-a[1])[0];
-    if(top)insights.push({copy:`保存記録では「${top[0]}」の完了がいちばん多め。動く時間を決めるなら、ここが候補かも。`,evidence:`ルーチン完了 ${top[1]} / ${D.logs.length}件`});
+    const ranked=Object.entries(bands).sort((a,b)=>b[1]-a[1]),top=ranked[0],tied=top&&ranked.filter(x=>x[1]===top[1]).length>1;
+    if(top)insights.push({copy:`保存記録では「${top[0]}」の完了が${tied?'多め':'いちばん多め'}。動く時間を決めるなら、ここが候補かも。`,evidence:`ルーチン完了 ${top[1]} / ${D.logs.length}件`});
   }
   const supports=liveLogs(D.journeyLogs).filter(x=>x.type==='support'&&['micro','start','postpone'].includes(x.choice));
   if(supports.length){const returned=supports.filter(x=>x.returnedAt||x.completedAt).length;insights.push({copy:returned?`重いと感じたあとも、${returned}回は行動へ戻れてる。立ち止まることと、やめることは同じじゃないよ。`:'「重い」と気づいた記録が育ち始めたよ。次は最初の1個だけで十分。',evidence:`動き出しサポート ${supports.length}件`});}
   if(H.moments.length){
     const themes=MEMORY_THEMES.map(t=>({theme:t,count:themeDateCount(t.id)})).filter(x=>x.count).sort((a,b)=>b.count-a.count);
-    if(themes[0])insights.push({copy:themes[0].theme.copy,evidence:`過去日記 ${themes[0].count}日で登場`});
+    if(themes[0])insights.push({copy:themes[0].count>=3?themes[0].theme.copy:`「${themes[0].theme.label}」について書いた日があるよ。もう少したまるまで、傾向とは決めずに見守るね。`,evidence:`過去日記 ${themes[0].count}日で登場`});
     const bodyDates=new Set(H.moments.filter(m=>MEMORY_THEMES[1].re.test(m.text)).map(m=>m.date)),digitalDates=new Set(H.moments.filter(m=>MEMORY_THEMES[3].re.test(m.text)).map(m=>m.date));
     const overlap=[...bodyDates].filter(d=>digitalDates.has(d)).length;
     if(overlap>=2)insights.push({copy:'疲れ・眠さの言葉と、デジタルへの寄り道が同じ日に出ることがあったよ。意志より先に、電池残量を見てもよさそう。',evidence:`同じ日に出た記録 ${overlap}日`});
@@ -2245,7 +2245,7 @@ function renderInsights(){const el=document.getElementById('insights');if(!el)re
 /* ============ GENTLE START / RETURN ============ */
 let rescueState=null;
 function latestUnresolvedJourney(){
-  return liveLogs(D.journeyLogs).filter(x=>!x.returnedAt&&!x.completedAt&&x.choice!=='dismissed'&&(x.type==='stopped'||x.choice==='postpone'||x.choice==='rest')).sort((a,b)=>(b.updatedAt||b.at)-(a.updatedAt||a.at))[0]||null;
+  return liveLogs(D.journeyLogs).filter(x=>!x.returnedAt&&!x.completedAt&&!['dismissed','superseded'].includes(x.choice)&&(x.type==='stopped'||x.choice==='postpone'||x.choice==='rest')).sort((a,b)=>(b.updatedAt||b.at)-(a.updatedAt||a.at))[0]||null;
 }
 function rescueAdvice(){
   const hour=new Date().getHours(),body=themeDateCount('body'),voice=themeDateCount('voice');
@@ -2256,7 +2256,8 @@ function rescueAdvice(){
 function openRescue(routineId){
   const routine=D.routines.find(r=>r.id===routineId);if(!routine)return;
   if(!routine.steps||!routine.steps.length){toast('🧩 まずステップを1個だけ追加してね');return;}
-  const now=Date.now(),log=normalizeJourneyLog({id:uid(),at:now,updatedAt:now,type:'support',choice:'',routineId:routine.id,routineName:routine.name});D.journeyLogs.unshift(log);save();
+  const now=Date.now();for(const old of liveLogs(D.journeyLogs)){if(old.routineId===routine.id&&!old.returnedAt&&!old.completedAt&&!['dismissed','superseded'].includes(old.choice)){old.choice='superseded';old.updatedAt=now;}}
+  const log=normalizeJourneyLog({id:uid(),at:now,updatedAt:now,type:'support',choice:'',routineId:routine.id,routineName:routine.name});D.journeyLogs.unshift(log);save();
   rescueState={mode:'choose',routineId:routine.id,logId:log.id};renderRescueSheet();document.getElementById('rescueModal').classList.add('show');sfxSlam();
 }
 function renderRescueSheet(){
@@ -2288,18 +2289,20 @@ function renderJourneyCard(){
   const el=document.getElementById('journeyCard');if(!el)return;const log=latestUnresolvedJourney();
   if(!log){el.hidden=true;el.innerHTML='';return;}el.hidden=false;const due=!log.dueAt||log.dueAt<=Date.now();el.classList.toggle('due',due);
   if(log.type==='stopped'&&!due)el.innerHTML=`<div class="journey-title">🫧 いまは休む作戦</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の続き・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 今なら続ける</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">＋15分</button></div>`;
-  else if(log.type==='stopped')el.innerHTML=`<div class="journey-title">🌱 止まったところも消えてない</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の途中から、最初の1個だけ戻れるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">🕰 15分のばす</button></div>`;
+  else if(log.type==='stopped')el.innerHTML=`<div class="journey-title">🌱 止まったところも消えてない</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の止まったステップを、最初から再開できるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">🕰 15分のばす</button></div>`;
   else el.innerHTML=`<div class="journey-title">${due?'🔔 戻りどきが来たよ':'🫧 休むのも作戦'}</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}',true)">${due?'⚡ 10秒だけ':'▶ 今なら10秒'}</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">＋15分</button></div>`;
 }
 function delayJourney(id,minutes){const log=D.journeyLogs.find(x=>x.id===id);if(!log)return;log.dueAt=Date.now()+minutes*60000;log.updatedAt=Date.now();save();renderJourneyCard();toast('🫧 15分のばしたよ。責めなくて大丈夫');}
 function resumeJourney(id,micro=false){
-  const log=D.journeyLogs.find(x=>x.id===id);if(!log)return;const options={journeyId:log.id,source:'return',micro:!!micro};
+  const log=D.journeyLogs.find(x=>x.id===id);if(!log)return;
+  if(!D.routines.some(r=>r.id===log.routineId)){log.choice='dismissed';log.updatedAt=Date.now();save();renderJourneyCard();toast('🫧 このルーチンはもうないので、戻るカードをしまいました');return;}
+  const options={journeyId:log.id,source:'return',micro:!!micro};
   if(log.type==='stopped'){options.startIndex=Math.max(0,Number(log.stepIndex)||0);options.stepRecords=(log.stepRecords||[]).map(x=>Object.assign({},x));options.skips=Number(log.skips)||0;}
   startRun(log.routineId,options);
 }
 function claimJourneyForStart(routineId,requestedId){
   const now=Date.now();let log=requestedId&&D.journeyLogs.find(x=>x.id===requestedId);
-  if(!log)log=liveLogs(D.journeyLogs).filter(x=>x.routineId===routineId&&!x.returnedAt&&!x.completedAt&&x.choice!=='dismissed'&&now-(x.updatedAt||x.at)<7*864e5).sort((a,b)=>(b.updatedAt||b.at)-(a.updatedAt||a.at))[0];
+  if(!log)log=liveLogs(D.journeyLogs).filter(x=>x.routineId===routineId&&!x.returnedAt&&!x.completedAt&&!['dismissed','superseded'].includes(x.choice)&&now-(x.updatedAt||x.at)<7*864e5).sort((a,b)=>(b.updatedAt||b.at)-(a.updatedAt||a.at))[0];
   if(!log)return'';log.returnedAt=now;log.updatedAt=now;save();return log.id;
 }
 function markJourneyComplete(id){const log=id&&D.journeyLogs.find(x=>x.id===id);if(log){log.completedAt=Date.now();log.updatedAt=log.completedAt;save();}}
@@ -2317,7 +2320,7 @@ function finishMicroRun(){
   const log=journeyId&&D.journeyLogs.find(x=>x.id===journeyId);if(log){log.tinyEndedAt=Date.now();log.updatedAt=log.tinyEndedAt;save();}
   document.getElementById('run').classList.remove('active');run=null;renderHome();jackpot('ENTRY CLEAR!!','10秒の入口突破 +3XP');toast('🌱 今日はここまでで成功。ちゃんと記録したよ');
 }
-/* confirm()代替：2度押し確認（アプリ内ビューはダイアログ不可のため） */
+/* confirm代替：2度押し確認（アプリ内ビューはダイアログ不可のため） */
 function twoTap(btn,confirmLabel,fn){
   if(btn.dataset.armed){clearTimeout(+btn.dataset.tm);delete btn.dataset.armed;fn();return;}
   btn.dataset.armed='1';
@@ -2521,6 +2524,7 @@ function saveRoutine(){
   document.querySelector('.tabbar button').click();
 }
 function delRoutine(){
+  const now=Date.now();for(const log of liveLogs(D.journeyLogs)){if(log.routineId===editId&&!log.returnedAt&&!log.completedAt){log.choice='dismissed';log.updatedAt=now;}}
   D.routines=D.routines.filter(x=>x.id!==editId);
   save();document.querySelector('.tabbar button').click();
 }
@@ -4548,7 +4552,7 @@ function restoreAll(input){
   rd.readAsText(f,'utf-8');
 }
 function resetAll(){
-  stopMealWaitTimer();D=seed();save();renderHome();renderMealWaitBar(0);toast('🧹 初期化しました');
+  stopMealWaitTimer();D=seed();H=defaultHistory();localStorage.removeItem(HISTORY_KEY);memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';save();renderHome();renderMemorySettings();renderMealWaitBar(0);toast('🧹 日記を含む端末内データを初期化しました');
 }
 
 // ボタン押下：やわらかいポワン＋光の波紋。クリック成立時にバネで戻す
