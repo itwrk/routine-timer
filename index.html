@@ -379,6 +379,56 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-bottom:calc(105px + env(safe-area-inset-bottom))}
 @media(max-width:390px){.meal-choice button{font-size:12px}.meal-card-idle{gap:5px}.meal-card-idle .btn{padding:8px 7px}.meal-quick-start button{font-size:11px;padding:11px 4px}.meal-food-btn{padding:8px 9px;font-size:10px}.meal-food-add{grid-template-columns:40px minmax(0,1fr) auto}.meal-food-add button{padding:7px 8px}.meal-editor-item{grid-template-columns:1fr 68px 26px}.loc-range-row{grid-template-columns:minmax(100px,1fr) 1.1fr 26px}.loc-head .btn{padding:8px 7px}}
 
+/* eating-support conversation archive */
+.food-chat-entry{border-color:rgba(130,87,230,.48);background:linear-gradient(135deg,#fff,#f6efff 58%,#edfaff)}
+.food-chat-entry-head{display:flex;align-items:center;gap:9px}
+.food-chat-entry-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:11px;background:rgba(130,87,230,.12);font-size:19px}
+.food-chat-entry-copy{flex:1;min-width:0}
+.food-chat-entry-copy strong{display:block;color:var(--purple);font-size:13px}
+.food-chat-entry-copy span{display:block;color:var(--dim);font-size:9px;line-height:1.5;margin-top:2px}
+.food-chat-entry .btn{white-space:nowrap;flex-shrink:0;padding:8px 9px;font-size:10px}
+.food-chat-page{grid-column:1/-1;max-width:820px;width:100%;margin:0 auto!important;padding:12px 13px}
+.food-chat-page-head{display:flex;align-items:center;gap:8px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.food-chat-page-head .btn{flex-shrink:0;white-space:nowrap;padding:8px 10px;font-size:10px}
+.food-chat-page-title{flex:1;min-width:0}
+.food-chat-page-title h2{margin:0;color:var(--purple);font-size:17px}
+.food-chat-page-title p{color:var(--dim);font-size:9px;line-height:1.5;margin-top:2px}
+.food-chat-note{margin:9px 0;padding:8px 9px;border-left:3px solid var(--gold);border-radius:8px;background:rgba(255,201,60,.08);font-size:10px;line-height:1.65}
+.food-chat-exchange{border:1px solid var(--line);border-radius:12px;margin-top:8px;background:rgba(255,255,255,.62);overflow:hidden}
+.food-chat-exchange>summary{list-style:none;display:flex;align-items:center;gap:7px;padding:10px;cursor:pointer;font-weight:800;font-size:12px;color:var(--text)}
+.food-chat-exchange>summary::-webkit-details-marker{display:none}
+.food-chat-exchange>summary::after{content:'＋';margin-left:auto;color:var(--purple);font-size:16px}
+.food-chat-exchange[open]>summary::after{content:'−'}
+.food-chat-exchange[open]>summary{border-bottom:1px solid var(--line);background:rgba(130,87,230,.05)}
+.food-chat-summary-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:var(--purple);color:#fff;font-family:'DotGothic16',monospace;font-size:10px;flex-shrink:0}
+.food-chat-message{padding:10px}
+.food-chat-message+.food-chat-message{border-top:1px dashed var(--line)}
+.food-chat-speaker{font-size:9px;font-weight:800;letter-spacing:.08em;margin-bottom:5px;color:var(--dim)}
+.food-chat-message.user .food-chat-speaker{color:var(--pink)}
+.food-chat-message.assistant .food-chat-speaker{color:var(--cyan)}
+.food-chat-bubble{font-size:12px;line-height:1.75;overflow-wrap:anywhere}
+.food-chat-message.user .food-chat-bubble{padding:8px 9px;border-radius:10px;background:rgba(229,56,127,.07);border-left:3px solid var(--pink);font-weight:700;white-space:pre-wrap}
+.food-chat-bubble h3{font-size:14px;line-height:1.45;color:var(--cyan);margin:15px 0 5px}
+.food-chat-bubble h3:first-child{margin-top:0}
+.food-chat-bubble h4{font-size:12px;color:var(--purple);margin:12px 0 4px}
+.food-chat-bubble p{margin:6px 0}
+.food-chat-bubble ul,.food-chat-bubble ol{padding-left:20px;margin:5px 0}
+.food-chat-bubble li{margin:3px 0}
+.food-chat-bubble blockquote{margin:7px 0;padding:7px 9px;border-left:3px solid var(--gold);border-radius:7px;background:rgba(255,201,60,.08);font-weight:700}
+.food-chat-bubble table{width:100%;border-collapse:collapse;margin:8px 0;font-size:10px;line-height:1.55}
+.food-chat-bubble th,.food-chat-bubble td{padding:6px;border:1px solid var(--line);vertical-align:top;text-align:left}
+.food-chat-bubble th{background:var(--card2);color:var(--purple)}
+.food-chat-bubble a{color:var(--cyan);font-weight:700}
+.food-chat-bottom{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
+.food-chat-bottom .btn{white-space:nowrap;min-width:0;padding:9px 5px;font-size:10px}
+@media(max-width:390px){
+  .food-chat-entry-head{gap:6px}.food-chat-entry-icon{width:32px;height:32px;font-size:17px}
+  .food-chat-entry-copy strong{font-size:12px}.food-chat-entry .btn{padding:7px 6px;font-size:9px}
+  .food-chat-page{padding:9px 8px}.food-chat-page-title h2{font-size:15px}
+  .food-chat-exchange>summary{padding:9px 8px;font-size:11px}.food-chat-message{padding:8px}
+  .food-chat-bubble{font-size:11px;line-height:1.7}.food-chat-bubble table{font-size:9px}
+}
+
 /* tab bar */
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:4px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-top:1px solid var(--line2);padding:8px max(8px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-bottom));z-index:50}
 .tabbar button{flex:1;max-width:130px;background:none;border:none;color:var(--dim);font-size:11px;font-weight:700;cursor:pointer;padding:6px 4px;border-radius:12px}
@@ -685,6 +735,13 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 
   <!-- MEAL -->
   <div class="screen" id="scr-meal">
+    <div class="card food-chat-entry">
+      <div class="food-chat-entry-head">
+        <div class="food-chat-entry-icon" aria-hidden="true">💬</div>
+        <div class="food-chat-entry-copy"><strong>摂食についての対話</strong><span>LOC・空腹への怖さ・幼少期の食事体験を整理した全記録</span></div>
+        <button class="btn btn-g" type="button" onclick="openFoodChat()">全文を読む</button>
+      </div>
+    </div>
     <div class="card meal-card" id="mealCard"></div>
     <div class="card meal-food-card" id="mealFoodCard"></div>
     <div class="card meal-plan-card" id="mealPlanCard"></div>
@@ -698,6 +755,318 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     <div class="card">
       <h2>📗 最近の食事</h2>
       <div id="mealHistory"></div>
+    </div>
+  </div>
+
+  <!-- EATING-SUPPORT CONVERSATION -->
+  <div class="screen" id="scr-food-chat">
+    <div class="card food-chat-page" id="foodChatTranscript">
+      <div class="food-chat-page-head">
+        <button class="btn btn-g" type="button" onclick="closeFoodChat()">← 食事へ</button>
+        <div class="food-chat-page-title"><h2>💬 摂食についての対話</h2><p>2026年8月8日〜9日・摂食について話した全3往復</p></div>
+        <button class="btn btn-c" type="button" onclick="copyFoodChat()">全文コピー</button>
+      </div>
+      <div class="food-chat-note">これは診断ではなく、自分の食行動を理解するための対話記録です。このページは公開サイト上に掲載されています。</div>
+
+      <details class="food-chat-exchange">
+        <summary><span class="food-chat-summary-num">1</span>LOC以外の学術用語を整理</summary>
+        <article class="food-chat-message user">
+          <div class="food-chat-speaker">あなた</div>
+          <div class="food-chat-bubble">ダイエットというか摂食について、私に当てはまるような学術用語色々教えてLOC以外にも</div>
+        </article>
+        <article class="food-chat-message assistant">
+          <div class="food-chat-speaker">Codex</div>
+          <div class="food-chat-bubble">
+            <p>LOC（Loss of Control eating＝食べ始めると止めにくい／量を自分で決められない感覚）が中心なら、次の用語が近い可能性があります。ただし、ここでは診断ではなく「食行動を解像度高く説明するための語彙」として見てください。</p>
+
+            <h3>特にLOCと近い用語</h3>
+            <ul>
+              <li><strong>Subjective binge-eating episode：主観的過食エピソード（SBE）</strong><br>本人には「食べすぎた・止められなかった」という感覚があるものの、客観的には必ずしも異常に大量ではない状態。<br>「量は普通か少し多い程度なのに、制御不能感が強い」なら、単なる過食よりこれが近いです。</li>
+              <li><strong>Objective binge-eating episode：客観的過食エピソード（OBE）</strong><br>明らかに大量の食物を、限られた時間に、LOCを伴って食べること。反復性や苦痛などの条件を満たすと、過食性障害などの評価対象になります。<a href="https://www.nimh.nih.gov/health/publications/what-are-common-types-of-eating-disorders" target="_blank" rel="noopener noreferrer">NIMHの説明</a></li>
+              <li><strong>Compulsive grazing：強迫的グレージング／だらだら食い</strong><br>一度に大量ではなく、少量を何度も、予定外に食べ続け、「もう取らない」ができない状態。<br>まとまったドカ食いではなく、台所を通るたびにつまむ、何度も冷蔵庫に戻るタイプならかなり有力です。LOCのない、注意散漫なだけの <strong>non-compulsive grazing</strong> とは区別されます。<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12638020/" target="_blank" rel="noopener noreferrer">概念整理のレビュー</a></li>
+              <li><strong>Disinhibited eating：脱抑制的摂食</strong><br>普段の食事制限が、ストレス、空腹、誘惑、予定外の一口などをきっかけに崩れる傾向。LOCそのものより、「抑えていたものが解除される」というメカニズムに焦点を当てた言葉です。</li>
+            </ul>
+
+            <h3>食べる引き金を説明する用語</h3>
+            <ul>
+              <li><strong>Emotional eating：情動的摂食</strong><br>空腹ではなく、不安、怒り、寂しさ、退屈、疲労などへの対処として食べること。<br>「感情→食べたい」だけでなく、食べることで感情や思考を一時的に消す場合は <strong>emotion-regulation eating</strong>、<strong>experiential avoidance（体験の回避）</strong>とも説明できます。</li>
+              <li><strong>Stress-induced eating：ストレス誘発性摂食</strong><br>情動的摂食のうち、特にストレス反応と結びついたもの。LOC、情動的摂食、ストレス摂食は互いに重なりやすいとされています。<a href="https://pubmed.ncbi.nlm.nih.gov/35801968/" target="_blank" rel="noopener noreferrer">LOCの系統的レビュー</a></li>
+              <li><strong>External eating：外発的摂食</strong><br>空腹感よりも、食物が見える、匂う、広告を見る、誰かが食べている、といった外部刺激で食べ始める傾向。</li>
+              <li><strong>Cue reactivity：食物手がかり反応性</strong><br>特定の食品、店、時間帯、場所などの「合図」によって、自動的に欲求や身体反応が起こること。</li>
+              <li><strong>Hedonic hunger：快楽的空腹</strong><br>身体はエネルギー不足ではないのに、「おいしいものを味わいたい」という報酬目的で食べたくなる状態。</li>
+              <li><strong>Reward-driven eating：報酬駆動型摂食</strong><br>食物への強い関心、満腹後も続く欲求、食物による気分調整などをまとめた概念。LOCより広い言葉です。</li>
+            </ul>
+
+            <h3>制限と反動を説明する用語</h3>
+            <ul>
+              <li><strong>Dietary restraint／cognitive restraint：食事抑制・認知的抑制</strong><br>空腹・満腹よりも、「何kcalまで」「これは禁止」といった認知的ルールで食事を抑えること。</li>
+              <li><strong>Rigid restraint：硬直的抑制</strong><br>「完全に守るか、全部失敗か」という厳格な制限。対して、調整可能な制限は <strong>flexible restraint（柔軟な抑制）</strong> と呼ばれます。</li>
+              <li><strong>Dichotomous thinking：二分法的思考</strong><br>食事を「成功／失敗」「善い食品／悪い食品」に分ける考え方。</li>
+              <li><strong>What-the-hell effect／abstinence violation effect</strong><br>禁止食品を一口食べただけで「もう台無しだから全部食べよう」となる現象。正式な摂食障害名ではありませんが、制限からLOCへ移る過程を説明しやすい心理学用語です。</li>
+              <li><strong>Restriction–binge cycle：制限―過食サイクル</strong><br>強い制限→生理的・心理的な食欲増大→LOCや過食→罪悪感→さらに制限、という循環。</li>
+              <li><strong>Dietary deprivation：食事剥奪</strong><br>実際のエネルギー不足。意志の弱さではなく、身体が不足を補おうとして食物への注意や欲求を強めている状態です。</li>
+            </ul>
+
+            <h3>身体感覚との関係</h3>
+            <ul>
+              <li><strong>Interoceptive awareness：内受容感覚への気づき</strong><br>空腹、満腹、緊張、疲労など、身体内部の信号を認識する能力。</li>
+              <li><strong>Interoceptive confusion／poor interoceptive awareness</strong><br>空腹と不安、満腹と胃の張り、疲労と甘いものへの欲求などを区別しづらい状態。</li>
+              <li><strong>Satiety responsiveness：満腹反応性</strong><br>満腹の信号を感じ、それに応じて食事を終える傾向。</li>
+              <li><strong>Eating automaticity：摂食の自動性</strong><br>意識的に決める前に、状況や習慣によって手が伸びること。「欲求に負けた」というより、行動系列が自動化している状態です。</li>
+            </ul>
+
+            <h3>時間帯やパターンに関する用語</h3>
+            <ul>
+              <li><strong>Night eating：夜間摂食</strong><br>夕食後に摂取が偏る、または夜中に目覚めて食べるパターン。単に夜食を取ることとは違い、頻度、睡眠との関係、苦痛などで評価されます。</li>
+              <li><strong>Chaotic eating／unstructured eating：混沌とした・非構造的な摂食</strong><br>食事時間や量が定まらず、抜く・つまむ・大量に食べることが入り混じる状態。</li>
+              <li><strong>Picking or nibbling</strong><br>少量を繰り返しつまむ行動。現在はグレージングの関連語として扱われることが多いです。</li>
+            </ul>
+
+            <p>あなたのLOCが「一回に大量」よりも、<strong>制限や先延ばし→食物への意識が強くなる→少量を何度も取る／始めると区切れない</strong>という形なら、中心概念はおそらく、</p>
+            <blockquote>認知的・硬直的抑制 → 脱抑制 → 主観的過食または強迫的グレージング＋LOC</blockquote>
+            <p>という組み合わせです。LOCは単独の診断名ではなく、過食、グレージング、夜間摂食、情動的摂食などを横断して現れる特徴だと考えられています。</p>
+            <p>なお、<strong>food addiction（食物依存）</strong>は魅力的に聞こえる説明ですが、現時点では独立した正式な摂食障害診断ではなく、LOCや報酬反応、習慣化を依存モデルで測る研究概念です。最初から「依存症だ」と決めるより、上の細かな用語に分けたほうが実態を捉えやすいです。</p>
+          </div>
+        </article>
+      </details>
+
+      <details class="food-chat-exchange">
+        <summary><span class="food-chat-summary-num">2</span>空腹への怖さとLOCの循環を分析</summary>
+        <article class="food-chat-message user">
+          <div class="food-chat-speaker">あなた</div>
+          <div class="food-chat-bubble">Chaotic eating／unstructured eating：混沌とした・非構造的な摂食
+食事時間や量が定まらず、抜く・つまむ・大量に食べることが入り混じる状態。
+これもある。
+
+私は、空腹だとかわいそうだ自分がかわいそうだ怖いもう食べられない怖いと思うことがある。
+
+認知的・硬直的抑制 → 脱抑制 → 主観的過食または強迫的グレージング＋LOC
+
+とか、私の分析をどんどん行なって。そして、その対策も。</div>
+        </article>
+        <article class="food-chat-message assistant">
+          <div class="food-chat-speaker">Codex</div>
+          <div class="food-chat-bubble">
+            <p>今の情報からは、先ほどのモデルを少し修正したほうがよさそうです。中心にあるのは単純な「意志の弱さ」や「食欲の強さ」ではなく、<strong>空腹と“次に食べられる保証のなさ”に対する警報反応</strong>だと思います。</p>
+
+            <h3>暫定的な分析</h3>
+            <p>あなたの中では、次の循環が起きている可能性があります。</p>
+            <blockquote>食事が不規則・抜ける<br>→ 空腹感や「次はいつ食べられる？」という不確実さ<br>→ 「自分がかわいそう」「この先もう食べられない」という予測<br>→ 恐怖・焦り・緊急性<br>→ 今のうちに食べる／何度もつまむ／区切れなくなる<br>→ 一時的に安心する<br>→ 「食べれば恐怖が消える」と脳が学習する<br>→ 次の空腹時には、さらに早く強い警報が鳴る<br>→ 食事の境界が曖昧になり、chaotic eatingやLOCが続く</blockquote>
+            <p>ここには、いくつかの学術概念が重なっています。</p>
+            <table>
+              <thead><tr><th>あなたの体験</th><th>近い概念</th><th>現時点の確度</th></tr></thead>
+              <tbody>
+                <tr><td>空腹になると怖い</td><td><strong>Interoceptive threat appraisal</strong>：身体感覚の脅威評価</td><td>高い</td></tr>
+                <tr><td>「もう食べられない」と感じる</td><td><strong>Catastrophizing</strong>：破局的予測</td><td>高い</td></tr>
+                <tr><td>先の欠乏を予想して今食べる</td><td><strong>Anticipatory／pre-emptive eating</strong>：予期的摂食</td><td>高い</td></tr>
+                <tr><td>食べると恐怖が下がる</td><td><strong>Negative reinforcement</strong>：負の強化</td><td>高い</td></tr>
+                <tr><td>食事が抜けたり、つまんだりする</td><td><strong>Chaotic／unstructured eating</strong></td><td>確認済み</td></tr>
+                <tr><td>少量を何度も止めにくく食べる</td><td><strong>Compulsive grazing＋LOC</strong></td><td>可能性あり</td></tr>
+                <tr><td>「後で制限するから今のうちに」</td><td><strong>Last supper effect</strong></td><td>条件つきで可能性あり</td></tr>
+                <tr><td>厳しい制限の反動で崩れる</td><td><strong>Restraint–disinhibition cycle</strong></td><td>まだ要確認</td></tr>
+              </tbody>
+            </table>
+            <p>「ラスト・サパー効果」は、これからダイエットや禁止が始まると予想したとき、「今のうちに食べておこう」と摂取が増える現象です。あなたの「もう食べられない怖い」が、自分で設けた禁止や翌日の制限と結びついているなら、かなり近いです。<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6083055/" target="_blank" rel="noopener noreferrer">関連研究</a></p>
+            <p>一方、本当に仕事・お金・家庭事情などで食事機会が保証されていないなら、これは単なる認知の歪みではなく、<strong>food insecurity／食物アクセスの不安定さ</strong>の問題です。現実の食物不安は過食やLOCと関連します。<a href="https://pubmed.ncbi.nlm.nih.gov/37040535/" target="_blank" rel="noopener noreferrer">系統的レビュー</a></p>
+
+            <h3>「自分がかわいそう」の意味</h3>
+            <p>この思考自体は敵ではありません。むしろ、</p>
+            <blockquote>空腹の自分を放置してはいけない。自分を守りたい。</blockquote>
+            <p>という、いたわりの信号だと思います。</p>
+            <p>ただ、現在は「自分を守る＝今すぐ食べられるだけ食べる」という一種類の救助方法に集中している可能性があります。目標は自分を厳しく扱うことではなく、</p>
+            <blockquote>かわいそうにしないために、今後も規則的に、十分に、確実に食べさせる</blockquote>
+            <p>という長期的なケアへ変えることです。</p>
+
+            <h3>最初に行う対策</h3>
+            <h4>1. まず減量より「食べられる保証」を作る</h4>
+            <p>当面の最優先課題は、摂取量を減らすことではなく食事の予測可能性を上げることです。</p>
+            <p>例えば2週間、</p>
+            <ul>
+              <li>3回の食事と2～3回の間食を、おおよその時刻で予定する</li>
+              <li>起きている間に極端に長い空白を作らない。目安として3～4時間程度</li>
+              <li>空腹が早く来たら、時刻まで我慢するのではなく、早めるか量を見直す</li>
+              <li>食事を逃しそうな日は、携帯できる「救援用の間食」を持つ</li>
+              <li>予定を外しても失敗扱いせず、次の食事から通常運転に戻す</li>
+            </ul>
+            <p>これは新しい厳格なルールではなく、「次も食べられる」という安全を教える足場です。摂食障害向けCBTでも、chaotic eatingや過食に対して規則的な食事・間食が初期の土台になります。<a href="https://www.nice.org.uk/guidance/NG69/chapter/recommendations" target="_blank" rel="noopener noreferrer">NICEガイドライン</a>、<a href="https://psychiatryonline.org/doi/full/10.1176/appi.ajp.23180001" target="_blank" rel="noopener noreferrer">APAガイドライン</a></p>
+
+            <h4>2. つまみ食いを「正式な間食」に格上げする</h4>
+            <p>つまんでいることに気づいたら、禁止したり取り上げたりせず、</p>
+            <ol>
+              <li>食べたいものを皿や容器に出す</li>
+              <li>座る</li>
+              <li>「これは15時の間食」と名付ける</li>
+              <li>食べ終わったら、次に食べる時刻を決める</li>
+            </ol>
+            <p>とします。</p>
+            <p>目的は少なくすることではなく、<strong>始まりと終わりが分からないグレージングを、安心できる一回の摂食機会に戻すこと</strong>です。</p>
+
+            <h4>3. 空腹と恐怖を分けて記述する</h4>
+            <p>空腹時に、次のように二層に分けます。</p>
+            <ul>
+              <li>身体：「胃が空っぽ、力が出ない」</li>
+              <li>予測：「このあと食べられない気がする」</li>
+              <li>感情：「怖さ8/10、かわいそう7/10」</li>
+            </ul>
+            <p>空腹なら普通に食べて構いません。空腹を証明しないと食べてはいけない、という課題ではありません。「恐怖が混ざっている」と認識するだけで十分です。空腹・満腹に特化した内受容感覚の処理は、LOCや認知的抑制とも関連します。<a href="https://pubmed.ncbi.nlm.nih.gov/35033582/" target="_blank" rel="noopener noreferrer">研究</a></p>
+            <p>そのときの言葉は、例えばこれです。</p>
+            <blockquote>空腹は食事が必要という信号で、食べ物が永久になくなる警報ではない。今日は次に○時に○○を食べられる。私は今も、次の私も放置しない。</blockquote>
+
+            <h4>4. 食後の「償い」をしない</h4>
+            <p>LOCや予定外の摂食があっても、</p>
+            <ul>
+              <li>次の食事を抜く</li>
+              <li>翌日極端に減らす</li>
+              <li>過剰な運動で帳消しにする</li>
+              <li>禁止食品を増やす</li>
+            </ul>
+            <p>ことは循環を再始動させやすいです。次の予定された食事・間食へそのまま戻します。強い食事制限は、食物への没頭や反動的な摂食を強めることがあります。<a href="https://pubmed.ncbi.nlm.nih.gov/8655907/" target="_blank" rel="noopener noreferrer">食事制限の心理的影響</a></p>
+
+            <h4>5. 「食べる以外のケア」も追加する</h4>
+            <p>ただし食事の代用にはしません。</p>
+            <p><strong>空腹なら食べる＋怖いなら安心も与える</strong>、です。</p>
+            <p>安心の候補は、温かい飲み物、毛布、休息、誰かへの連絡、次の食事を実際に用意して見える場所に置くことなどです。食べるか我慢するかの二択から、「食べて、さらに安心させる」に変えます。</p>
+
+            <h3>7日間だけ記録するなら</h3>
+            <p>カロリーや体重ではなく、次だけで十分です。</p>
+            <ul>
+              <li>時刻</li>
+              <li>前回食べてからの時間</li>
+              <li>空腹 0～10</li>
+              <li>「もう食べられない」恐怖 0～10</li>
+              <li>頭に浮かんだ正確な言葉</li>
+              <li>食事／間食／グレージング</li>
+              <li>LOC 0～10</li>
+              <li>食後10分の安心度</li>
+              <li>その後、食事を抜いたり補償したりしたか</li>
+            </ul>
+            <p>ここから、あなたが主に</p>
+            <ul>
+              <li>身体的な空腹で警報が鳴るタイプ</li>
+              <li>将来の禁止を予想するラスト・サパー型</li>
+              <li>現実に食事機会が不安定な型</li>
+              <li>感情的な孤独や不安を空腹として感じる型</li>
+              <li>複数が重なった型</li>
+            </ul>
+            <p>のどれなのか、かなり具体的に分析できます。</p>
+            <p>なお、現段階では「認知的・硬直的抑制→脱抑制」だけが主因とはまだ断定できません。むしろ新しい情報からは、<strong>非構造的な食事→空腹の脅威化→予期的摂食→安心による負の強化→LOC</strong>が主経路で、硬直的抑制はそれを増幅する副経路、という仮説がいちばん合っています。</p>
+            <p>意図的に空腹を長時間我慢する「曝露」は、今は勧めません。まず十分かつ規則的に食べる安全を作る段階です。また、LOCが週単位で反復する、嘔吐・下剤・絶食・過剰運動がある、急な体重変化、失神、動悸などがある場合は、摂食障害に詳しい心療内科・精神科や管理栄養士へ相談するのが安全です。</p>
+          </div>
+        </article>
+      </details>
+
+      <details class="food-chat-exchange" open>
+        <summary><span class="food-chat-summary-num">3</span>幼少期の「食べるな」と承認を分析</summary>
+        <article class="food-chat-message user">
+          <div class="food-chat-speaker">あなた</div>
+          <div class="food-chat-bubble">自分は小さい時から食べるな食べるなと言われていた。その反面、食べると、あの、外食とかでよく食べられると、よく食べるねと喜ばれておりました。うん、で、暇つぶしがないから、食べることでしか暇つぶしできなかった。</div>
+        </article>
+        <article class="food-chat-message assistant">
+          <div class="food-chat-speaker">Codex</div>
+          <div class="food-chat-bubble">
+            <p>それは、子どもにとってかなり混乱する食環境です。あなたは一貫して「食べてよい／食べてはいけない」を学べず、状況や相手の反応を読んで食べ方を決めざるを得なかったのだと思います。</p>
+            <p>厳密な意味での診断用語ではありませんが、<strong>摂食に関する二重拘束（double bind的状況）</strong>、そして <strong>approach–avoidance conflict（接近‐回避葛藤）</strong>に近い構造です。</p>
+
+            <h3>あなたの中に形成された可能性のある4つの役</h3>
+            <h4>1. 内在化された「食べるな」役</h4>
+            <p>子どもの頃に繰り返された言葉が、現在は外から言われなくても自分の頭の中で再生されます。</p>
+            <ul>
+              <li>食べるのは悪い</li>
+              <li>これ以上食べてはいけない</li>
+              <li>欲しがる自分はだめ</li>
+              <li>食べるには許可や理由が必要</li>
+            </ul>
+            <p>これは <strong>introjected regulation（取り入れ的調整）</strong>、簡単にいえば「他人の規則を自分の内側に取り込んだ状態」と説明できます。</p>
+
+            <h4>2. 欠乏から守る「今のうちに食べろ」役</h4>
+            <p>禁止されてきたからこそ、食べられる機会を逃すことが危険になります。</p>
+            <ul>
+              <li>今食べないと、また禁止される</li>
+              <li>次にいつ食べられるか分からない</li>
+              <li>食べられるときに確保しないと自分がかわいそう</li>
+            </ul>
+            <p>これが、現在の「もう食べられない、怖い」と強くつながっていそうです。過去には本当に食事の自由がなかったため、完全な“考えすぎ”ではなく、<strong>以前は妥当だった防衛学習が、現在にも残っている</strong>という理解が合います。</p>
+
+            <h4>3. 承認を得る「よく食べる子」役</h4>
+            <p>外食などでは、よく食べると喜ばれた。すると、</p>
+            <blockquote>食べること＝誰かを喜ばせること<br>よく食べる自分＝歓迎される自分</blockquote>
+            <p>という <strong>social reinforcement of eating（摂食への社会的強化）</strong>も成立します。</p>
+            <p>食べると叱られることもあれば、食べると喜ばれることもある。この予測不能な反応は、食事を必要以上に意識させます。自分の空腹・満腹より、相手が喜ぶか、怒るかを参照する <strong>externally regulated eating（外的に調整された摂食）</strong>になりやすい構造です。</p>
+
+            <h4>4. 退屈を処理する「刺激を作れ」役</h4>
+            <p>食べることは、</p>
+            <ul>
+              <li>味や食感による刺激</li>
+              <li>探す・選ぶ・準備するという活動</li>
+              <li>時間の区切り</li>
+              <li>確実に得られる小さな報酬</li>
+            </ul>
+            <p>を一度に提供します。</p>
+            <p>これは単なる感情的摂食より、<strong>boredom eating（退屈摂食）</strong>、<strong>understimulation-driven eating（低刺激状態からの摂食）</strong>、<strong>reward-seeking eating（報酬探索型摂食）</strong>が近そうです。</p>
+            <p>暇になるたびに食べていたなら、「暇・空白・手持ち無沙汰」が食事開始の合図になる <strong>habitual cue–response association（習慣的な手がかり―反応連合）</strong>も形成されています。</p>
+
+            <h3>現在の全体モデル</h3>
+            <p>あなたの場合、単純な</p>
+            <blockquote>制限→反動的過食</blockquote>
+            <p>だけではなく、</p>
+            <blockquote>幼少期の禁止と承認の矛盾<br>→ 自分の空腹・満腹より外部の許可を参照する<br>→ 食べられる機会への希少性が高まる<br>→ 空腹や暇が「今食べなければ」という緊急事態になる<br>→ グレージング・主観的過食・LOC<br>→ 内在化された「食べるな」が発動する<br>→ 食事を抜く／罪悪感／再制限<br>→ 再び欠乏警報</blockquote>
+            <p>という循環が有力です。</p>
+            <p>親による強い食事制限は、子どもの「空腹でなくても食べる行動」や食物反応性、自己調整の難しさと関連することが、縦断研究のレビューでも報告されています。ただし親子間には双方向の影響もあるため、誰か一人を原因と断定するものではありません。<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8671268/" target="_blank" rel="noopener noreferrer">子どもの摂食自己調整に関するレビュー</a></p>
+
+            <h3>対策の中心は「もっと管理する」ことではない</h3>
+            <p>必要なのは、禁止でも放任でもなく、<strong>structure＋autonomy support（構造化＋自律性の支援）</strong>です。</p>
+            <table>
+              <thead><tr><th>以前の方式</th><th>今後作りたい方式</th></tr></thead>
+              <tbody>
+                <tr><td>「食べるな」という強制的制限</td><td>食事・間食を安定して用意する</td></tr>
+                <tr><td>食べられる時だけ大量に許可</td><td>次も必ず食べられると保証する</td></tr>
+                <tr><td>相手の評価で量が決まる</td><td>身体感覚と自分の判断を尊重する</td></tr>
+                <tr><td>暇を食事だけで埋める</td><td>食事を残しつつ、刺激の選択肢を増やす</td></tr>
+                <tr><td>食べすぎたら次を抜く</td><td>次の予定へ普通に戻る</td></tr>
+              </tbody>
+            </table>
+
+            <h4>実際に使う言葉</h4>
+            <p>「食べるな」という声が出たら、</p>
+            <blockquote>これは昔の録音。今の私に命令している事実ではない。私は次の食事も与える。</blockquote>
+            <p>「今食べないとかわいそう」が出たら、</p>
+            <blockquote>私をかわいそうにしない方法は、今だけ大量に救助することではなく、今日も明日も確実に食べさせること。</blockquote>
+            <p>「よく食べれば喜ばれる」が出たら、</p>
+            <blockquote>食べる量は人を喜ばせるための演技ではない。少なくても多くても、私の価値とは関係ない。</blockquote>
+
+            <h3>暇への対策</h3>
+            <p>「暇だから食べたい」とき、食事を禁止する必要はありません。まず三つを別々に確認します。</p>
+            <ol>
+              <li>身体的に空腹か</li>
+              <li>この先食べられない恐怖があるか</li>
+              <li>刺激や活動が不足しているか</li>
+            </ol>
+            <p>複数に当てはまって構いません。</p>
+            <ul>
+              <li>空腹なら食べる</li>
+              <li>恐怖には「次に食べる時刻と内容」を具体的に保証する</li>
+              <li>暇には別の刺激も追加する</li>
+            </ul>
+            <p>非食物の暇つぶしは大げさな趣味でなくてよく、音楽を1曲聴く、短い動画、入浴、外気に当たる、パズル、誰かに一言送るなど、2～10分で開始できるものを複数用意します。</p>
+            <p>重要なのは「食べたいなら代わりに散歩しろ」ではなく、</p>
+            <blockquote>空腹なら食べる。退屈もあるなら、食べた後の活動も用意する</blockquote>
+            <p>という扱いです。食べる楽しみを奪わず、「唯一の暇つぶし」から「いくつかある楽しみの一つ」にしていきます。</p>
+            <p>そして今後は、食べた量について自分を褒めたり叱ったりせず、代わりに、</p>
+            <ul>
+              <li>食事を抜かずに用意できた</li>
+              <li>怖さに気づけた</li>
+              <li>つまみ食いを正式な間食にできた</li>
+              <li>次も食べてよいと伝えられた</li>
+            </ul>
+            <p>という<strong>自己ケアの行動</strong>を評価するのが合っています。</p>
+            <p>この学習史を踏まえると、あなたの問題は「食欲を抑えられない」より、<strong>食べ物を安定して与えてもらえるという信頼を育てられなかったため、自分で緊急確保している</strong>と捉えるほうが正確そうです。これは性格ではなく学習された仕組みなので、安定した食事と新しい反応を繰り返すことで、再学習できます。</p>
+          </div>
+        </article>
+      </details>
+      <div class="food-chat-bottom">
+        <button class="btn btn-g" type="button" onclick="closeFoodChat()">← 食事タブへ戻る</button>
+        <button class="btn btn-c" type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ 先頭へ</button>
+      </div>
     </div>
   </div>
 
@@ -1476,6 +1845,26 @@ function showScreen(id){
   if(id==='scr-meal')renderMeal();
   if(id==='scr-prog')renderProg();
   if(id==='scr-set'){renderManage();renderSet();}
+}
+function openFoodChat(){
+  showScreen('scr-food-chat');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function closeFoodChat(){
+  showScreen('scr-meal');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function foodChatPlainText(){
+  const messages=[...document.querySelectorAll('#foodChatTranscript .food-chat-message')];
+  return ['摂食についての対話（2026年8月8日〜9日）',...messages.map(message=>{
+    const speaker=message.querySelector('.food-chat-speaker');
+    const body=message.querySelector('.food-chat-bubble');
+    return `${speaker?speaker.textContent.trim():''}\n${body?body.innerText.trim():''}`;
+  })].join('\n\n');
+}
+function copyFoodChat(){
+  if(!navigator.clipboard||!navigator.clipboard.writeText){toast('このブラウザではコピーできません');return;}
+  navigator.clipboard.writeText(foodChatPlainText()).then(()=>toast('📋 対話全文をコピーしました')).catch(()=>toast('コピーできませんでした'));
 }
 function openManage(section){
   const btn=document.querySelector('.tabbar button[data-scr="scr-set"]');
