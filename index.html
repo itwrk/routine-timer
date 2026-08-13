@@ -1436,9 +1436,24 @@ let H;
 try{H=normalizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY))||defaultHistory());}
 catch(e){H=defaultHistory();}
 function saveHistory(){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(H));return true;}catch(e){if(typeof toast==='function')toast('⚠️ 端末の保存容量が足りません');return false;}}
+const HABIT_TIME_PRESETS=[
+  {id:'all',label:'終日',optionLabel:'終日（いつでも）',startTime:'',endTime:''},
+  {id:'morning',label:'朝',optionLabel:'朝（5時〜11時）',startTime:'05:00',endTime:'11:00'},
+  {id:'daytime',label:'昼',optionLabel:'昼（11時〜15時）',startTime:'11:00',endTime:'15:00'},
+  {id:'evening',label:'夕方',optionLabel:'夕方（15時〜18時）',startTime:'15:00',endTime:'18:00'},
+  {id:'night',label:'夜',optionLabel:'夜（18時〜24時）',startTime:'18:00',endTime:'00:00'},
+  {id:'late-night',label:'深夜',optionLabel:'深夜（0時〜5時）',startTime:'00:00',endTime:'05:00'},
+  {id:'custom',label:'自由指定',optionLabel:'自由指定',startTime:'',endTime:''}
+];
+function habitPresetById(id){return HABIT_TIME_PRESETS.find(p=>p.id===id)||null;}
 function normalizeHabit(h){
-  const normalized=Object.assign({guide:'',link:'',scheduleMode:'daily',weekdays:[0,1,2,3,4,5,6],showDate:'',startTime:'',endTime:''},h||{});
+  const normalized=Object.assign({guide:'',link:'',scheduleMode:'daily',weekdays:[0,1,2,3,4,5,6],showDate:'',timePreset:'',startTime:'',endTime:''},h||{});
   normalized.weekdays=Array.isArray(normalized.weekdays)?normalized.weekdays.map(Number).filter(n=>n>=0&&n<=6):[0,1,2,3,4,5,6];
+  if(!habitPresetById(normalized.timePreset))normalized.timePreset=normalized.startTime||normalized.endTime?'custom':'all';
+  const preset=habitPresetById(normalized.timePreset);
+  if(preset&&preset.id!=='custom'){
+    normalized.startTime=preset.startTime;normalized.endTime=preset.endTime;
+  }
   return normalized;
 }
 const DEFAULT_MOODS=[
@@ -2183,8 +2198,13 @@ function timeMinutes(value){
   const m=/^(\d{2}):(\d{2})$/.exec(value||'');
   return m?Number(m[1])*60+Number(m[2]):null;
 }
+function habitTimeWindow(habit){
+  const preset=habitPresetById(habit.timePreset);
+  return preset&&preset.id!=='custom'?preset:habit;
+}
 function habitVisibleAt(habit,now=new Date()){
-  const start=timeMinutes(habit.startTime),end=timeMinutes(habit.endTime);
+  const window=habitTimeWindow(habit);
+  const start=timeMinutes(window.startTime),end=timeMinutes(window.endTime);
   const current=now.getHours()*60+now.getMinutes();
   const overnight=start!==null&&end!==null&&start>end;
   const anchor=new Date(now);
@@ -2203,8 +2223,11 @@ function habitVisibleAt(habit,now=new Date()){
   return true;
 }
 function habitWindowLabel(habit){
-  if(habit.startTime&&habit.startTime===habit.endTime)return '';
-  const start=timeHour(habit.startTime),end=timeHour(habit.endTime);
+  const preset=habitPresetById(habit.timePreset);
+  if(preset&&preset.id!=='custom')return preset.label;
+  const window=habitTimeWindow(habit);
+  if(window.startTime&&window.startTime===window.endTime)return '';
+  const start=timeHour(window.startTime),end=timeHour(window.endTime);
   if(start!==''&&end!=='')return `${start}時〜${end}時`;
   if(start!=='')return `${start}時〜`;
   if(end!=='')return `〜${end}時`;
@@ -2220,6 +2243,9 @@ function hourOptions(current){
   let html=`<option value=""${selected===''?' selected':''}>指定なし</option>`;
   for(let hour=0;hour<24;hour++)html+=`<option value="${hour}"${selected===String(hour)?' selected':''}>${hour}時</option>`;
   return html;
+}
+function habitTimePresetOptions(current){
+  return HABIT_TIME_PRESETS.map(p=>`<option value="${p.id}"${p.id===current?' selected':''}>${p.optionLabel}</option>`).join('');
 }
 function habitDayLabel(habit){
   if(habit.scheduleMode==='weekdays')return (habit.weekdays||[]).map(d=>WEEKDAY_LABELS[d]).join('・')+'曜';
@@ -2336,6 +2362,10 @@ function updateHabitScheduleFields(editor){
   editor.querySelector('.habit-weekday-field').style.display=mode==='weekdays'?'block':'none';
   editor.querySelector('.habit-date-field').style.display=mode==='date'?'block':'none';
 }
+function updateHabitTimeFields(editor){
+  const custom=editor.querySelector('.habit-time-preset').value==='custom';
+  editor.querySelector('.habit-custom-time-fields').style.display=custom?'grid':'none';
+}
 function saveHabitEditor(habit,editor){
   const name=editor.querySelector('.habit-edit-name').value.trim();
   if(!name){toast('✅ 項目名を入力してください');return;}
@@ -2347,9 +2377,12 @@ function saveHabitEditor(habit,editor){
   const showDate=editor.querySelector('.habit-edit-date').value;
   if(scheduleMode==='weekdays'&&!weekdays.length){toast('⚠️ 表示する曜日を1つ以上選んでください');return;}
   if(scheduleMode==='date'&&!showDate){toast('⚠️ 表示する日付を選んでください');return;}
+  const timePreset=editor.querySelector('.habit-time-preset').value;
+  const preset=habitPresetById(timePreset)||habitPresetById('all');
+  const startTime=preset.id==='custom'?hourTime(editor.querySelector('.habit-start-time').value):preset.startTime;
+  const endTime=preset.id==='custom'?hourTime(editor.querySelector('.habit-end-time').value):preset.endTime;
   Object.assign(habit,{
-    name,guide:editor.querySelector('.habit-edit-guide').value.trim(),link,scheduleMode,weekdays,showDate,
-    startTime:hourTime(editor.querySelector('.habit-start-time').value),endTime:hourTime(editor.querySelector('.habit-end-time').value)
+    name,guide:editor.querySelector('.habit-edit-guide').value.trim(),link,scheduleMode,weekdays,showDate,timePreset,startTime,endTime
   });
   habitEditId=null;save();renderHabitManager();renderHabits();toast('💾 チェック項目を保存しました');
 }
@@ -2370,9 +2403,10 @@ function renderHabitManager(){
     if(habitEditId===habit.id){
       const editor=document.createElement('div');editor.className='habit-editor';
       const days=WEEKDAY_LABELS.map((label,i)=>`<label><input type="checkbox" value="${i}" ${(habit.weekdays||[]).includes(i)?'checked':''}>${label}</label>`).join('');
-      editor.innerHTML=`<div class="field"><label>項目名</label><input class="habit-edit-name" type="text" maxlength="60" value="${esc(habit.name)}"></div><div class="field"><label>📖 手順メモ</label><textarea class="habit-edit-guide" maxlength="2000" rows="4" placeholder="作業の手順や注意点を書く">${esc(habit.guide)}</textarea></div><div class="field"><label>🔗 関連リンク</label><input class="habit-edit-link" type="url" maxlength="500" value="${esc(habit.link)}" placeholder="https://..."></div><div class="field"><label>ホームに表示する日</label><select class="habit-mode"><option value="daily" ${habit.scheduleMode==='daily'?'selected':''}>毎日</option><option value="weekdays" ${habit.scheduleMode==='weekdays'?'selected':''}>曜日指定</option><option value="date" ${habit.scheduleMode==='date'?'selected':''}>日付指定</option></select></div><div class="field habit-weekday-field"><label>表示する曜日</label><div class="habit-weekdays">${days}</div></div><div class="field habit-date-field"><label>表示する日付</label><input class="habit-edit-date" type="date" value="${esc(habit.showDate)}"></div><div class="habit-editor-grid"><div class="field"><label>表示開始時（任意）</label><select class="habit-start-time">${hourOptions(habit.startTime)}</select></div><div class="field"><label>表示終了時（任意）</label><select class="habit-end-time">${hourOptions(habit.endTime)}</select></div></div><p class="muted">例：毎日 18時〜19時。終了を翌日にする時間帯（22時〜2時）も設定できます。</p><div class="habit-editor-actions"><button class="btn btn-c btn-sm habit-save" type="button">💾 保存</button><button class="btn btn-g btn-sm habit-cancel" type="button">キャンセル</button></div>`;
-      list.appendChild(editor);updateHabitScheduleFields(editor);
+      editor.innerHTML=`<div class="field"><label>項目名</label><input class="habit-edit-name" type="text" maxlength="60" value="${esc(habit.name)}"></div><div class="field"><label>📖 手順メモ</label><textarea class="habit-edit-guide" maxlength="2000" rows="4" placeholder="作業の手順や注意点を書く">${esc(habit.guide)}</textarea></div><div class="field"><label>🔗 関連リンク</label><input class="habit-edit-link" type="url" maxlength="500" value="${esc(habit.link)}" placeholder="https://..."></div><div class="field"><label>ホームに表示する日</label><select class="habit-mode"><option value="daily" ${habit.scheduleMode==='daily'?'selected':''}>毎日</option><option value="weekdays" ${habit.scheduleMode==='weekdays'?'selected':''}>曜日指定</option><option value="date" ${habit.scheduleMode==='date'?'selected':''}>日付指定</option></select></div><div class="field habit-weekday-field"><label>表示する曜日</label><div class="habit-weekdays">${days}</div></div><div class="field habit-date-field"><label>表示する日付</label><input class="habit-edit-date" type="date" value="${esc(habit.showDate)}"></div><div class="field"><label>ホームに表示する時間帯</label><select class="habit-time-preset">${habitTimePresetOptions(habit.timePreset)}</select></div><div class="habit-editor-grid habit-custom-time-fields"><div class="field"><label>表示開始時（任意）</label><select class="habit-start-time">${hourOptions(habit.startTime)}</select></div><div class="field"><label>表示終了時（任意）</label><select class="habit-end-time">${hourOptions(habit.endTime)}</select></div></div><p class="muted">「自由指定」を選ぶと、これまでどおり開始時・終了時を選べます。終了を翌日にする時間帯（22時〜2時）も設定できます。</p><div class="habit-editor-actions"><button class="btn btn-c btn-sm habit-save" type="button">💾 保存</button><button class="btn btn-g btn-sm habit-cancel" type="button">キャンセル</button></div>`;
+      list.appendChild(editor);updateHabitScheduleFields(editor);updateHabitTimeFields(editor);
       editor.querySelector('.habit-mode').onchange=()=>updateHabitScheduleFields(editor);
+      editor.querySelector('.habit-time-preset').onchange=()=>updateHabitTimeFields(editor);
       editor.querySelector('.habit-save').onclick=()=>saveHabitEditor(habit,editor);
       editor.querySelector('.habit-cancel').onclick=()=>{habitEditId=null;renderHabitManager();};
     }
