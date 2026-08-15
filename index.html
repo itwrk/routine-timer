@@ -191,23 +191,30 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 
 /* 24-hour activity timeline */
 .activity-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.activity-head h2{margin:0}
-.activity-range{color:var(--dim);font-size:9px;white-space:nowrap}
+.activity-head h2{margin:0;font-size:16px!important}
+.activity-range{color:var(--dim);font-size:11px;white-space:nowrap}
 .activity-timeline{margin-top:7px}
-.activity-item{display:flex;gap:8px;padding:8px 1px;border-top:1px dashed var(--line)}
-.activity-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line2);border-radius:9px;flex-shrink:0;font-size:13px}
-.activity-body{flex:1;min-width:0}
-.activity-type{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:9px;margin-bottom:2px}
-.activity-type>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.activity-type time{margin-left:auto;color:var(--gold);white-space:nowrap}
-.activity-text{font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.activity-item{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;padding:9px 1px;border-top:1px dashed var(--line)}
+.activity-current{display:flex;align-items:center;gap:10px;min-width:0}
+.activity-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line2);border-radius:10px;flex-shrink:0;font-size:17px}
+.activity-line{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.activity-text{flex:1;min-width:0;font-size:15px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-time{margin-left:auto;color:var(--gold);font-size:12px;white-space:nowrap;flex-shrink:0}
 .activity-item.check .activity-text{font-weight:700}
 .activity-item.stopwatch .activity-icon{border-color:var(--cyan);box-shadow:0 0 8px rgba(53,224,255,.2)}
 .activity-item.stopwatch .activity-text{font-weight:800;color:#167fa3}
 .activity-item.mood .activity-icon{border-color:var(--pink);box-shadow:0 0 8px rgba(255,77,141,.18)}
 .activity-item.mood .activity-text{font-weight:800;color:var(--pink)}
-.activity-mood-tag{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;background:rgba(255,77,141,.08);border:1px solid rgba(255,77,141,.22);border-radius:999px;color:var(--text);font-size:9px;font-weight:700;line-height:1.5;white-space:nowrap;vertical-align:middle}
+.activity-mood-tag{display:inline-flex;align-items:center;padding:2px 7px;background:rgba(255,77,141,.08);border:1px solid rgba(255,77,141,.22);border-radius:999px;color:var(--text);font-size:10px;font-weight:700;line-height:1.5;white-space:nowrap;flex-shrink:0}
 .activity-item.meal .activity-icon{border-color:var(--gold);box-shadow:0 0 8px rgba(255,201,60,.18)}
+.activity-past{display:flex;align-items:center;gap:8px;min-width:0;margin-left:42px;padding:7px 9px;background:rgba(130,87,230,.055);border:1px solid rgba(130,87,230,.16);border-radius:9px}
+.activity-past-kicker{color:var(--purple);font-size:10px;font-weight:800;white-space:nowrap;flex-shrink:0}
+.activity-past-text{min-width:0;font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(min-width:960px){
+  .activity-item.has-past{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:center}
+  .activity-item.has-past .activity-past{margin-left:0;border-width:0 0 0 1px;border-style:dashed;border-color:var(--line2);border-radius:0;background:transparent;padding:4px 0 4px 12px}
+  .activity-past-text{font-size:14px}
+}
 
 /* past-you memory / gentle return */
 .memory-card{position:relative;overflow:hidden;border-color:rgba(130,87,230,.42);background:linear-gradient(135deg,#fff 0%,#f7efff 58%,#edfaff 100%);box-shadow:0 6px 24px rgba(130,87,230,.16)}
@@ -2188,39 +2195,70 @@ function activityTimeLabel(stamp){
   if(localDateKey(d)===localDateKey(yesterday))return `昨日 ${time}`;
   return `${d.getMonth()+1}/${d.getDate()} ${time}`;
 }
-function renderActivityTimeline(){
-  const el=document.getElementById('activityTimeline');
-  if(!el)return;
-  const now=Date.now(),cutoff=now-24*60*60*1000,items=[];
+function collectActivityTimelineItems(cutoff,now){
+  const items=[];
   for(const note of liveLogs(D.personalNotes)){
     const stamp=Number(note.createdAt)||0;
     const context=noteContextLabel(note);
-    if(stamp>=cutoff&&stamp<=now)items.push({kind:'note',icon:'📝',label:context?`実行メモ・${context}`:'ひとことメモ',text:note.text||'',stamp});
+    if(stamp>=cutoff&&stamp<=now)items.push({id:`note-${note.id}`,kind:'note',icon:'📝',label:context?`実行メモ・${context}`:'ひとことメモ',text:note.text||'',stamp});
   }
   for(const log of liveLogs(D.moodLogs)){
     const stamp=Number(log.createdAt)||0;
     const previousActivity=moodActivityLabel(log.previousActivity);
-    if(stamp>=cutoff&&stamp<=now)items.push({kind:'mood',icon:log.emoji||'🌡️',label:'今の気分',text:log.label||'気分',tag:previousActivity,stamp});
+    if(stamp>=cutoff&&stamp<=now)items.push({id:`mood-${log.id}`,kind:'mood',icon:log.emoji||'🌡️',label:'今の気分',text:log.label||'気分',tag:previousActivity,stamp});
   }
   for(const log of liveLogs(D.habitLogs)){
     const stamp=activityLogStamp(log);
-    if(stamp>=cutoff&&stamp<=now)items.push({kind:'check',icon:'✅',label:'チェックリスト・毎日',text:log.habitName||'削除済みの項目',stamp});
+    if(stamp>=cutoff&&stamp<=now)items.push({id:`habit-${log.id}`,kind:'check',icon:'✅',label:'チェックリスト・毎日',text:log.habitName||'削除済みの項目',stamp});
   }
   for(const log of liveLogs(D.todayTaskLogs)){
     const stamp=activityLogStamp(log);
-    if(stamp>=cutoff&&stamp<=now)items.push({kind:'check',icon:'✅',label:'チェックリスト・今日だけ',text:log.taskName||'削除済みの項目',stamp});
+    if(stamp>=cutoff&&stamp<=now)items.push({id:`task-${log.id}`,kind:'check',icon:'✅',label:'チェックリスト・今日だけ',text:log.taskName||'削除済みの項目',stamp});
   }
   for(const log of liveLogs(D.stopwatchLogs)){
     const stamp=Number(log.endedAt)||0;
-    if(stamp>=cutoff&&stamp<=now)items.push({kind:'stopwatch',icon:'⏱️',label:'1ボタン計測',text:log.label||'作業',tag:quickTimerDurationLabel(log.durationSec),stamp});
+    if(stamp>=cutoff&&stamp<=now)items.push({id:`stopwatch-${log.id}`,kind:'stopwatch',icon:'⏱️',label:'1ボタン計測',text:log.label||'作業',tag:quickTimerDurationLabel(log.durationSec),stamp});
   }
-  items.push(...mealTimelineItems(cutoff,now));
-  items.sort((a,b)=>b.stamp-a.stamp);
+  for(const item of mealTimelineItems(cutoff,now))items.push(Object.assign({id:`meal-${stableHash(`${item.kind}|${item.stamp}|${item.text}`)}`},item));
+  return items.sort((a,b)=>b.stamp-a.stamp);
+}
+function activityPastPool(cutoff){
+  const now=Date.now(),pool=collectActivityTimelineItems(0,cutoff).filter(item=>{
+    const hiddenUntil=Number((H.seen[item.id]||{}).hiddenUntil)||0;
+    if(hiddenUntil>now)return false;
+    return H.includeSensitive||item.kind!=='note'||(!isPrivateMemoryText(item.text)&&!isDistressingMemoryText(item.text));
+  });
+  for(const log of D.logs||[]){
+    const stamp=activityLogStamp(log);if(!stamp||stamp>cutoff)continue;
+    const text=`${log.routine||'ルーチン'}を ${Number(log.done)||0}/${Number(log.total)||0} ステップ完了`;
+    pool.push({id:`routine-${stableHash(`${stamp}|${text}`)}`,kind:'routine',icon:'🏁',text,stamp});
+  }
+  for(const memory of H.moments||[]){
+    const state=H.seen[memory.id]||{},hiddenUntil=Number(memory.hiddenUntil||state.hiddenUntil)||0;
+    if(!memory.time||!memory.text||memory.at>cutoff||hiddenUntil>now||(memory.sensitive&&!H.includeSensitive))continue;
+    pool.push({id:`diary-${memory.id}`,kind:'memory',icon:'📓',text:memory.text,stamp:memory.at});
+  }
+  return[...new Map(pool.map(item=>[item.id,item])).values()];
+}
+function activityClockMinute(stamp){const d=new Date(stamp);return d.getHours()*60+d.getMinutes();}
+function closestPastActivity(item,pool,used){
+  const minute=activityClockMinute(item.stamp);
+  return pool.filter(p=>p.id!==item.id&&!used.has(p.id)&&p.stamp<item.stamp).map(p=>({item:p,distance:clockDistance(minute,activityClockMinute(p.stamp))})).filter(x=>x.distance<=120).sort((a,b)=>a.distance-b.distance||b.item.stamp-a.item.stamp)[0]?.item||null;
+}
+function activityPastTimeLabel(stamp){
+  const d=new Date(stamp),now=new Date(),date=d.getFullYear()===now.getFullYear()?`${d.getMonth()+1}/${d.getDate()}`:`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+  return `${date} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function renderActivityTimeline(){
+  const el=document.getElementById('activityTimeline');
+  if(!el)return;
+  const now=Date.now(),cutoff=now-24*60*60*1000,items=collectActivityTimelineItems(cutoff,now),pastPool=activityPastPool(cutoff),usedPast=new Set();
   el.innerHTML='';
   if(!items.length){el.innerHTML='<p class="muted">過去24時間のメモ、気分、チェック完了、計測記録はまだありません。</p>';return;}
   for(const item of items){
-    const row=document.createElement('article');row.className=`activity-item ${item.kind}`;
-    row.innerHTML=`<span class="activity-icon">${esc(item.icon)}</span><div class="activity-body"><div class="activity-type"><time>${activityTimeLabel(item.stamp)}</time></div><div class="activity-text">${esc(item.text)}${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</div></div>`;
+    const past=closestPastActivity(item,pastPool,usedPast);if(past)usedPast.add(past.id);
+    const row=document.createElement('article');row.className=`activity-item ${item.kind}${past?' has-past':''}`;
+    row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}<time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>${past?`<aside class="activity-past"><span class="activity-past-kicker">↩ 同じころ ${activityPastTimeLabel(past.stamp)}</span><span class="activity-past-text">${esc(past.text)}</span></aside>`:''}`;
     el.appendChild(row);
   }
 }
