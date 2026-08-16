@@ -197,8 +197,9 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .activity-item{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;padding:9px 1px;border-top:1px dashed var(--line)}
 .activity-current{display:flex;align-items:center;gap:10px;min-width:0}
 .activity-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:1px solid var(--line2);border-radius:10px;flex-shrink:0;font-size:17px}
-.activity-line{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-.activity-text{flex:1;min-width:0;font-size:15px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:8px;flex:1;min-width:0}
+.activity-summary{display:flex;align-items:baseline;gap:8px;min-width:0;overflow:hidden;white-space:nowrap}
+.activity-text{min-width:0;font-size:15px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .activity-time{margin-left:auto;color:var(--gold);font-size:12px;white-space:nowrap;flex-shrink:0}
 .activity-item.check .activity-text{font-weight:700}
 .activity-item.stopwatch .activity-icon{border-color:var(--cyan);box-shadow:0 0 8px rgba(53,224,255,.2)}
@@ -690,6 +691,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   .screen.active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
   .screen.active>.card,.screen.active>.sect,.screen.active>.btn-full,.screen.active>.statgrid{margin:0}
   #routineList{display:contents}
+  #scr-home #quickTimerCard{grid-column:1/-1}
   #scr-home #memoryCard{grid-column:span 2}
   #scr-home .memo-composer{grid-row:span 2}
   #scr-home #activityTimelineCard{grid-column:span 2}
@@ -722,9 +724,9 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 
   <!-- HOME -->
   <div class="screen active" id="scr-home">
+    <div class="card quick-timer-card" id="quickTimerCard" aria-live="polite"></div>
     <div class="card memory-card" id="memoryCard" aria-live="polite"></div>
     <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
-    <div class="card quick-timer-card" id="quickTimerCard" aria-live="polite"></div>
     <div class="card memo-composer">
       <div class="memo-section-head"><h2>📝 ひとことメモ</h2><button class="text-link" type="button" onclick="openManage('memos')">すべて見る →</button></div>
       <div class="memo-inputrow">
@@ -2242,12 +2244,12 @@ function activityPastPool(cutoff){
 }
 function activityClockMinute(stamp){const d=new Date(stamp);return d.getHours()*60+d.getMinutes();}
 function closestPastActivity(item,pool,used){
-  const minute=activityClockMinute(item.stamp);
-  return pool.filter(p=>p.id!==item.id&&!used.has(p.id)&&p.stamp<item.stamp).map(p=>({item:p,distance:clockDistance(minute,activityClockMinute(p.stamp))})).filter(x=>x.distance<=120).sort((a,b)=>a.distance-b.distance||b.item.stamp-a.item.stamp)[0]?.item||null;
+  const current=new Date(item.stamp),previousStart=new Date(current.getFullYear(),current.getMonth(),current.getDate()-1).getTime(),previousEnd=new Date(current.getFullYear(),current.getMonth(),current.getDate()).getTime(),minute=activityClockMinute(item.stamp);
+  return pool.filter(p=>p.id!==item.id&&!used.has(p.id)&&p.stamp>=previousStart&&p.stamp<previousEnd).map(p=>({item:p,distance:clockDistance(minute,activityClockMinute(p.stamp))})).filter(x=>x.distance<=120).sort((a,b)=>a.distance-b.distance||b.item.stamp-a.item.stamp)[0]?.item||null;
 }
 function activityPastTimeLabel(stamp){
-  const d=new Date(stamp),now=new Date(),date=d.getFullYear()===now.getFullYear()?`${d.getMonth()+1}/${d.getDate()}`:`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
-  return `${date} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const d=new Date(stamp);
+  return `1日前 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 function renderActivityTimeline(){
   const el=document.getElementById('activityTimeline');
@@ -2258,7 +2260,7 @@ function renderActivityTimeline(){
   for(const item of items){
     const past=closestPastActivity(item,pastPool,usedPast);if(past)usedPast.add(past.id);
     const row=document.createElement('article');row.className=`activity-item ${item.kind}${past?' has-past':''}`;
-    row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}<time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>${past?`<aside class="activity-past"><span class="activity-past-kicker">↩ 同じころ ${activityPastTimeLabel(past.stamp)}</span><span class="activity-past-text">${esc(past.text)}</span></aside>`:''}`;
+    row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-summary"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</span><time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>${past?`<aside class="activity-past"><span class="activity-past-kicker">↩ ${activityPastTimeLabel(past.stamp)}</span><span class="activity-past-text">${esc(past.text)}</span></aside>`:''}`;
     el.appendChild(row);
   }
 }
