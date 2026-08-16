@@ -122,6 +122,9 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .quick-timer-card.running .quick-timer-clock{color:var(--pink);text-shadow:0 0 12px rgba(255,77,141,.34)}
 .quick-timer-fields{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:6px;margin-bottom:7px}
 .quick-timer-fields input,.quick-timer-fields select{min-width:0;padding:8px 9px;font-size:12px}
+.quick-timer-presets{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:-1px 0 7px}
+.quick-timer-preset{max-width:100%;padding:5px 9px;background:var(--card2);border:1px solid var(--line2);border-radius:999px;color:var(--text);font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.quick-timer-preset.active{border-color:var(--pink);color:var(--pink);background:rgba(255,77,141,.09);box-shadow:0 0 8px rgba(255,77,141,.2)}
 .quick-timer-btn{padding:11px 8px!important;font-size:14px!important;white-space:nowrap}
 .quick-timer-help{margin:0 0 7px;color:var(--dim);font-size:9px;line-height:1.45}
 @media(max-width:390px){.quick-timer-fields{grid-template-columns:1fr}.quick-timer-clock{font-size:19px}}
@@ -218,23 +221,22 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 }
 
 /* past-you memory / gentle return */
-.memory-card{position:relative;overflow:hidden;border-color:rgba(130,87,230,.42);background:linear-gradient(135deg,#fff 0%,#f7efff 58%,#edfaff 100%);box-shadow:0 6px 24px rgba(130,87,230,.16)}
+.memory-card{position:relative;overflow:hidden;padding:7px 8px;border-color:rgba(130,87,230,.42);background:linear-gradient(135deg,#fff 0%,#f7efff 58%,#edfaff 100%);box-shadow:0 4px 14px rgba(130,87,230,.12)}
 .memory-card::after{content:'';position:absolute;width:90px;height:90px;right:-36px;top:-42px;border-radius:50%;background:radial-gradient(circle,rgba(53,224,255,.25),transparent 68%);pointer-events:none}
 .memory-card.found{animation:memoryFound .38s cubic-bezier(.18,1.5,.35,1)}
 @keyframes memoryFound{0%{transform:scale(.96);filter:brightness(1.2)}100%{transform:none;filter:none}}
-.memory-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;position:relative;z-index:1}
-.memory-kicker{font-family:'DotGothic16',monospace;color:var(--purple);font-size:10px;letter-spacing:.08em;white-space:nowrap}
+.memory-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;position:relative;z-index:1}
+.memory-kicker{font-family:'DotGothic16',monospace;color:var(--purple);font-size:9px;letter-spacing:.06em;white-space:nowrap}
 .memory-source{color:var(--dim);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .memory-reason{color:var(--gold);font-size:10px;font-weight:800;margin-bottom:3px}
 .memory-quote{font-size:13px;line-height:1.55;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
 .memory-date{color:var(--dim);font-size:9px;margin-top:4px}
-.memory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;position:relative;z-index:1}
-.memory-item{min-width:0;padding:7px;background:rgba(255,255,255,.68);border:1px solid rgba(130,87,230,.22);border-radius:10px}
-.memory-item .memory-reason{font-size:8px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.memory-item .memory-quote{font-size:10px;line-height:1.4;-webkit-line-clamp:3}
+.memory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;position:relative;z-index:1}
+.memory-item{min-width:0;padding:5px 6px;background:rgba(255,255,255,.68);border:1px solid rgba(130,87,230,.18);border-radius:8px}
+.memory-item .memory-quote{font-size:9px;line-height:1.3;-webkit-line-clamp:2}
 .memory-item .memory-date{font-size:7px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.memory-item-actions{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:5px}
-.memory-item-actions button{min-width:0;min-height:28px;padding:3px 1px;border-radius:7px;font-size:8px;white-space:nowrap}
+.memory-item-actions{display:flex;justify-content:flex-end;margin-top:3px}
+.memory-item-actions button{min-width:0;min-height:22px;padding:2px 6px;border-radius:6px;font-size:7px;white-space:nowrap}
 .memory-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:7px}
 .memory-actions button{min-width:0;min-height:40px;white-space:nowrap;padding:7px 3px;font-size:10px;border-radius:9px}
 .memory-actions button:last-child{grid-column:1/-1}
@@ -692,7 +694,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   .screen.active>.card,.screen.active>.sect,.screen.active>.btn-full,.screen.active>.statgrid{margin:0}
   #routineList{display:contents}
   #scr-home #quickTimerCard{grid-column:1/-1}
-  #scr-home #memoryCard{grid-column:span 2}
+  #scr-home #memoryCard{grid-column:span 1}
   #scr-home .memo-composer{grid-row:span 2}
   #scr-home #activityTimelineCard{grid-column:span 2}
   #scr-preview>.card,#scr-edit>.card{grid-column:1 / span 2}
@@ -2039,11 +2041,12 @@ function renderQuickTimer(){
     return;
   }
   const choices=quickTimerChoices();
-  card.innerHTML=`<div class="quick-timer-head"><h2>🔴 計測中</h2><span class="quick-timer-clock" id="quickTimerClock">${quickTimerClock(Date.now()-active.startedAt)}</span></div><div class="quick-timer-fields"><input id="quickTimerLabel" type="text" maxlength="80" value="${esc(active.label||'')}" placeholder="いま何をしている？" aria-label="実行内容" oninput="updateQuickTimerLabel(this.value)"><select aria-label="過去の実行内容から選ぶ" onchange="chooseQuickTimerLabel(this.value)"><option value="">過去から選ぶ</option>${choices.map(label=>`<option value="${esc(label)}">${esc(label)}</option>`).join('')}</select></div><button class="btn btn-p btn-full quick-timer-btn" type="button" onclick="toggleQuickTimer()">■ 停止して記録</button>`;
+  card.innerHTML=`<div class="quick-timer-head"><h2>🔴 計測中</h2><span class="quick-timer-clock" id="quickTimerClock">${quickTimerClock(Date.now()-active.startedAt)}</span></div><div class="quick-timer-fields"><input id="quickTimerLabel" type="text" maxlength="80" value="${esc(active.label||'')}" placeholder="いま何をしている？" aria-label="実行内容" oninput="updateQuickTimerLabel(this.value)"><select aria-label="過去の実行内容から選ぶ" onchange="chooseQuickTimerLabel(this.value)"><option value="">過去から選ぶ</option>${choices.map(label=>`<option value="${esc(label)}">${esc(label)}</option>`).join('')}</select></div><div class="quick-timer-presets" aria-label="実行内容をワンタップで選ぶ">${choices.slice(0,8).map(label=>`<button class="quick-timer-preset${label===(active.label||'')?' active':''}" type="button" data-label="${esc(label)}" onclick="chooseQuickTimerLabel(this.dataset.label)">${esc(label)}</button>`).join('')}</div><button class="btn btn-p btn-full quick-timer-btn" type="button" onclick="toggleQuickTimer()">■ 停止して記録</button>`;
   startQuickTimerTicker();
 }
 function updateQuickTimerLabel(value){
   if(!D.activeStopwatch)return;D.activeStopwatch.label=String(value||'').slice(0,80);D.activeStopwatch.updatedAt=Date.now();
+  document.querySelectorAll('.quick-timer-preset').forEach(btn=>btn.classList.toggle('active',btn.dataset.label===D.activeStopwatch.label));
   clearTimeout(quickTimerSaveTm);quickTimerSaveTm=setTimeout(()=>localStorage.setItem(KEY,JSON.stringify(D)),350);
 }
 function chooseQuickTimerLabel(value){
@@ -2803,7 +2806,6 @@ function rankedMemories(options={}){
     if(options.help&&(m.tags||[]).some(t=>['tiny','voice','body'].includes(t)))score+=70;
     if(m.valence>0)score+=20;else if(m.valence<0)score-=25;
     if(state.lastShownAt&&nowMs-state.lastShownAt<14*864e5)score-=90;
-    score+=(Number(m.loved||state.loved)||0)*18;
     score+=(parseInt(stableHash(`${m.id}|${today()}|${Math.floor(now.getHours()/3)}`),36)%37)/37;
     return{memory:m,score};
   }).sort((a,b)=>b.score-a.score).map(x=>x.memory);
@@ -2824,13 +2826,10 @@ function renderMemoryCard(){
     el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><span class="memory-source">端末内だけ</span></div><div class="memory-empty"><p class="muted">日記を読み込むか、メモや完了記録が育つと、同じころの過去がここに現れるよ。</p><button class="btn btn-c btn-sm" type="button" onclick="document.getElementById('diaryFile').click()">📓 読み込む</button></div>`;return;
   }
   memories.forEach(recordMemoryShown);
-  const cards=memories.map(memory=>{const stamp=new Date(memory.at),date=`${stamp.getFullYear()}/${stamp.getMonth()+1}/${stamp.getDate()}${memory.time?` ${memory.time}`:''}`;return `<article class="memory-item"><div class="memory-reason">✦ ${esc(memoryReason(memory))}</div><div class="memory-quote">「${esc(memory.text)}」</div><div class="memory-date">${date} ・ ${esc(memory.source||'過去の記録')}</div><div class="memory-item-actions"><button class="btn btn-p" type="button" onclick="loveMemory('${memory.id}')" aria-label="なつかしい">💖 好き</button><button class="btn btn-g" type="button" onclick="hideMemory('${memory.id}')" aria-label="30日隠す">🙈 隠す</button></div></article>`;}).join('');
+  const cards=memories.map(memory=>{const stamp=new Date(memory.at),date=`${stamp.getFullYear()}/${stamp.getMonth()+1}/${stamp.getDate()}${memory.time?` ${memory.time}`:''}`;return `<article class="memory-item"><div class="memory-quote">「${esc(memory.text)}」</div><div class="memory-date">${date} ・ ${esc(memory.source||'過去の記録')}</div><div class="memory-item-actions"><button class="btn btn-g" type="button" onclick="hideMemory('${memory.id}')" aria-label="30日隠す">🙈 隠す</button></div></article>`;}).join('');
   el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><button class="text-link" type="button" onclick="cycleMemory()">🎰 入れ替え</button></div><div class="memory-grid">${cards}</div>`;
 }
 function cycleMemory(){memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';renderMemoryCard();const el=document.getElementById('memoryCard');el.classList.add('found');sfxDone();setTimeout(()=>el.classList.remove('found'),450);}
-function loveMemory(id){
-  const local=H.moments.find(m=>m.id===id),state=H.seen[id]||{};if(local)local.loved=(Number(local.loved)||0)+1;state.loved=(Number(state.loved)||0)+1;H.seen[id]=state;saveHistory();toast('💖 この記憶、また出すね');sfxJackpot();burst();
-}
 function hideMemory(id){
   const until=Date.now()+30*864e5,local=H.moments.find(m=>m.id===id),state=H.seen[id]||{};if(local)local.hiddenUntil=until;state.hiddenUntil=until;H.seen[id]=state;saveHistory();toast('🙈 30日間そっとしまいました');cycleMemory();
 }
