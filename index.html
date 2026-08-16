@@ -3400,7 +3400,10 @@ function tick(){
   run.lastSignalElapsed=elapsed;
   if(run.timerMode==='down'&&run.leftMs<=0){
     if(run.microEntry){speak('10秒できた！');completeMicroEntry();}
-    else{speak('時間です！');doneStep(true);}
+    else{
+      if(run.idx<run.r.steps.length-1)speak('時間です！');
+      doneStep(true);
+    }
     return;
   }
   updateRing();updateRemain();
@@ -3454,7 +3457,7 @@ function doneStep(auto=false){
   D.xp+=gain;run.xp=(run.xp||0)+gain;
   renderCombo(gain);xpPop(gain,label);
   save();
-  nextStep('done'); // 待たずに即スパーン！
+  nextStep('done',auto); // 待たずに即スパーン！
 }
 function finishAll(){
   if(!run)return;
@@ -3493,12 +3496,15 @@ function recordCurrentStep(outcome){
   run.stepRecords.push({stepId:s.id,name:s.name,actualSec:Math.max(0,Math.round((run.stepElapsedMs||0)/1000)),plannedSec:s.sec,mode:run.usedCountUp?'countup':'countdown',outcome});
   run.currentRecorded=true;
 }
-function nextStep(outcome){
+function nextStep(outcome,auto=false){
   recordCurrentStep(outcome);
   if(run.idx<run.r.steps.length-1){run.idx++;loadStep(true);}
-  else finishRun();
+  else finishRun(auto);
 }
-function finishRun(){
+function runCompletionSpeech(routineName,perfect){
+  return perfect?`${routineName}、完了しました！パーフェクト完走です！ボーナス30XPです！`:`${routineName}、完了しました！おつかれさまでした！`;
+}
+function finishRun(autoCompleted=false){
   clearInterval(timer);timer=null;
   const r=run.r,skips=run.skips;
   const doneCount=r.steps.length-skips;
@@ -3517,7 +3523,9 @@ function finishRun(){
   if(mode==='auto')calAddEvent(log,run.startedAt,Date.now());
   else if(mode==='ask'){const st=run.startedAt;setTimeout(()=>askCalLog(log,st,Date.now()),1200);}
   sfxJackpot();burst(true);
-  speak(perfect?`${r.name}、パーフェクト完走！すごい！ボーナス30XPです！`:`${r.name}、完了！おつかれさま！`);
+  const completionSpeech=runCompletionSpeech(r.name,perfect);
+  if(autoCompleted)setTimeout(()=>speak(completionSpeech),300);
+  else speak(completionSpeech);
   const xpGained=(run.xp||0)+bonus;
   showResult({log,perfect,bonus,xpGained,durSec:durationSec});
 }
