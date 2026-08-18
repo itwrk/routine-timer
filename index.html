@@ -126,9 +126,49 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .quick-timer-presets{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:-1px 0 7px}
 .quick-timer-preset{max-width:100%;padding:5px 9px;background:var(--card2);border:1px solid var(--line2);border-radius:999px;color:var(--text);font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .quick-timer-preset.active{border-color:var(--pink);color:var(--pink);background:rgba(255,77,141,.09);box-shadow:0 0 8px rgba(255,77,141,.2)}
+.quick-timer-pages-label{color:var(--dim);font-size:9px;font-weight:700;margin:7px 0 4px}
+.quick-timer-actions{display:grid;grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr);gap:6px}
+.quick-timer-actions .btn{min-width:0}
 .quick-timer-btn{padding:11px 8px!important;font-size:14px!important;white-space:nowrap}
 .quick-timer-help{margin:0 0 7px;color:var(--dim);font-size:9px;line-height:1.45}
-@media(max-width:390px){.quick-timer-fields{grid-template-columns:1fr}.quick-timer-clock{font-size:19px}}
+.activity-page-card{border-color:rgba(130,87,230,.42);background:linear-gradient(145deg,#fff 0%,#f6efff 54%,#edfbff 100%)}
+.activity-page-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
+.activity-page-kicker{color:var(--purple);font-family:'DotGothic16',monospace;font-size:10px;letter-spacing:.08em;white-space:nowrap}
+.activity-page-running{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding:9px 11px;border:1px solid rgba(255,77,141,.42);border-radius:12px;background:rgba(255,77,141,.07)}
+.activity-page-running-label{min-width:0;font-size:11px;font-weight:800;color:var(--pink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.activity-page-clock{font-family:'DotGothic16',monospace;color:var(--pink);font-size:20px;font-weight:800;letter-spacing:.05em;white-space:nowrap}
+.activity-page-hero{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.activity-page-emoji{width:50px;height:50px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--line2);border-radius:14px;background:var(--card2);font-size:27px}
+.activity-page-title{flex:1;min-width:0;font-size:22px;font-weight:800;line-height:1.25;overflow-wrap:anywhere}
+.activity-page-edit-btn{white-space:nowrap;flex-shrink:0;padding:8px 10px;font-size:11px}
+.activity-page-body{min-height:150px;padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.68);font-size:14px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.activity-page-body a{color:var(--cyan-text);font-weight:700}
+.activity-page-empty{color:var(--dim)}
+.activity-page-editor{padding:11px;border:1px solid var(--line2);border-radius:13px;background:rgba(237,234,249,.76)}
+.activity-page-editor-grid{display:grid;grid-template-columns:58px minmax(0,1fr);gap:8px}
+.activity-page-editor .activity-page-emoji-input{text-align:center;padding-left:4px;padding-right:4px}
+.activity-page-editor textarea{min-height:230px;line-height:1.65}
+.activity-page-editor-actions,.activity-page-footer{display:flex;gap:7px;margin-top:9px}
+.activity-page-editor-actions button,.activity-page-footer button{flex:1;min-width:0;white-space:nowrap;padding:10px 6px;font-size:12px}
+.activity-page-section{margin-top:14px}
+.activity-page-section h3{font-size:12px;color:var(--cyan);margin-bottom:6px;letter-spacing:.05em}
+.activity-page-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:5px}
+.activity-page-stat{padding:8px 9px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.58);text-align:center}
+.activity-page-stat b{display:block;color:var(--gold-text);font-family:'DotGothic16',monospace;font-size:16px}
+.activity-page-stat span{color:var(--dim);font-size:9px}
+.activity-page-log{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:7px 2px;border-bottom:1px dashed var(--line);font-size:11px}
+.activity-page-log time{color:var(--dim);white-space:nowrap}
+.activity-page-log b{color:var(--cyan-text);white-space:nowrap}
+.activity-page-updated{margin-top:7px;color:var(--dim);font-size:9px;text-align:right}
+.activity-item.stopwatch.activity-page-link{cursor:pointer;border-radius:10px;padding-left:5px;padding-right:5px}
+.activity-item.stopwatch.activity-page-link:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(max-width:390px){
+  .quick-timer-fields{grid-template-columns:1fr}.quick-timer-clock{font-size:19px}
+  .quick-timer-actions{grid-template-columns:minmax(0,.68fr) minmax(0,1.32fr)}
+  .activity-page-editor input,.activity-page-editor textarea{font-size:16px}
+  .activity-page-title{font-size:19px}.activity-page-body{font-size:13px;padding:11px;min-height:135px}
+  .activity-page-edit-btn{padding:8px 7px;font-size:10px}
+}
 
 .tweet-row{display:flex;gap:9px;padding:11px 1px;border-bottom:1px solid var(--line)}
 .tweet-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;box-shadow:0 0 10px rgba(255,77,141,.25)}
@@ -771,6 +811,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   #scr-home .memo-composer{grid-row:span 2}
   #scr-home #activityTimelineCard{grid-column:span 2}
   #scr-preview>.card,#scr-edit>.card{grid-column:1 / span 2}
+  #scr-activity-page>.card{grid-column:1/-1}
   #scr-set>.btn-full{grid-column:1/-1}
   #scr-set>.card{break-inside:avoid}
   #scr-prog .statgrid{grid-column:1/-1}
@@ -858,6 +899,11 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       </div>
       <button class="btn btn-g btn-full btn-sm" type="button" id="previewRescue" onclick="openRescue(selectedRoutineId)" style="margin-top:7px;white-space:nowrap">🫠 いまは重い…</button>
     </div>
+  </div>
+
+  <!-- ACTIVITY PAGE -->
+  <div class="screen" id="scr-activity-page">
+    <div class="card activity-page-card" id="activityPageCard" aria-live="polite"></div>
   </div>
 
   <!-- MEAL -->
@@ -1747,14 +1793,26 @@ function normalizeJourneyLog(log){
   n.stepRecords=Array.isArray(n.stepRecords)?n.stepRecords.map(x=>Object.assign({},x)):[];
   return n;
 }
+function activityPageDefaultEmoji(title){return /ゲーム|game/i.test(String(title||''))?'🎮':'📄';}
+function normalizeActivityPage(page){
+  const source=page||{},fallback=String(source.title||'作業').trim().slice(0,80)||'作業';
+  const n=Object.assign({id:uid(),title:fallback,emoji:activityPageDefaultEmoji(fallback),body:'',aliases:[],createdAt:Date.now(),updatedAt:0,deletedAt:null},source);
+  n.title=String(n.title||fallback).trim().slice(0,80)||fallback;
+  n.emoji=String(n.emoji||activityPageDefaultEmoji(n.title)).trim().slice(0,8)||activityPageDefaultEmoji(n.title);
+  n.body=String(n.body||'').slice(0,20000);
+  n.aliases=[...new Set((Array.isArray(n.aliases)?n.aliases:[]).map(x=>String(x||'').trim().slice(0,80)).filter(x=>x&&x!==n.title))].slice(-20);
+  n.createdAt=Math.max(0,Number(n.createdAt)||Number(n.updatedAt)||Date.now());n.updatedAt=Math.max(0,Number(n.updatedAt)||n.createdAt);
+  return n;
+}
 function normalizeStopwatchLog(log){
-  const n=Object.assign({id:uid(),label:'作業',startedAt:0,endedAt:0,durationSec:0,updatedAt:0,deletedAt:null},log||{});
+  const n=Object.assign({id:uid(),label:'作業',pageId:'',startedAt:0,endedAt:0,durationSec:0,updatedAt:0,deletedAt:null},log||{});
   n.label=String(n.label||'作業').trim().slice(0,80)||'作業';
+  n.pageId=String(n.pageId||'').slice(0,80);
   n.startedAt=Math.max(0,Number(n.startedAt)||0);n.endedAt=Math.max(n.startedAt,Number(n.endedAt)||0);
   n.durationSec=Math.max(0,Number(n.durationSec)||Math.round((n.endedAt-n.startedAt)/1000));
   return n;
 }
-const CURRENT_SCHEMA=11;
+const CURRENT_SCHEMA=12;
 
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
@@ -1775,9 +1833,11 @@ function normalizeData(raw){
   d.rewardPointEvents=(Array.isArray(d.rewardPointEvents)?d.rewardPointEvents:[]).map(normalizeRewardPointEvent);
   d.journeyLogs=(Array.isArray(d.journeyLogs)?d.journeyLogs:[]).map(normalizeJourneyLog);
   d.stopwatchLogs=(Array.isArray(d.stopwatchLogs)?d.stopwatchLogs:[]).map(normalizeStopwatchLog);
+  d.activityPages=(Array.isArray(d.activityPages)?d.activityPages:[]).map(normalizeActivityPage);
   if(d.activeStopwatch&&Number(d.activeStopwatch.startedAt)>0){
-    d.activeStopwatch=Object.assign({id:uid(),label:'作業',startedAt:Date.now(),updatedAt:0},d.activeStopwatch);
+    d.activeStopwatch=Object.assign({id:uid(),label:'作業',pageId:'',startedAt:Date.now(),updatedAt:0},d.activeStopwatch);
     d.activeStopwatch.label=String(d.activeStopwatch.label||'作業').slice(0,80);
+    d.activeStopwatch.pageId=String(d.activeStopwatch.pageId||'').slice(0,80);
   }else d.activeStopwatch=null;
   delete d.badges;
   return migrateData(d);
@@ -1805,6 +1865,7 @@ function migrateData(d){
     if(!Array.isArray(d.rewardPointEvents))d.rewardPointEvents=[];
     ensureOpeningRewardPointSnapshot(d,legacyXpOpeningCandidate(d));
   }
+  if(from<12&&!Array.isArray(d.activityPages))d.activityPages=[];
   d.mealSessions=(Array.isArray(d.mealSessions)?d.mealSessions:[]).map(normalizeMealSession);
   d.mealTemplates=(Array.isArray(d.mealTemplates)?d.mealTemplates:[]).map(normalizeMealTemplate);
   d.foodRules=(Array.isArray(d.foodRules)?d.foodRules:[]).map(normalizeFoodRule);
@@ -1817,6 +1878,7 @@ function migrateData(d){
   d.rewards=(Array.isArray(d.rewards)?d.rewards:[]).map(normalizeReward);
   d.rewardRedemptions=(Array.isArray(d.rewardRedemptions)?d.rewardRedemptions:[]).map(normalizeRewardRedemption);
   d.rewardPointEvents=(Array.isArray(d.rewardPointEvents)?d.rewardPointEvents:[]).map(normalizeRewardPointEvent);
+  d.activityPages=(Array.isArray(d.activityPages)?d.activityPages:[]).map(normalizeActivityPage);
   d.mealPrefs=Object.assign(defaultMealPrefs(),d.mealPrefs||{});
   purgeMealTombstones(d);
   if(d.mealSessions.length>1000){
@@ -1830,12 +1892,13 @@ function migrateData(d){
   if(d.mealSafetyLogs.length>1000){d.mealSafetyLogs.sort((a,b)=>(a.startedAt||0)-(b.startedAt||0));d.mealSafetyLogs=d.mealSafetyLogs.slice(-1000);}
   if(d.journeyLogs.length>1000){d.journeyLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.journeyLogs=d.journeyLogs.slice(-1000);}
   if(d.stopwatchLogs.length>2000){d.stopwatchLogs.sort((a,b)=>(a.endedAt||0)-(b.endedAt||0));d.stopwatchLogs=d.stopwatchLogs.slice(-2000);}
+  if(d.activityPages.length>500){d.activityPages.sort((a,b)=>(a.updatedAt||0)-(b.updatedAt||0));d.activityPages=d.activityPages.slice(-500);}
   d.schemaVersion=CURRENT_SCHEMA;
   return d;
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','activityPages'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -1855,8 +1918,8 @@ const seed=()=>({
   todayTasks:[],todayTaskLogs:[],
   rewards:[],rewardRedemptions:[],rewardPointEvents:[],
   journeyLogs:[],
-  stopwatchLogs:[],activeStopwatch:null,
-  schemaVersion:11,
+  stopwatchLogs:[],activityPages:[],activeStopwatch:null,
+  schemaVersion:12,
   mealSessions:[],
   mealTemplates:builtinMealTemplates(),
   foodRules:[],
@@ -2090,30 +2153,37 @@ function toast(msg){
 }
 function hasVisibleDataEditor(){
   const focused=document.activeElement,focusedInput=focused&&focused.matches('input,textarea,select,[contenteditable="true"]')&&focused.offsetParent!==null;
-  return !!focusedInput||[...document.querySelectorAll('.habit-memo-editor,.habit-editor,.reward-editor')].some(editor=>editor.offsetParent!==null);
+  return !!focusedInput||[...document.querySelectorAll('.habit-memo-editor,.habit-editor,.reward-editor,.activity-page-editor')].some(editor=>editor.offsetParent!==null);
 }
 function renderActiveDataScreen(){
   if(hasVisibleDataEditor())return;
   const active=document.querySelector('.screen.active');if(!active)return;
   if(active.id==='scr-home'){if(!run)renderHome();}
+  else if(active.id==='scr-activity-page')renderActivityPage();
   else if(active.id==='scr-meal')renderMeal();
   else if(active.id==='scr-prog')renderProg();
   else if(active.id==='scr-set'){renderManage();renderSet();}
 }
 function tab(btn){
-  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
   showScreen(btn.dataset.scr);
 }
 function showScreen(id){
+  const current=document.querySelector('.screen.active');let savedActivityDraft=false;
+  if(id!=='scr-activity-page'&&current&&current.id==='scr-activity-page'&&activityPageEditing){
+    if(activityPageById(selectedActivityPageId)){if(!commitActivityPageEditor())return false;savedActivityDraft=true;}
+    activityPageEditing=false;
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   const nav=document.querySelector(`.tabbar button[data-scr="${id}"]`);
   if(nav){document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('on'));nav.classList.add('on');}
   if(id==='scr-home')renderHome();
+  if(id==='scr-activity-page')renderActivityPage();
   if(id==='scr-meal')renderMeal();
   if(id==='scr-prog')renderProg();
   if(id==='scr-set'){renderManage();renderSet();}
+  if(savedActivityDraft)toast('💾 編集内容を保存しました');
+  return true;
 }
 function openFoodChat(){
   showScreen('scr-food-chat');
@@ -2186,14 +2256,27 @@ function renderHome(){
   });
 }
 let quickTimerInterval=null,quickTimerSaveTm=null;
-function quickTimerChoices(){
-  const choices=[],seen=new Set();
-  for(const log of [...liveLogs(D.stopwatchLogs)].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))){
-    const label=String(log.label||'').trim();if(!label||seen.has(label))continue;
-    seen.add(label);choices.push(label);if(choices.length>=20)break;
-  }
-  return choices.length?choices:['作業'];
+let selectedActivityPageId=null,activityPageEditing=false;
+function activityPageById(id){return id?liveLogs(D.activityPages).find(page=>page.id===id)||null:null;}
+function activityPageForLabel(label){
+  const key=String(label||'').trim().toLocaleLowerCase('ja-JP');if(!key)return null;
+  return [...liveLogs(D.activityPages)].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).find(page=>page.title.toLocaleLowerCase('ja-JP')===key||(page.aliases||[]).some(alias=>alias.toLocaleLowerCase('ja-JP')===key))||null;
 }
+function buildQuickTimerChoiceItems(pageFirst=false){
+  const choices=[],seenPages=new Set(),seenLabels=new Set();
+  const add=(rawLabel,rawPageId='')=>{
+    let page=activityPageById(rawPageId)||activityPageForLabel(rawLabel),label=String(page?page.title:rawLabel||'').trim().slice(0,80),pageId=page?page.id:String(rawPageId||'');
+    const labelKey=label.toLocaleLowerCase('ja-JP');if(!label||seenLabels.has(labelKey)||(pageId&&seenPages.has(pageId)))return;
+    seenLabels.add(labelKey);if(pageId)seenPages.add(pageId);choices.push({label,pageId});
+  };
+  if(D.activeStopwatch)add(D.activeStopwatch.label,D.activeStopwatch.pageId);
+  const addPages=()=>{for(const page of [...liveLogs(D.activityPages)].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)))add(page.title,page.id);};
+  const addLogs=()=>{for(const log of [...liveLogs(D.stopwatchLogs)].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0)))add(log.label,log.pageId);};
+  if(pageFirst){addPages();addLogs();}else{addLogs();addPages();}
+  return choices.slice(0,100);
+}
+function quickTimerChoiceItems(){return buildQuickTimerChoiceItems(false);}
+function quickTimerPageItems(){return buildQuickTimerChoiceItems(true);}
 function quickTimerClock(ms){
   const total=Math.max(0,Math.floor(ms/1000)),hours=Math.floor(total/3600),minutes=Math.floor(total%3600/60),seconds=total%60;
   return hours?`${hours}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`:`${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
@@ -2205,8 +2288,9 @@ function quickTimerDurationLabel(sec){
   return `${seconds}秒`;
 }
 function updateQuickTimerClock(){
-  const el=document.getElementById('quickTimerClock');if(!el||!D.activeStopwatch)return;
-  el.textContent=quickTimerClock(Date.now()-D.activeStopwatch.startedAt);
+  if(!D.activeStopwatch)return;
+  const value=quickTimerClock(Date.now()-D.activeStopwatch.startedAt);
+  for(const id of ['quickTimerClock','activityPageClock']){const el=document.getElementById(id);if(el)el.textContent=value;}
 }
 function startQuickTimerTicker(){
   if(quickTimerInterval!==null)return;
@@ -2215,38 +2299,93 @@ function startQuickTimerTicker(){
 function stopQuickTimerTicker(){if(quickTimerInterval!==null)clearInterval(quickTimerInterval);quickTimerInterval=null;}
 function renderQuickTimer(){
   const card=document.getElementById('quickTimerCard');if(!card)return;
-  const active=D.activeStopwatch;
+  const active=D.activeStopwatch,choices=quickTimerChoiceItems(),pageChoices=quickTimerPageItems();
+  const chips=pageChoices.slice(0,8).map(choice=>`<button class="quick-timer-preset${active&&choice.pageId&&choice.pageId===active.pageId||active&&choice.label===(active.label||'')?' active':''}" type="button" data-label="${esc(choice.label)}" data-page-id="${esc(choice.pageId)}" onclick="openActivityPage(this.dataset.label,this.dataset.pageId,true)">${esc(choice.label)}</button>`).join('');
   card.classList.toggle('running',!!active);
   if(!active){
     stopQuickTimerTicker();
-    card.innerHTML=`<div class="quick-timer-head"><h2>⏱️ 1ボタン計測</h2><span class="quick-timer-clock">00:00</span></div><p class="quick-timer-help">押した瞬間から計測。もう一度押すと停止して記録します。</p><button class="btn btn-c btn-full quick-timer-btn" type="button" onclick="toggleQuickTimer()">▶ 計測スタート</button>`;
+    card.innerHTML=`<div class="quick-timer-head"><h2>⏱️ 1ボタン計測</h2><span class="quick-timer-clock">00:00</span></div><p class="quick-timer-help">押した瞬間から計測。もう一度押すと停止して記録します。</p><button class="btn btn-c btn-full quick-timer-btn" type="button" onclick="toggleQuickTimer()">▶ 計測スタート</button>${chips?`<div class="quick-timer-pages-label">📄 活動ページ</div><div class="quick-timer-presets" aria-label="活動ページを開く">${chips}</div>`:''}`;
     return;
   }
-  const choices=quickTimerChoices();
-  card.innerHTML=`<div class="quick-timer-head"><h2>🔴 計測中</h2><span class="quick-timer-clock" id="quickTimerClock">${quickTimerClock(Date.now()-active.startedAt)}</span></div><div class="quick-timer-fields"><input id="quickTimerLabel" type="text" maxlength="80" value="${esc(active.label||'')}" placeholder="いま何をしている？" aria-label="実行内容" oninput="updateQuickTimerLabel(this.value)"><select aria-label="過去の実行内容から選ぶ" onchange="chooseQuickTimerLabel(this.value)"><option value="">過去から選ぶ</option>${choices.map(label=>`<option value="${esc(label)}">${esc(label)}</option>`).join('')}</select></div><div class="quick-timer-presets" aria-label="実行内容をワンタップで選ぶ">${choices.slice(0,8).map(label=>`<button class="quick-timer-preset${label===(active.label||'')?' active':''}" type="button" data-label="${esc(label)}" onclick="chooseQuickTimerLabel(this.dataset.label)">${esc(label)}</button>`).join('')}</div><button class="btn btn-p btn-full quick-timer-btn" type="button" onclick="toggleQuickTimer()">■ 停止して記録</button>`;
+  const options=choices.map(choice=>`<option value="${esc(choice.label)}" data-page-id="${esc(choice.pageId)}">${esc(choice.label)}</option>`).join('');
+  card.innerHTML=`<div class="quick-timer-head"><h2>🔴 計測中</h2><span class="quick-timer-clock" id="quickTimerClock">${quickTimerClock(Date.now()-active.startedAt)}</span></div><div class="quick-timer-fields"><input id="quickTimerLabel" type="text" maxlength="80" value="${esc(active.label||'')}" placeholder="いま何をしている？" aria-label="実行内容" oninput="updateQuickTimerLabel(this.value)"><select aria-label="過去の実行内容から選ぶ" onchange="chooseQuickTimerSelect(this)"><option value="">過去から選ぶ</option>${options}</select></div><div class="quick-timer-presets" aria-label="活動ページを開く">${chips}</div><div class="quick-timer-actions"><button class="btn btn-c quick-timer-btn" type="button" onclick="openCurrentActivityPage()">📄 ページ</button><button class="btn btn-p quick-timer-btn" type="button" onclick="toggleQuickTimer()">■ 停止して記録</button></div>`;
   startQuickTimerTicker();
 }
 function updateQuickTimerLabel(value){
-  if(!D.activeStopwatch)return;D.activeStopwatch.label=String(value||'').slice(0,80);D.activeStopwatch.updatedAt=Date.now();
+  if(!D.activeStopwatch)return;D.activeStopwatch.label=String(value||'').slice(0,80);D.activeStopwatch.pageId=(activityPageForLabel(D.activeStopwatch.label)||{}).id||'';D.activeStopwatch.updatedAt=Date.now();
   document.querySelectorAll('.quick-timer-preset').forEach(btn=>btn.classList.toggle('active',btn.dataset.label===D.activeStopwatch.label));
   clearTimeout(quickTimerSaveTm);quickTimerSaveTm=setTimeout(()=>localStorage.setItem(KEY,JSON.stringify(D)),350);
 }
-function chooseQuickTimerLabel(value){
+function chooseQuickTimerLabel(value,pageId=''){
   if(!value||!D.activeStopwatch)return;
   const input=document.getElementById('quickTimerLabel');if(input)input.value=value;
-  updateQuickTimerLabel(value);if(input)input.focus();
+  updateQuickTimerLabel(value);D.activeStopwatch.pageId=String(pageId||D.activeStopwatch.pageId||'');if(input)input.focus();
 }
+function chooseQuickTimerSelect(select){const option=select&&select.options[select.selectedIndex];if(option&&option.value)chooseQuickTimerLabel(option.value,option.dataset.pageId||'');}
 function toggleQuickTimer(){
   if(!D.activeStopwatch){
-    const now=Date.now(),label=quickTimerChoices()[0]||'作業';
-    D.activeStopwatch={id:uid(),label,startedAt:now,updatedAt:now};save();renderQuickTimer();toast('▶ 計測を始めました');return;
+    const now=Date.now(),choice=quickTimerChoiceItems()[0]||{label:'作業',pageId:''};
+    D.activeStopwatch={id:uid(),label:choice.label,pageId:choice.pageId,startedAt:now,updatedAt:now};save();renderQuickTimer();toast('▶ 計測を始めました');return;
   }
   clearTimeout(quickTimerSaveTm);
-  const active=D.activeStopwatch,now=Date.now(),input=document.getElementById('quickTimerLabel');
-  const label=String(input?input.value:active.label||'').trim().slice(0,80)||'作業';
-  const log=normalizeStopwatchLog({id:active.id,label,startedAt:active.startedAt,endedAt:now,durationSec:Math.max(1,Math.round((now-active.startedAt)/1000)),updatedAt:now});
+  const active=D.activeStopwatch,now=Date.now(),label=String(active.label||'').trim().slice(0,80)||'作業';
+  const log=normalizeStopwatchLog({id:active.id,label,pageId:active.pageId||'',startedAt:active.startedAt,endedAt:now,durationSec:Math.max(1,Math.round((now-active.startedAt)/1000)),updatedAt:now});
   D.stopwatchLogs.unshift(log);D.activeStopwatch=null;save();renderQuickTimer();renderActivityTimeline();sfxDone();toast(`⏹ ${label}：${quickTimerDurationLabel(log.durationSec)}を記録しました`);
 }
+function ensureActivityPage(label,pageId=''){
+  const title=String(label||'作業').trim().slice(0,80)||'作業',stableId=`activity-${stableHash(title.normalize('NFKC').toLocaleLowerCase('ja-JP'))}`;
+  let page=activityPageById(pageId)||activityPageForLabel(title)||activityPageById(stableId),created=false;
+  if(!page){page=normalizeActivityPage({id:stableId,title,createdAt:Date.now(),updatedAt:Date.now()});D.activityPages.push(page);created=true;}
+  return{page,created};
+}
+function openActivityPage(label,pageId='',linkActive=true){
+  const found=ensureActivityPage(label,pageId),page=found.page;let activeChanged=false;
+  if(linkActive&&D.activeStopwatch){D.activeStopwatch.label=page.title;D.activeStopwatch.pageId=page.id;D.activeStopwatch.updatedAt=Date.now();activeChanged=true;}
+  selectedActivityPageId=page.id;activityPageEditing=found.created;
+  if(found.created)save();else if(activeChanged)localStorage.setItem(KEY,JSON.stringify(D));
+  renderQuickTimer();showScreen('scr-activity-page');window.scrollTo({top:0,behavior:'smooth'});
+}
+function openCurrentActivityPage(){
+  if(!D.activeStopwatch)return;
+  const input=document.getElementById('quickTimerLabel'),label=String(input?input.value:D.activeStopwatch.label||'').trim().slice(0,80)||'作業';
+  openActivityPage(label,D.activeStopwatch.pageId,true);
+}
+function closeActivityPage(){if(showScreen('scr-home'))window.scrollTo({top:0,behavior:'smooth'});}
+function activityPageLogs(page){
+  const names=new Set([page.title,...(page.aliases||[])].map(x=>String(x).toLocaleLowerCase('ja-JP')));
+  return liveLogs(D.stopwatchLogs).filter(log=>log.pageId===page.id||(!log.pageId&&names.has(String(log.label||'').toLocaleLowerCase('ja-JP')))).sort((a,b)=>(b.endedAt||0)-(a.endedAt||0));
+}
+function activityPageUpdatedLabel(stamp){
+  if(!stamp)return '';
+  const d=new Date(stamp);return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function activityPageBodyHtml(text){return esc(text).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');}
+function renderActivityPage(){
+  const card=document.getElementById('activityPageCard'),page=activityPageById(selectedActivityPageId);if(!card)return;
+  if(!page){showScreen('scr-home');return;}
+  const active=D.activeStopwatch,logs=activityPageLogs(page),total=logs.reduce((sum,log)=>sum+(Number(log.durationSec)||0),0);
+  const pageNames=new Set([page.title,...(page.aliases||[])].map(name=>String(name).toLocaleLowerCase('ja-JP'))),activeLinked=!!(active&&(active.pageId===page.id||(!active.pageId&&pageNames.has(String(active.label||'').toLocaleLowerCase('ja-JP')))));
+  const running=active?`<div class="activity-page-running"><span class="activity-page-running-label">🔴 ${esc(active.label||'作業')}を計測中</span><strong class="activity-page-clock" id="activityPageClock">${quickTimerClock(Date.now()-active.startedAt)}</strong></div>`:'';
+  const editor=`<div class="activity-page-editor"><div class="activity-page-editor-grid"><div class="field"><label>絵文字</label><input class="activity-page-emoji-input" id="activityPageEmoji" type="text" maxlength="8" value="${esc(page.emoji)}" aria-label="ページの絵文字"></div><div class="field"><label>ページ名</label><input id="activityPageTitleInput" type="text" maxlength="80" value="${esc(page.title)}" placeholder="ページ名"></div></div><div class="field"><label>自由メモ</label><textarea id="activityPageBodyInput" maxlength="20000" placeholder="攻略、やりたいこと、関連リンクなど…">${esc(page.body)}</textarea></div><div class="activity-page-editor-actions"><button class="btn btn-p" type="button" onclick="saveActivityPage()">💾 保存</button><button class="btn btn-g" type="button" onclick="cancelActivityPageEdit()">キャンセル</button></div></div>`;
+  const viewer=`<div class="activity-page-hero"><div class="activity-page-emoji">${esc(page.emoji)}</div><div class="activity-page-title">${esc(page.title)}</div><button class="btn btn-g activity-page-edit-btn" type="button" onclick="beginActivityPageEdit()">✏️ 編集</button></div><div class="activity-page-body${page.body?'':' activity-page-empty'}">${page.body?activityPageBodyHtml(page.body):'このページはまだ空です。「編集」から攻略メモやリンクを残せます。'}</div><div class="activity-page-updated">更新 ${activityPageUpdatedLabel(page.updatedAt)}</div>`;
+  const history=logs.length?logs.slice(0,8).map(log=>`<div class="activity-page-log"><time>${activityTimeLabel(log.endedAt||log.startedAt)}</time><b>${quickTimerDurationLabel(log.durationSec)}</b></div>`).join(''):'<p class="muted">この活動の計測記録はまだありません。</p>';
+  const footer=active?`<div class="activity-page-footer"><button class="btn btn-g" type="button" onclick="closeActivityPage()">← 計測画面へ</button><button class="btn btn-p" type="button" onclick="stopQuickTimerFromActivityPage()">${activeLinked?'■ 停止して記録':'■ 現在の計測を停止'}</button></div>`:`<div class="activity-page-footer"><button class="btn btn-g" type="button" onclick="closeActivityPage()">← ホームへ戻る</button></div>`;
+  card.innerHTML=`<div class="activity-page-top"><button class="btn btn-g btn-sm" type="button" onclick="closeActivityPage()">← 戻る</button><span class="activity-page-kicker">ACTIVITY PAGE</span></div>${running}${activityPageEditing?editor:viewer}<section class="activity-page-section"><h3>⏱️ この活動の記録</h3><div class="activity-page-stats"><div class="activity-page-stat"><b>${logs.length}</b><span>計測回数</span></div><div class="activity-page-stat"><b>${quickTimerDurationLabel(total)}</b><span>合計時間</span></div></div>${history}</section>${footer}`;
+  if(active)startQuickTimerTicker();
+}
+function beginActivityPageEdit(){activityPageEditing=true;renderActivityPage();requestAnimationFrame(()=>document.getElementById('activityPageBodyInput')?.focus());}
+function cancelActivityPageEdit(){activityPageEditing=false;renderActivityPage();}
+function commitActivityPageEditor(){
+  const page=activityPageById(selectedActivityPageId),titleInput=document.getElementById('activityPageTitleInput'),emojiInput=document.getElementById('activityPageEmoji'),bodyInput=document.getElementById('activityPageBodyInput');if(!page||!titleInput||!emojiInput||!bodyInput)return false;
+  const title=titleInput.value.trim().slice(0,80);if(!title){toast('ページ名を入力してください');titleInput.focus();return false;}
+  const conflict=activityPageForLabel(title);if(conflict&&conflict.id!==page.id){toast('同じ名前の活動ページがあります');titleInput.focus();return false;}
+  const oldTitle=page.title;if(oldTitle!==title)page.aliases=[...new Set([...(page.aliases||[]),oldTitle])].filter(alias=>alias&&alias!==title).slice(-20);
+  page.title=title;page.emoji=emojiInput.value.trim().slice(0,8)||activityPageDefaultEmoji(title);page.body=bodyInput.value.slice(0,20000);page.updatedAt=Date.now();
+  if(D.activeStopwatch&&D.activeStopwatch.pageId===page.id){D.activeStopwatch.label=page.title;D.activeStopwatch.updatedAt=page.updatedAt;}
+  save();renderQuickTimer();renderActivityTimeline();return true;
+}
+function saveActivityPage(){if(!commitActivityPageEditor())return;activityPageEditing=false;renderActivityPage();toast('💾 活動ページを保存しました');}
+function stopQuickTimerFromActivityPage(){if(activityPageEditing&&!commitActivityPageEditor())return;activityPageEditing=false;toggleQuickTimer();renderActivityPage();}
 let selectedRoutineId=null;
 function openRoutinePreview(id){
   selectedRoutineId=id;renderRoutinePreview();showScreen('scr-preview');
@@ -2404,7 +2543,8 @@ function collectActivityTimelineItems(cutoff,now){
   }
   for(const log of liveLogs(D.stopwatchLogs)){
     const stamp=Number(log.endedAt)||0;
-    if(stamp>=cutoff&&stamp<=now)items.push({id:`stopwatch-${log.id}`,kind:'stopwatch',icon:'⏱️',label:'1ボタン計測',text:log.label||'作業',tag:quickTimerDurationLabel(log.durationSec),stamp});
+    const page=activityPageById(log.pageId);
+    if(stamp>=cutoff&&stamp<=now)items.push({id:`stopwatch-${log.id}`,kind:'stopwatch',icon:'⏱️',label:'1ボタン計測',text:page?page.title:log.label||'作業',pageId:page?page.id:log.pageId||'',tag:quickTimerDurationLabel(log.durationSec),stamp});
   }
   for(const item of mealTimelineItems(cutoff,now))items.push(Object.assign({id:`meal-${stableHash(`${item.kind}|${item.stamp}|${item.text}`)}`},item));
   return items.sort((a,b)=>b.stamp-a.stamp);
@@ -2446,6 +2586,11 @@ function renderActivityTimeline(){
     const past=closestPastActivity(item,pastPool,usedPast);if(past)usedPast.add(past.id);
     const row=document.createElement('article');row.className=`activity-item ${item.kind}${past?' has-past':''}`;
     row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-summary"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</span><time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>${past?`<aside class="activity-past"><span class="activity-past-kicker">↩ ${activityPastTimeLabel(past.stamp)}</span><span class="activity-past-text">${esc(past.text)}</span></aside>`:''}`;
+    if(item.kind==='stopwatch'){
+      row.classList.add('activity-page-link');row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label',`${item.text}の活動ページを開く`);
+      row.onclick=()=>openActivityPage(item.text,item.pageId||'',false);
+      row.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();row.click();}};
+    }
     el.appendChild(row);
   }
 }
@@ -5253,7 +5398,7 @@ function buildLocCsv(){
   return lines.join('\n');
 }
 function exportLocCsv(){download('loc_logs.csv',buildLocCsv());toast('🧭 LOC CSVを書き出しました');}
-const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','rewards','rewardRedemptions','rewardPointEvents'];
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','activityPages','rewards','rewardRedemptions','rewardPointEvents'];
 function mergeMealCollections(local,remote){
   const legacyXp=Math.max(legacyXpOpeningCandidate(local),legacyXpOpeningCandidate(remote));
   const openingAmounts=[...(Array.isArray(local&&local.rewardPointEvents)?local.rewardPointEvents:[]),...(Array.isArray(remote&&remote.rewardPointEvents)?remote.rewardPointEvents:[])].filter(isOpeningRewardPointEvent).map(event=>Math.floor(Number(event.amount)||0));
