@@ -136,6 +136,19 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .quick-timer-actions .btn{min-width:0}
 .quick-timer-btn{padding:11px 8px!important;font-size:14px!important;white-space:nowrap}
 .quick-timer-help{margin:0 0 7px;color:var(--dim);font-size:9px;line-height:1.45}
+/* boredom tolerance challenge */
+.boredom-card{border-color:rgba(130,87,230,.45);background:linear-gradient(145deg,#fff,rgba(130,87,230,.055),rgba(53,224,255,.045))}
+.boredom-head{display:flex;align-items:center;gap:7px}.boredom-head strong{flex:1;min-width:0;color:var(--purple);font-size:13px}.boredom-pb{font-size:9px;font-weight:800;color:var(--gold);white-space:nowrap}
+.boredom-help{font-size:10px;line-height:1.55;color:var(--dim);margin:4px 0 8px}.boredom-help b{color:var(--text)}
+.boredom-presets,.boredom-labels,.boredom-mode{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
+.boredom-chip{border:1px solid var(--line2);border-radius:999px;background:var(--card2);color:var(--text);padding:7px 9px;font-size:10px;font-weight:800;white-space:nowrap;cursor:pointer}
+.boredom-chip.on{border-color:var(--purple);color:var(--purple);background:rgba(130,87,230,.1);box-shadow:0 0 8px rgba(130,87,230,.2)}
+.boredom-clock{text-align:center;font-family:'DotGothic16',monospace;color:var(--pink);font-size:34px;font-weight:900;letter-spacing:.06em;margin:7px 0}
+.boredom-message{min-height:60px;padding:9px 10px;border-left:3px solid var(--cyan);border-radius:9px;background:rgba(53,224,255,.07);font-size:12px;line-height:1.65;font-weight:700}
+.boredom-label-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.boredom-label-btns button{min-width:0;padding:10px 3px;font-size:11px;white-space:nowrap}
+.boredom-score-row{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:7px;align-items:center;margin:7px 0;font-size:11px;font-weight:700}.boredom-score-row select{padding:8px;min-width:0}
+.boredom-history{margin-top:8px;padding-top:7px;border-top:1px dashed var(--line)}.boredom-log{display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:9px;color:var(--dim)}
+@media(max-width:390px){.boredom-chip{padding:7px 8px}.boredom-label-btns button{font-size:10px}.boredom-message{font-size:11px}}
 .activity-page-card{border-color:rgba(130,87,230,.42);background:linear-gradient(145deg,#fff 0%,#f6efff 54%,#edfbff 100%)}
 .activity-page-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
 .activity-page-kicker{color:var(--purple);font-family:'DotGothic16',monospace;font-size:10px;letter-spacing:.08em;white-space:nowrap}
@@ -910,6 +923,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   <!-- HOME -->
   <div class="screen active" id="scr-home">
     <div class="card quick-timer-card" id="quickTimerCard" aria-live="polite"></div>
+    <div class="card boredom-card" id="boredomCard" aria-live="polite"></div>
     <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
     <div class="card memo-composer">
       <div class="memo-section-head"><h2>📝 ひとことメモ</h2><button class="text-link" type="button" onclick="openManage('memos')">すべて見る →</button></div>
@@ -992,6 +1006,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       </div>
     </div>
     <div class="card meal-card" id="mealCard"></div>
+    <div class="card boredom-card" id="mealBoredomCard" aria-live="polite"></div>
     <div class="card meal-safety-card" id="mealSafetyCard"></div>
     <div class="card meal-food-card" id="mealFoodCard"></div>
     <div class="card meal-plan-card" id="mealPlanCard"></div>
@@ -1874,7 +1889,16 @@ function normalizeRoutineRunLog(log){
   n.updatedAt=Math.max(0,Number(n.updatedAt)||n.endedAt||Date.now());
   return n;
 }
-const CURRENT_SCHEMA=13;
+function normalizeBoredomLog(log){
+  const n=Object.assign({id:uid(),targetSec:10,completedSec:0,completed:false,mode:'general',labels:[],discomfort:0,urge:0,startedAt:0,endedAt:0,updatedAt:0,deletedAt:null},log||{});
+  n.id=String(n.id||uid());n.targetSec=[10,30,60,180].includes(Number(n.targetSec))?Number(n.targetSec):10;
+  n.completedSec=Math.max(0,Math.round(Number(n.completedSec)||0));n.completed=!!n.completed;
+  n.mode=n.mode==='cooking'?'cooking':'general';n.labels=[...new Set((Array.isArray(n.labels)?n.labels:[]).filter(x=>['bored','escape'].includes(x)))];
+  n.discomfort=Math.max(0,Math.min(10,Math.round(Number(n.discomfort)||0)));n.urge=Math.max(0,Math.min(10,Math.round(Number(n.urge)||0)));
+  n.startedAt=Math.max(0,Number(n.startedAt)||0);n.endedAt=Math.max(n.startedAt,Number(n.endedAt)||0);n.updatedAt=Math.max(0,Number(n.updatedAt)||n.endedAt||Date.now());
+  return n;
+}
+const CURRENT_SCHEMA=14;
 
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
@@ -1896,12 +1920,19 @@ function normalizeData(raw){
   d.journeyLogs=(Array.isArray(d.journeyLogs)?d.journeyLogs:[]).map(normalizeJourneyLog);
   d.stopwatchLogs=(Array.isArray(d.stopwatchLogs)?d.stopwatchLogs:[]).map(normalizeStopwatchLog);
   d.routineRunLogs=(Array.isArray(d.routineRunLogs)?d.routineRunLogs:[]).map(normalizeRoutineRunLog);
+  d.boredomLogs=(Array.isArray(d.boredomLogs)?d.boredomLogs:[]).map(normalizeBoredomLog);
   d.activityPages=(Array.isArray(d.activityPages)?d.activityPages:[]).map(normalizeActivityPage);
   if(d.activeStopwatch&&Number(d.activeStopwatch.startedAt)>0){
     d.activeStopwatch=Object.assign({id:uid(),label:'作業',pageId:'',startedAt:Date.now(),updatedAt:0},d.activeStopwatch);
     d.activeStopwatch.label=String(d.activeStopwatch.label||'作業').slice(0,80);
     d.activeStopwatch.pageId=String(d.activeStopwatch.pageId||'').slice(0,80);
   }else d.activeStopwatch=null;
+  if(d.activeBoredom&&Number(d.activeBoredom.startedAt)>0){
+    d.activeBoredom=Object.assign({id:uid(),targetSec:10,mode:'general',labels:[],startedAt:Date.now()},d.activeBoredom);
+    d.activeBoredom.targetSec=[10,30,60,180].includes(Number(d.activeBoredom.targetSec))?Number(d.activeBoredom.targetSec):10;
+    d.activeBoredom.mode=d.activeBoredom.mode==='cooking'?'cooking':'general';
+    d.activeBoredom.labels=[...new Set((Array.isArray(d.activeBoredom.labels)?d.activeBoredom.labels:[]).filter(x=>['bored','escape'].includes(x)))];
+  }else d.activeBoredom=null;
   delete d.badges;
   return migrateData(d);
 }
@@ -1941,6 +1972,7 @@ function migrateData(d){
       known.add(id);
     }
   }
+  if(from<14&&!Array.isArray(d.boredomLogs))d.boredomLogs=[];
   d.mealSessions=(Array.isArray(d.mealSessions)?d.mealSessions:[]).map(normalizeMealSession);
   d.mealTemplates=(Array.isArray(d.mealTemplates)?d.mealTemplates:[]).map(normalizeMealTemplate);
   d.foodRules=(Array.isArray(d.foodRules)?d.foodRules:[]).map(normalizeFoodRule);
@@ -1954,6 +1986,7 @@ function migrateData(d){
   d.rewardRedemptions=(Array.isArray(d.rewardRedemptions)?d.rewardRedemptions:[]).map(normalizeRewardRedemption);
   d.rewardPointEvents=(Array.isArray(d.rewardPointEvents)?d.rewardPointEvents:[]).map(normalizeRewardPointEvent);
   d.activityPages=(Array.isArray(d.activityPages)?d.activityPages:[]).map(normalizeActivityPage);
+  d.boredomLogs=(Array.isArray(d.boredomLogs)?d.boredomLogs:[]).map(normalizeBoredomLog);
   d.mealPrefs=Object.assign(defaultMealPrefs(),d.mealPrefs||{});
   purgeMealTombstones(d);
   if(d.mealSessions.length>1000){
@@ -1969,12 +2002,13 @@ function migrateData(d){
   if(d.stopwatchLogs.length>2000){d.stopwatchLogs.sort((a,b)=>(a.endedAt||0)-(b.endedAt||0));d.stopwatchLogs=d.stopwatchLogs.slice(-2000);}
   if(d.routineRunLogs.length>2000){d.routineRunLogs.sort((a,b)=>(a.endedAt||0)-(b.endedAt||0));d.routineRunLogs=d.routineRunLogs.slice(-2000);}
   if(d.activityPages.length>500){d.activityPages.sort((a,b)=>(a.updatedAt||0)-(b.updatedAt||0));d.activityPages=d.activityPages.slice(-500);}
+  if(d.boredomLogs.length>1000){d.boredomLogs.sort((a,b)=>(a.endedAt||0)-(b.endedAt||0));d.boredomLogs=d.boredomLogs.slice(-1000);}
   d.schemaVersion=CURRENT_SCHEMA;
   return d;
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages','boredomLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -1994,8 +2028,8 @@ const seed=()=>({
   todayTasks:[],todayTaskLogs:[],
   rewards:[],rewardRedemptions:[],rewardPointEvents:[],
   journeyLogs:[],
-  stopwatchLogs:[],routineRunLogs:[],activityPages:[],activeStopwatch:null,
-  schemaVersion:13,
+  stopwatchLogs:[],routineRunLogs:[],activityPages:[],boredomLogs:[],activeBoredom:null,activeStopwatch:null,
+  schemaVersion:14,
   mealSessions:[],
   mealTemplates:builtinMealTemplates(),
   foodRules:[],
@@ -2261,6 +2295,44 @@ function showScreen(id){
   if(savedActivityDraft)toast('💾 編集内容を保存しました');
   return true;
 }
+
+/* ============ 退屈耐性チャレンジ ============ */
+const BOREDOM_DURATIONS=[10,30,60,180];
+const BOREDOM_SENSES=['包丁の重さと、握っている手の位置を確認','まな板に当たる音とリズムをそのまま観察','食材の硬さ・抵抗・滑りやすさを確認','指先と刃の距離、反対の手の位置を確認'];
+let boredomDraft={targetSec:10,mode:'general',finished:null},boredomTimer=null;
+function boredomTime(sec){sec=Math.max(0,Math.ceil(sec));return sec<60?`${sec}秒`:`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;}
+function boredomBest(){return liveLogs(D.boredomLogs).reduce((m,x)=>Math.max(m,Number(x.completedSec)||0),0);}
+function boredomNextTarget(){const best=boredomBest();return BOREDOM_DURATIONS.find(x=>x>best)||180;}
+function setBoredomDuration(sec){if(D.activeBoredom)return;boredomDraft.targetSec=BOREDOM_DURATIONS.includes(sec)?sec:10;renderBoredomCards();}
+function setBoredomMode(mode){if(D.activeBoredom)return;boredomDraft.mode=mode==='cooking'?'cooking':'general';renderBoredomCards();}
+function startBoredomChallenge(mode){
+  if(D.activeBoredom)return;
+  const targetSec=boredomDraft.targetSec||10;
+  D.activeBoredom={id:uid(),targetSec,mode:mode==='cooking'?'cooking':boredomDraft.mode,labels:[],startedAt:Date.now()};boredomDraft.finished=null;save();startBoredomTimer();renderBoredomCards();
+}
+function startBoredomTimer(){clearInterval(boredomTimer);if(!D.activeBoredom)return;boredomTimer=setInterval(()=>{renderBoredomCards();const a=D.activeBoredom;if(a&&(Date.now()-a.startedAt)/1000>=a.targetSec)finishBoredomChallenge(true);},250);}
+function labelBoredom(kind){const a=D.activeBoredom;if(!a)return;if(!a.labels.includes(kind))a.labels.push(kind);save();renderBoredomCards();toast(kind==='bored'?'🏷️「退屈きた」と気づいた':'🏷️「逃げたい感じきた」と気づいた');}
+function finishBoredomChallenge(auto=false){
+  const a=D.activeBoredom;if(!a)return;clearInterval(boredomTimer);boredomTimer=null;
+  const completedSec=Math.min(a.targetSec,Math.max(0,Math.round((Date.now()-a.startedAt)/1000)));
+  boredomDraft.finished={...a,completedSec,completed:completedSec>=a.targetSec,endedAt:Date.now()};D.activeBoredom=null;save();renderBoredomCards();
+  if(auto){sfxDone();burst();}
+}
+function saveBoredomResult(btn){
+  const f=boredomDraft.finished;if(!f)return;
+  const card=btn&&btn.closest('.boredom-card'),discomfort=Number(card?.querySelector('.boredom-discomfort')?.value||0),urge=Number(card?.querySelector('.boredom-urge')?.value||0),before=boredomBest();
+  const log=normalizeBoredomLog({...f,discomfort,urge,updatedAt:Date.now()});D.boredomLogs.unshift(log);if(D.boredomLogs.length>1000)D.boredomLogs.length=1000;
+  boredomDraft.finished=null;boredomDraft.targetSec=log.completed?BOREDOM_DURATIONS.find(x=>x>log.targetSec)||180:log.targetSec;save();renderBoredomCards();
+  toast(log.completedSec>before?'🏆 自己ベスト更新！':'🧠 その場にいた分を記録しました');
+}
+function boredomScoreOptions(){return Array.from({length:11},(_,i)=>`<option value="${i}">${i}</option>`).join('');}
+function boredomCardHtml(forCooking=false){
+  const active=D.activeBoredom,finished=boredomDraft.finished,best=boredomBest(),logs=liveLogs(D.boredomLogs).sort((a,b)=>b.endedAt-a.endedAt).slice(0,3);
+  if(finished){return `<div class="boredom-head"><strong>${finished.completed?'🏁 設定時間、その場にいた！':'🌱 ここまでを保存'}</strong><span class="boredom-pb">${finished.completedSec}/${finished.targetSec}秒</span></div><p class="boredom-help"><b>不快感が下がっていなくても成功条件は変わりません。</b> 今の強さを記録します。</p><label class="boredom-score-row"><span>不快感 0〜10</span><select class="boredom-discomfort">${boredomScoreOptions()}</select></label><label class="boredom-score-row"><span>逃げたい衝動 0〜10</span><select class="boredom-urge">${boredomScoreOptions()}</select></label><button class="btn btn-p btn-full btn-sm" type="button" onclick="saveBoredomResult(this)">記録する</button>`;}
+  if(active){const elapsed=Math.max(0,(Date.now()-active.startedAt)/1000),remain=Math.max(0,active.targetSec-elapsed),sense=BOREDOM_SENSES[Math.floor(elapsed/4)%BOREDOM_SENSES.length];return `<div class="boredom-head"><strong>🧠 ${active.mode==='cooking'?'料理中・安全優先':'退屈と一緒に作業中'}</strong><span class="boredom-pb">${Math.min(active.targetSec,Math.floor(elapsed))}/${active.targetSec}秒</span></div><div class="boredom-clock">${boredomTime(remain)}</div><div class="boredom-message">${active.mode==='cooking'?`🔪 ${esc(sense)}<br><small>注意をそらす課題や音声はありません。安全な手元を最優先。</small>`:'不快感を消そうとしなくてOK。気づいて名前をつけ、いまの作業を続ける。'}</div><div class="boredom-label-btns"><button class="btn btn-g" type="button" onclick="labelBoredom('bored')">🏷️ 退屈きた${active.labels.includes('bored')?' ✓':''}</button><button class="btn btn-g" type="button" onclick="labelBoredom('escape')">🏷️ 逃げたい感じきた${active.labels.includes('escape')?' ✓':''}</button></div><button class="text-link" type="button" onclick="finishBoredomChallenge(false)">ここまでを記録して終了</button>`;}
+  const mode=forCooking?'cooking':boredomDraft.mode,next=boredomNextTarget();return `<div class="boredom-head"><strong>🧠 退屈耐性チャレンジ</strong><span class="boredom-pb">自己ベスト ${boredomTime(best)}</span></div><p class="boredom-help">成功は「楽になること」ではなく、<b>不快感があるまま設定時間その場にいて、作業を続けること。</b></p><div class="boredom-presets">${BOREDOM_DURATIONS.map(s=>`<button class="boredom-chip ${boredomDraft.targetSec===s?'on':''}" type="button" onclick="setBoredomDuration(${s})">${s<60?s+'秒':s/60+'分'}${s===next?' ★':''}</button>`).join('')}</div>${forCooking?'<div class="boredom-message">🔪 料理中モード：包丁の重さ、まな板の音、食材の硬さ、手の位置を静かに実況します。音声課題は使いません。</div>':`<div class="boredom-mode"><button class="boredom-chip ${mode==='general'?'on':''}" type="button" onclick="setBoredomMode('general')">🧩 通常</button><button class="boredom-chip ${mode==='cooking'?'on':''}" type="button" onclick="setBoredomMode('cooking')">🔪 料理中</button></div>`}<button class="btn btn-c btn-full btn-sm" type="button" onclick="startBoredomChallenge('${mode}')" style="margin-top:7px">▶ ${boredomTime(boredomDraft.targetSec)} 始める</button>${logs.length?`<div class="boredom-history">${logs.map(x=>`<div class="boredom-log"><span>${x.completed?'✅':'🌱'} ${x.completedSec}/${x.targetSec}秒${x.mode==='cooking'?'・料理':''}</span><span>不快 ${x.discomfort}・衝動 ${x.urge}</span></div>`).join('')}</div>`:''}`;}
+function renderBoredomCards(){const home=document.getElementById('boredomCard'),meal=document.getElementById('mealBoredomCard');if(home)home.innerHTML=boredomCardHtml(false);if(meal)meal.innerHTML=boredomCardHtml(true);}
+
 function openFoodChat(){
   showScreen('scr-food-chat');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -2294,6 +2366,7 @@ function openManage(section){
 
 /* ============ HOME ============ */
 function renderHome(){
+  renderBoredomCards();
   document.getElementById('hStreak').textContent=streak();
   document.getElementById('hLevel').textContent=levelInfo().level;
   const el=document.getElementById('routineList');el.innerHTML='';
@@ -4972,7 +5045,7 @@ function renderMealPlanCard(){
 }
 function renderMeal(){
   syncMealViewFromData();
-  renderMealCard();renderMealSafetyCard();renderMealFoodCard();renderMealPlanCard();renderMoodButtons();renderMoodActivityPicker();renderLocCard();renderRecallCard();renderMealHistory();
+  renderMealCard();renderBoredomCards();renderMealSafetyCard();renderMealFoodCard();renderMealPlanCard();renderMoodButtons();renderMoodActivityPicker();renderLocCard();renderRecallCard();renderMealHistory();
 }
 function renderMealRules(){
   const el=document.getElementById('mealRules');if(!el)return;
@@ -5818,7 +5891,7 @@ function restoreAll(input){
   rd.readAsText(f,'utf-8');
 }
 function resetAll(){
-  stopMealWaitTimer();stopMealSafetyTimer();D=seed();mealState.safetyView='idle';mealState.safetyFear=null;mealState.safetyDoneId=null;save();renderHome();renderMealWaitBar(0);renderMealSafetyCard();toast('🧹 端末内データを初期化しました');
+  stopMealWaitTimer();stopMealSafetyTimer();clearInterval(boredomTimer);boredomTimer=null;D=seed();boredomDraft={targetSec:10,mode:'general',finished:null};mealState.safetyView='idle';mealState.safetyFear=null;mealState.safetyDoneId=null;save();renderHome();renderMealWaitBar(0);renderMealSafetyCard();toast('🧹 端末内データを初期化しました');
 }
 
 // ボタン押下：やわらかいポワン＋光の波紋。クリック成立時にバネで戻す
@@ -5837,6 +5910,7 @@ document.addEventListener('click',e=>{
 
 renderHome();
 restoreMealState();
+if(D.activeBoredom)startBoredomTimer();
 expireOldOpenUrges();
 /* タブ復帰時にクラウドから自動取得（両端末を開きっぱなしでも古いまま書かないため） */
 let lastFocusPull=0;
@@ -5846,6 +5920,7 @@ function autoPullOnFocus(){
   const runEl=document.getElementById('run');
   if(runEl&&runEl.classList.contains('active'))return;   // ルーチン実行中は触らない
   if(D.activeStopwatch)return; // 1ボタン計測中は開始端末の状態を維持
+  if(D.activeBoredom)return; // チャレンジ中は開始端末の状態を維持
   if(Date.now()-lastFocusPull<45000)return;
   lastFocusPull=Date.now();
   syncPull(true);
