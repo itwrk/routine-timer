@@ -267,38 +267,6 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .activity-item.mood .activity-text{font-weight:800;color:var(--pink)}
 .activity-mood-tag{display:inline-flex;align-items:center;padding:2px 7px;background:rgba(255,77,141,.08);border:1px solid rgba(255,77,141,.22);border-radius:999px;color:var(--text);font-size:10px;font-weight:700;line-height:1.5;white-space:nowrap;flex-shrink:0}
 .activity-item.meal .activity-icon{border-color:var(--gold);box-shadow:0 0 8px rgba(255,201,60,.18)}
-.activity-past{display:flex;align-items:center;gap:8px;min-width:0;margin-left:42px;padding:7px 9px;background:rgba(130,87,230,.055);border:1px solid rgba(130,87,230,.16);border-radius:9px}
-.activity-past-kicker{color:var(--purple);font-size:10px;font-weight:800;white-space:nowrap;flex-shrink:0}
-.activity-past-text{min-width:0;font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media(min-width:960px){
-  .activity-item.has-past{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:center}
-  .activity-item.has-past .activity-past{margin-left:0;border-width:0 0 0 1px;border-style:dashed;border-color:var(--line2);border-radius:0;background:transparent;padding:4px 0 4px 12px}
-  .activity-past-text{font-size:14px}
-}
-
-/* past-you memory / gentle return */
-.memory-card{position:relative;overflow:hidden;padding:7px 8px;border-color:rgba(130,87,230,.42);background:linear-gradient(135deg,#fff 0%,#f7efff 58%,#edfaff 100%);box-shadow:0 4px 14px rgba(130,87,230,.12)}
-.memory-card::after{content:'';position:absolute;width:90px;height:90px;right:-36px;top:-42px;border-radius:50%;background:radial-gradient(circle,rgba(53,224,255,.25),transparent 68%);pointer-events:none}
-.memory-card.found{animation:memoryFound .38s cubic-bezier(.18,1.5,.35,1)}
-@keyframes memoryFound{0%{transform:scale(.96);filter:brightness(1.2)}100%{transform:none;filter:none}}
-.memory-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;position:relative;z-index:1}
-.memory-kicker{font-family:'DotGothic16',monospace;color:var(--purple);font-size:9px;letter-spacing:.06em;white-space:nowrap}
-.memory-source{color:var(--dim);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.memory-reason{color:var(--gold);font-size:10px;font-weight:800;margin-bottom:3px}
-.memory-quote{font-size:13px;line-height:1.55;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
-.memory-date{color:var(--dim);font-size:9px;margin-top:4px}
-.memory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;position:relative;z-index:1}
-.memory-item{min-width:0;padding:5px 6px;background:rgba(255,255,255,.68);border:1px solid rgba(130,87,230,.18);border-radius:8px}
-.memory-item .memory-quote{font-size:9px;line-height:1.3;-webkit-line-clamp:2}
-.memory-item .memory-date{font-size:7px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.memory-item-actions{display:flex;justify-content:flex-end;margin-top:3px}
-.memory-item-actions button{min-width:0;min-height:22px;padding:2px 6px;border-radius:6px;font-size:7px;white-space:nowrap}
-.memory-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:7px}
-.memory-actions button{min-width:0;min-height:40px;white-space:nowrap;padding:7px 3px;font-size:10px;border-radius:9px}
-.memory-actions button:last-child{grid-column:1/-1}
-.memory-empty{display:flex;align-items:center;gap:8px}
-.memory-empty p{flex:1;min-width:0}
-.memory-empty button{white-space:nowrap;flex-shrink:0;padding:8px 9px;font-size:10px}
 .journey-card{border-color:rgba(14,171,114,.45);background:linear-gradient(135deg,#fff,#effcf6)}
 .journey-card.due{border-color:var(--pink);box-shadow:0 0 18px rgba(255,77,141,.22);animation:journeyGlow 1.3s ease-in-out infinite alternate}
 @keyframes journeyGlow{to{box-shadow:0 0 24px rgba(255,77,141,.38)}}
@@ -331,15 +299,6 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .insight-copy{font-size:12px;line-height:1.55;font-weight:700}
 .insight-evidence{color:var(--dim);font-size:9px;margin-top:3px}
 .insight-foot{color:var(--dim);font-size:9px;line-height:1.5;margin-top:7px}
-.memory-settings-status{margin-top:7px;padding:7px 8px;background:var(--card2);border-radius:9px;font-size:11px;line-height:1.5}
-.memory-settings-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.memory-settings-actions button{white-space:nowrap}
-.privacy-note{border-left:3px solid var(--mint);padding-left:8px;margin-top:7px}
-.res-memory{margin-top:11px;padding:9px 10px;text-align:left;background:linear-gradient(135deg,#fff8dd,#f7efff);border:1px solid rgba(217,154,6,.42);border-radius:12px}
-.res-memory-kicker{font-family:'DotGothic16',monospace;color:var(--gold);font-size:9px;letter-spacing:.06em}
-.res-memory-text{font-size:11px;line-height:1.5;font-weight:700;margin-top:3px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.res-memory-date{color:var(--dim);font-size:8px;margin-top:3px}
-
 /* saved step library manager */
 .step-lib-row{display:flex;align-items:flex-start;gap:8px;padding:8px 2px;border-bottom:1px dashed var(--line)}
 .step-lib-emoji{font-size:20px;line-height:1.2;flex-shrink:0}
@@ -365,6 +324,39 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .cal-event-date{color:var(--event-color);font-weight:700;min-width:64px;flex-shrink:0}
 .cal-event-time{color:var(--gold);min-width:42px;flex-shrink:0}
 .cal-event-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Notion tasks */
+.notion-card{border-color:rgba(130,87,230,.42);background:linear-gradient(145deg,#fff 0%,#f7f2ff 58%,#eefcff 100%)}
+.notion-head{display:flex;align-items:center;gap:7px;margin-bottom:4px;min-width:0}
+.notion-head h2{margin:0;flex:1;min-width:0}
+.notion-count{display:inline-flex;align-items:center;padding:2px 7px;border:1px solid rgba(130,87,230,.28);border-radius:999px;background:rgba(130,87,230,.08);color:var(--purple);font-size:9px;font-weight:800;white-space:nowrap}
+.notion-freshness{color:var(--dim);font-size:8px;white-space:nowrap}
+.notion-freshness.error{color:var(--pink)}
+.notion-refresh{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;border:1px solid var(--line2);border-radius:9px;background:var(--card2);color:var(--cyan);font-size:17px;font-weight:800;cursor:pointer}
+.notion-refresh.loading{animation:notionSpin .8s linear infinite}
+@keyframes notionSpin{to{transform:rotate(360deg)}}
+.notion-task-list{min-width:0}
+.notion-state{padding:8px 2px;color:var(--dim);font-size:11px;line-height:1.5}
+.notion-state .text-link{margin-left:4px}
+.notion-task{display:grid;grid-template-columns:5px minmax(0,1fr) 16px;align-items:center;gap:7px;min-height:45px;padding:6px 1px;border-top:1px dashed var(--line);color:var(--text);text-decoration:none}
+.notion-task:first-child{border-top:0}
+.notion-task:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:8px}
+.notion-task-accent{align-self:stretch;min-height:29px;border-radius:999px;background:var(--purple);box-shadow:0 0 7px rgba(130,87,230,.28)}
+.notion-task.priority-high .notion-task-accent{background:var(--pink);box-shadow:0 0 8px rgba(229,56,127,.3)}
+.notion-task.priority-mid .notion-task-accent{background:var(--gold);box-shadow:0 0 8px rgba(217,154,6,.28)}
+.notion-task.priority-low .notion-task-accent{background:var(--mint);box-shadow:0 0 8px rgba(14,171,114,.24)}
+.notion-task-main{min-width:0}
+.notion-task-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:800;line-height:1.35}
+.notion-task-meta{display:flex;align-items:center;gap:5px;min-width:0;margin-top:2px;color:var(--dim);font-size:9px;line-height:1.35}
+.notion-task-tag{display:inline-flex;align-items:center;padding:1px 5px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.64);white-space:nowrap}
+.notion-due.overdue{border-color:rgba(229,56,127,.3);color:var(--pink);background:rgba(229,56,127,.07)}
+.notion-due.today{border-color:rgba(217,154,6,.34);color:var(--gold-text);background:rgba(217,154,6,.08)}
+.notion-due.soon{border-color:rgba(14,156,199,.3);color:var(--cyan-text);background:rgba(14,156,199,.07)}
+.notion-task-open{color:var(--cyan);font-size:13px;font-weight:800;text-align:center}
+.notion-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-top:5px;border-top:1px solid var(--line);font-size:9px}
+.notion-more{color:var(--dim);white-space:nowrap}
+.notion-footer .text-link{margin-left:auto;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:390px){.notion-head{gap:5px}.notion-refresh{width:34px;height:34px}.notion-task{gap:6px}.notion-task-title{font-size:11px}.notion-task-meta{font-size:8px}}
 
 /* ===== meal support ===== */
 .meal-card{border-color:rgba(255,201,60,.55);padding:8px 10px}
@@ -793,26 +785,27 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 #scr-home .rcard{padding:7px 8px;margin-bottom:5px}
 #scr-home>.btn-full{padding:9px!important;white-space:nowrap}
 @media(min-width:960px){
-  :root{--ring-size:min(24vw,220px);--desktop-menu:184px}
+  :root{--ring-size:min(22vw,190px);--desktop-menu:156px}
   body{padding-left:var(--desktop-menu)}
-  #app{width:100%;max-width:1240px;padding:18px 24px 26px}
-  .top{position:sticky;top:0;z-index:40;padding:8px 10px;margin-bottom:10px;background:rgba(246,244,251,.9);backdrop-filter:blur(10px);border:1px solid rgba(222,217,240,.72);border-radius:12px}
-  .tabbar{inset:0 auto 0 0;width:var(--desktop-menu);height:100dvh;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:6px;padding:18px 12px;background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(242,239,252,.94));border-top:0;border-right:1px solid var(--line2);box-shadow:8px 0 28px rgba(84,70,150,.09)}
-  .tabbar-brand{display:grid;grid-template-columns:38px 1fr;grid-template-rows:auto auto;align-items:center;margin:0 2px 14px;padding:5px 6px 15px;border-bottom:1px solid var(--line)}
-  .tabbar-brand>span{grid-row:1/3;font-size:26px}
-  .tabbar-brand strong{font-family:'DotGothic16',monospace;font-size:13px;letter-spacing:.08em;color:var(--text)}
-  .tabbar-brand small{font-family:'DotGothic16',monospace;font-size:8px;letter-spacing:.12em;color:var(--dim)}
-  .tabbar button{flex:0 0 auto;max-width:none;width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid transparent;border-radius:12px;text-align:left;font-size:12px;white-space:nowrap}
-  .tabbar button .ti{display:inline-flex;width:25px;align-items:center;justify-content:center;font-size:19px;margin:0}
+  #app{width:100%;max-width:1440px;padding:10px 14px 18px}
+  h1{font-size:12px}
+  .top{position:sticky;top:0;z-index:40;padding:5px 8px;margin-bottom:6px;background:rgba(246,244,251,.9);backdrop-filter:blur(10px);border:1px solid rgba(222,217,240,.72);border-radius:9px}
+  .pill{padding:2px 6px;font-size:9px}
+  .tabbar{inset:0 auto 0 0;width:var(--desktop-menu);height:100dvh;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:3px;padding:12px 8px;background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(242,239,252,.94));border-top:0;border-right:1px solid var(--line2);box-shadow:8px 0 28px rgba(84,70,150,.09)}
+  .tabbar-brand{display:grid;grid-template-columns:30px 1fr;grid-template-rows:auto auto;align-items:center;margin:0 2px 8px;padding:3px 4px 10px;border-bottom:1px solid var(--line)}
+  .tabbar-brand>span{grid-row:1/3;font-size:21px}
+  .tabbar-brand strong{font-family:'DotGothic16',monospace;font-size:11px;letter-spacing:.08em;color:var(--text)}
+  .tabbar-brand small{font-family:'DotGothic16',monospace;font-size:7px;letter-spacing:.12em;color:var(--dim)}
+  .tabbar button{flex:0 0 auto;max-width:none;width:100%;display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid transparent;border-radius:9px;text-align:left;font-size:10px;white-space:nowrap}
+  .tabbar button .ti{display:inline-flex;width:20px;align-items:center;justify-content:center;font-size:16px;margin:0}
   .tabbar button.on{color:var(--cyan);background:linear-gradient(135deg,rgba(53,224,255,.12),rgba(130,87,230,.08));border-color:rgba(14,156,199,.18);box-shadow:0 5px 14px rgba(84,70,150,.08)}
   .toast{bottom:28px}
   #mealWaitBar{left:calc(var(--desktop-menu) + 16px);right:16px;bottom:16px;max-width:720px}
   body.meal-waiting #app{padding-bottom:96px}
-  .screen.active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+  .screen.active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row dense;gap:6px;align-items:start}
   .screen.active>.card,.screen.active>.sect,.screen.active>.btn-full,.screen.active>.statgrid{margin:0}
   #routineList{display:contents}
-  #scr-home #quickTimerCard{grid-column:1/-1}
-  #scr-home #memoryCard{grid-column:span 1}
+  #scr-home #quickTimerCard{grid-column:span 1}
   #scr-home .memo-composer{grid-row:span 2}
   #scr-home #activityTimelineCard{grid-column:span 2}
   #scr-preview>.card,#scr-edit>.card{grid-column:1 / span 2}
@@ -822,14 +815,75 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   #scr-prog .statgrid{grid-column:1/-1}
   #scr-prog #habitTrackerCard{grid-column:1/-1}
   #scr-prog .habit-tracker-grid{width:100%;grid-template-columns:112px repeat(14,minmax(38px,1fr))}
-  .card{margin-bottom:0}
-  .memory-item .memory-quote{font-size:11px;-webkit-line-clamp:4}
+  .card{margin-bottom:0;padding:7px 8px;border-radius:10px;box-shadow:0 3px 11px rgba(84,70,150,.08)}
+  #app h2{font-size:13px;margin-bottom:6px}
+  #app .btn{padding:7px 10px;font-size:11px;border-radius:9px}
+  #app .btn-sm{padding:5px 8px;font-size:10px;border-radius:8px}
+  #app input[type=text],#app input[type=number],#app input[type=url],#app input[type=date],#app textarea,#app select{font-size:11px;padding:6px 8px;border-radius:8px}
+  #app .muted{font-size:10px;line-height:1.5}
+  #scr-home .card{padding:6px 8px}
+  #scr-home h2{font-size:12px;margin-bottom:4px}
+  #scr-home .btn{padding:6px 9px;font-size:10px}
+  #scr-home #quickTimerCard:not(.running){display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 8px}
+  #scr-home #quickTimerCard:not(.running) .quick-timer-head{margin:0}
+  #scr-home #quickTimerCard:not(.running) .quick-timer-help{margin:0}
+  #scr-home #quickTimerCard:not(.running) .quick-timer-btn{grid-column:2;grid-row:1 / span 2;width:auto;min-width:128px}
+  #scr-home #quickTimerCard:not(.running) .quick-timer-pages-label,#scr-home #quickTimerCard:not(.running) .quick-timer-presets{grid-column:1/-1}
+  #scr-home .quick-timer-head{margin-bottom:3px}
+  #scr-home .quick-timer-clock{font-size:16px}
+  #scr-home .quick-timer-help{font-size:8px;line-height:1.25}
+  #scr-home .quick-timer-btn{padding:6px 7px!important;font-size:11px!important;border-radius:9px}
+  #scr-home .quick-timer-pages-label{margin:3px 0 2px}
+  #scr-home .quick-timer-presets{gap:3px;margin:0 0 3px}
+  #scr-home .quick-timer-preset{padding:3px 6px;font-size:8px}
+  #scr-home .quick-timer-fields{gap:4px;margin-bottom:4px}
+  #scr-home .quick-timer-fields input,#scr-home .quick-timer-fields select{padding:5px 6px;font-size:10px}
+  #scr-home .memo-inputrow{gap:4px}
+  #scr-home .memo-inputrow textarea{height:36px;min-height:36px;padding:4px 6px;font-size:10px}
+  #scr-home .memo-actions{gap:3px}
+  #scr-home .memo-actions button{width:48px;font-size:9px}
+  #scr-home .mood-quick{margin-top:3px;padding-top:4px}
+  #scr-home .mood-quick-head{margin-bottom:3px}
+  #scr-home .mood-btn{padding:3px 6px;font-size:9px}
+  #scr-home .memo-post{gap:4px;padding:3px 0;font-size:10px;line-height:1.3}
+  #scr-home .habit-row,#scr-home .habit-toggle-area{gap:4px}
+  #scr-home .habit-row{padding:3px 1px}
+  #scr-home .habit-row .habit-check{width:19px;height:19px;border-radius:5px}
+  #scr-home .habit-row .habit-name{font-size:11px}
+  #scr-home .habit-condition{padding:1px 4px;font-size:8px}
+  #scr-home .habit-row .habit-detail-btn,#scr-home .habit-row .habit-link{font-size:9px}
+  #scr-home .habit-row .habit-del{min-width:28px;min-height:28px;padding:3px}
+  #scr-home .habit-add{gap:4px;margin-top:3px}
+  #scr-home .habit-add input{padding:4px 6px;font-size:10px}
+  #scr-home .rcard{gap:6px;padding:5px 6px;margin:0}
+  #scr-home .rcard .em{width:28px;height:28px;border-radius:8px;font-size:16px}
+  #scr-home .rcard .name{font-size:11px}
+  #scr-home .rcard .stepnames{font-size:8px}
+  #scr-home .rcard .edit-btn{padding:4px;font-size:12px}
+  #scr-home .activity-head h2{font-size:12px!important}
+  #scr-home .activity-range{font-size:8px}
+  #scr-home .activity-timeline{margin-top:3px}
+  #scr-home .activity-item{gap:4px;padding:4px 1px}
+  #scr-home .activity-current{gap:6px}
+  #scr-home .activity-icon{width:24px;height:24px;border-radius:7px;font-size:13px}
+  #scr-home .activity-text{font-size:11px}
+  #scr-home .activity-time{font-size:9px}
+  #scr-home .activity-mood-tag{padding:1px 5px;font-size:8px}
+  #scr-home .cal-event{gap:4px;padding:3px 0;font-size:10px}
+  #scr-home .cal-event-color{height:18px}
+  #scr-home .cal-event-date{min-width:52px}
+  #scr-home .cal-event-time{min-width:34px}
+  #scr-home .notion-head{margin-bottom:2px}
+  #scr-home .notion-refresh{width:28px;height:28px;border-radius:8px;font-size:14px}
+  #scr-home .notion-task{min-height:37px;gap:5px;padding:3px 1px}
+  #scr-home .notion-task-title{font-size:10px}
+  #scr-home .notion-task-meta{font-size:8px;margin-top:1px}
+  #scr-home .notion-task-tag{padding:0 4px}
 }
-@media(min-width:1280px){
+@media(min-width:1120px){
   .screen.active{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(max-width:390px){
-  .memory-quote{font-size:12px;-webkit-line-clamp:3}.memory-actions button{font-size:10px;padding:7px 2px}
   #rescueModal .sheet{padding:14px 9px calc(14px + env(safe-area-inset-bottom))}.rescue-title{font-size:17px}.rescue-actions button{font-size:10px;padding:10px 3px}
   .rescard{max-height:92dvh;overflow-y:auto;padding:16px 12px}.restitle{font-size:35px}
 }
@@ -848,7 +902,6 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   <!-- HOME -->
   <div class="screen active" id="scr-home">
     <div class="card quick-timer-card" id="quickTimerCard" aria-live="polite"></div>
-    <div class="card memory-card" id="memoryCard" aria-live="polite"></div>
     <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
     <div class="card memo-composer">
       <div class="memo-section-head"><h2>📝 ひとことメモ</h2><button class="text-link" type="button" onclick="openManage('memos')">すべて見る →</button></div>
@@ -876,6 +929,16 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <input type="text" id="todayTaskInput" maxlength="60" placeholder="今日だけやることを追加">
         <button class="btn btn-c btn-sm" type="button" onclick="addTodayTask()">＋ 今日だけ</button>
       </div>
+    </div>
+    <div class="card notion-card" id="notionTaskCard">
+      <div class="notion-head">
+        <h2>📓 春香ボール</h2>
+        <span class="notion-count" id="notionTaskCount" hidden></span>
+        <span class="notion-freshness" id="notionTaskFreshness"></span>
+        <button class="notion-refresh" id="notionTaskRefresh" type="button" aria-label="Notionタスクを更新" title="更新" onclick="loadNotionTasks(true)">↻</button>
+      </div>
+      <div class="notion-task-list" id="notionTaskList" aria-live="polite"><div class="notion-state">Notionからタスクを読み込み中…</div></div>
+      <div class="notion-footer" id="notionTaskFooter" hidden></div>
     </div>
     <div id="routineList"></div>
     <div class="sect card" id="calCard">
@@ -1371,19 +1434,6 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div id="allMemoFeed" class="memo-timeline"></div>
     </div>
 
-    <div class="card" id="memoryImportCard">
-      <h2>📓 過去の日記をタイムカプセルに</h2>
-      <p class="muted">ObsidianなどのMarkdown（<b>## 2024-08-08</b> 形式）を読み込むと、同じ日付・同じ時間ごろの言葉がホームに現れます。</p>
-      <div id="memoryImportStatus" class="memory-settings-status">まだ日記を読み込んでいません。</div>
-      <div class="memory-settings-actions">
-        <button class="btn btn-c btn-sm" type="button" onclick="document.getElementById('diaryFile').click()">📓 日記MDを読む</button>
-        <button class="btn btn-g btn-sm" type="button" onclick="twoTap(this,'もう一度で消去',clearDiaryMemories)">日記だけ消去</button>
-      </div>
-      <input type="file" id="diaryFile" accept=".md,.txt,text/markdown,text/plain" style="display:none" onchange="importDiaryFile(this)">
-      <div class="field" style="margin-top:9px"><label><input type="checkbox" id="includeDeepMemories" onchange="setIncludeDeepMemories(this.checked)" style="width:auto;margin-right:6px">健康・人間関係など深い内容も候補にする</label></div>
-      <p class="muted privacy-note">🔒 日記はこの端末のブラウザ保存領域だけ（暗号化はされず、同じブラウザ利用者には見える可能性があります）。Google Drive同期・バックアップJSON・AI送信・公開HTMLには含めません。iPhoneではiCloud Driveから同じファイルを選べます。</p>
-    </div>
-
     <!-- SETTINGS -->
     <div class="card">
       <h2>💬 今日のひとことプール</h2>
@@ -1447,7 +1497,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <button class="btn btn-g btn-sm" onclick="speak('テスト読み上げです。今日もがんばろう！')">🔊 テスト再生</button>
       <p class="muted" style="margin-top:8px">iPhoneでは一度ボタンを押した後から音声が有効になります。</p>
     </div>
-    <div class="card">
+    <div class="card" id="syncSettingsCard">
       <h2>☁️ 端末間同期（スマホ⇄Mac）</h2>
       <div class="field"><label>同期URL（GASウェブアプリ）</label><input type="text" id="setSyncUrl" placeholder="https://script.google.com/macros/s/..../exec" onchange="saveSettings()"></div>
       <div class="field"><label>合言葉（GAS側のSECRETと同じもの）</label><input type="text" id="setSyncKey" placeholder="例: anchan-0721" onchange="saveSettings()"></div>
@@ -1476,10 +1526,11 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       </div>
       <p class="muted">ホームの「今後の予定」表示もこの連携を使います。GASを最新版（rvt-sync.gs v2）に更新し、「デプロイを管理→新バージョン」で反映してください。</p>
     </div>
-    <div class="card">
+    <div class="card" id="notionSettingsCard">
       <h2>📓 Notion連携（GAS Webhook）</h2>
       <div class="field"><label>GASウェブアプリURL</label><input type="text" id="setWebhook" placeholder="https://script.google.com/macros/s/..../exec" onchange="saveSettings()"></div>
       <p class="muted">完了ごとに <b>date / time / routine / done / total / skips / durationMin</b> をJSONでPOSTします。筋トレログと同様、GAS側でNotion APIに中継してください。GASの `doPost(e)` で `JSON.parse(e.postData.contents)` を受けてNotionページ作成、でOK。</p>
+      <p class="muted" style="margin-top:8px">ホームの「春香ボール」は、上の端末間同期GASを安全な中継として使います。NotionトークンやタスクDB IDは公開HTMLや端末データには保存しません。</p>
     </div>
     <div class="card">
       <h2>💾 データ</h2>
@@ -1573,7 +1624,6 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div><div class="rv" id="resTotal">-</div><div class="rl">通算完了</div></div>
     </div>
     <div class="ressub" id="resSub"></div>
-    <div class="res-memory" id="resMemory" hidden></div>
     <button class="btn btn-p btn-full" style="margin-top:16px" onclick="closeResult()">🏠 ホームへ</button>
     <p class="muted" style="text-align:center;margin-top:10px"><span id="resCount">20</span>秒後に自動でホームに戻ります</p>
   </div>
@@ -1608,24 +1658,9 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
 <script>
 /* ============ data ============ */
 const KEY='rvt_v1';
-const HISTORY_KEY='rvt_history_v1';
 const uid=()=>Math.random().toString(36).slice(2,9);
+function stableHash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36);}
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
-function defaultHistory(){return{v:1,moments:[],seen:{},includeSensitive:false,importedAt:0,sourceName:''};}
-function normalizeHistory(raw){
-  const h=Object.assign(defaultHistory(),raw||{});
-  h.moments=(Array.isArray(h.moments)?h.moments:[]).map(m=>{
-    const n=Object.assign({id:'',date:'',time:'',at:0,text:'',tags:[],valence:0,private:false,distress:false,sensitive:false,quality:'memory',hiddenUntil:0,loved:0},m||{});
-    n.private=!!n.private||isPrivateMemoryText(n.text);n.distress=!!n.distress||isDistressingMemoryText(n.text);n.sensitive=n.private||n.distress;return n;
-  }).filter(m=>m.id&&m.date&&m.text);
-  h.seen=h.seen&&typeof h.seen==='object'?h.seen:{};
-  h.includeSensitive=!!h.includeSensitive;
-  return h;
-}
-let H;
-try{H=normalizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY))||defaultHistory());}
-catch(e){H=defaultHistory();}
-function saveHistory(){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(H));return true;}catch(e){if(typeof toast==='function')toast('⚠️ 端末の保存容量が足りません');return false;}}
 const HABIT_TIME_PRESETS=[
   {id:'all',label:'終日',optionLabel:'終日（いつでも）',startTime:'',endTime:''},
   {id:'morning',label:'朝',optionLabel:'朝（5時〜11時）',startTime:'05:00',endTime:'11:00'},
@@ -2218,6 +2253,7 @@ function openManage(section){
   if(section==='rewards')requestAnimationFrame(()=>document.getElementById('rewardManageCard').scrollIntoView({behavior:'smooth',block:'start'}));
   if(section==='mealTemplates')requestAnimationFrame(()=>document.getElementById('mealTemplateManageCard').scrollIntoView({behavior:'smooth',block:'start'}));
   if(section==='foodItems')requestAnimationFrame(()=>document.getElementById('foodItemManageCard').scrollIntoView({behavior:'smooth',block:'start'}));
+  if(section==='sync')requestAnimationFrame(()=>document.getElementById('syncSettingsCard').scrollIntoView({behavior:'smooth',block:'start'}));
 }
 
 /* ============ HOME ============ */
@@ -2231,7 +2267,6 @@ function renderHome(){
   renderHabits();
   renderQuickTimer();
   renderActivityTimeline();
-  renderMemoryCard();
   renderJourneyCard();
   if(!D.routines.length)el.innerHTML='<div class="card muted">まだルーチンがありません。「記録」画面から作ってみよう！</div>';
   const sorted=[...D.routines].sort((a,b)=>(b.lastRun||0)-(a.lastRun||0));
@@ -2253,6 +2288,7 @@ function renderHome(){
   const hc=document.getElementById('hitokotoChips');hc.innerHTML='';
   document.getElementById('aiToneInput').value=D.settings.aiTone||'';
   loadCalEvents();
+  loadNotionTasks();
   D.hitokoto.forEach((t,i)=>{
     const c=document.createElement('span');c.className='txtchip';
     c.innerHTML=`${esc(t)}<button title="削除">✕</button>`;
@@ -2570,43 +2606,15 @@ function collectActivityTimelineItems(cutoff,now){
   for(const item of mealTimelineItems(cutoff,now))items.push(Object.assign({id:`meal-${stableHash(`${item.kind}|${item.stamp}|${item.text}`)}`},item));
   return items.sort((a,b)=>b.stamp-a.stamp);
 }
-function activityPastPool(cutoff){
-  const now=Date.now(),pool=collectActivityTimelineItems(0,cutoff).filter(item=>{
-    const hiddenUntil=Number((H.seen[item.id]||{}).hiddenUntil)||0;
-    if(hiddenUntil>now)return false;
-    return H.includeSensitive||item.kind!=='note'||(!isPrivateMemoryText(item.text)&&!isDistressingMemoryText(item.text));
-  });
-  for(const log of D.logs||[]){
-    const stamp=activityLogStamp(log);if(!stamp||stamp>cutoff)continue;
-    const text=`${log.routine||'ルーチン'}を ${Number(log.done)||0}/${Number(log.total)||0} ステップ完了`;
-    pool.push({id:`routine-${stableHash(`${stamp}|${text}`)}`,kind:'routine',icon:'🏁',text,stamp});
-  }
-  for(const memory of H.moments||[]){
-    const state=H.seen[memory.id]||{},hiddenUntil=Number(memory.hiddenUntil||state.hiddenUntil)||0;
-    if(!memory.time||!memory.text||memory.at>cutoff||hiddenUntil>now||(memory.sensitive&&!H.includeSensitive))continue;
-    pool.push({id:`diary-${memory.id}`,kind:'memory',icon:'📓',text:memory.text,stamp:memory.at});
-  }
-  return[...new Map(pool.map(item=>[item.id,item])).values()];
-}
-function activityClockMinute(stamp){const d=new Date(stamp);return d.getHours()*60+d.getMinutes();}
-function closestPastActivity(item,pool,used){
-  const current=new Date(item.stamp),previousStart=new Date(current.getFullYear(),current.getMonth(),current.getDate()-1).getTime(),previousEnd=new Date(current.getFullYear(),current.getMonth(),current.getDate()).getTime(),minute=activityClockMinute(item.stamp);
-  return pool.filter(p=>p.id!==item.id&&!used.has(p.id)&&p.stamp>=previousStart&&p.stamp<previousEnd).map(p=>({item:p,distance:clockDistance(minute,activityClockMinute(p.stamp))})).filter(x=>x.distance<=120).sort((a,b)=>a.distance-b.distance||b.item.stamp-a.item.stamp)[0]?.item||null;
-}
-function activityPastTimeLabel(stamp){
-  const d=new Date(stamp);
-  return `1日前 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
 function renderActivityTimeline(){
   const el=document.getElementById('activityTimeline');
   if(!el)return;
-  const now=Date.now(),cutoff=now-24*60*60*1000,items=collectActivityTimelineItems(cutoff,now),pastPool=activityPastPool(cutoff),usedPast=new Set();
+  const now=Date.now(),cutoff=now-24*60*60*1000,items=collectActivityTimelineItems(cutoff,now);
   el.innerHTML='';
   if(!items.length){el.innerHTML='<p class="muted">過去24時間のメモ、気分、チェック完了、計測記録はまだありません。</p>';return;}
   for(const item of items){
-    const past=closestPastActivity(item,pastPool,usedPast);if(past)usedPast.add(past.id);
-    const row=document.createElement('article');row.className=`activity-item ${item.kind}${past?' has-past':''}`;
-    row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-summary"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</span><time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>${past?`<aside class="activity-past"><span class="activity-past-kicker">↩ ${activityPastTimeLabel(past.stamp)}</span><span class="activity-past-text">${esc(past.text)}</span></aside>`:''}`;
+    const row=document.createElement('article');row.className=`activity-item ${item.kind}`;
+    row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-summary"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</span><time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>`;
     if(item.kind==='stopwatch'){
       row.classList.add('activity-page-link');row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label',`${item.text}の活動ページを開く`);
       row.onclick=()=>openActivityPage(item.text,item.pageId||'',false);
@@ -3111,183 +3119,9 @@ function addHitokoto(){
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-/* ============ PAST YOU / LOCAL DIARY ============ */
-const MEMORY_THEMES=[
-  {id:'learn',label:'学ぶ・知る',re:/心理|学習|勉強|レポート|授業|読書|本を|研究|大学|概念|知りたい/,copy:'「学ぶ・知る」の話題が何度も出てくるよ。好奇心は、かなり強い燃料みたい。'},
-  {id:'body',label:'身体・休息',re:/眠|疲|休|空腹|お腹|体調|身体|散歩|歩い|照明|寒い|暑い/,copy:'眠さ・疲れ・空腹・場所を細かく感じ取っている日が多め。根性より、まず身体を整える方が近道かも。'},
-  {id:'tiny',label:'小さく始める',re:/1ミリ|一文|少しだけ|設定だけ|ついでに|コツコツ|できた|終わった|終えた|なんとかなる/,copy:'「少しだけ」「ついでに」から動けた記録があるよ。入口を小さくする作戦は相性がよさそう。'},
-  {id:'digital',label:'デジタル寄り道',re:/Twitter|ツイッター|YouTube|ユーチューブ|ゲーム|ネットサーフィン|スクロール|SNS|動画/,copy:'デジタルの刺激へ寄り道した記録もあるよ。気づけた時点で、もう戻り始めてる。'},
-  {id:'voice',label:'声・視覚',re:/音声入力|音声|声で|ビジュアル|画像|文字に起こ/,copy:'文字が重い時は、声や見える形にすると進みやすかったみたい。音声メモで十分。'}
-];
-function stableHash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36);}
-function cleanDiaryText(text){
-  return String(text||'').replace(/\[deleted::[^\]]*\]/g,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/^\s*[-*]\s*(?:\[[ xX]\]\s*)?/,'').replace(/[`*_>#]/g,'').replace(/\s+/g,' ').trim();
-}
-function isPrivateMemoryText(text){return /癌|病院|通院|診断|生理|血が|エッチ|セックス|配偶者|家族|母親|父親|両親|カウンセリング|体重|食べすぎ|食べ過ぎ|恋愛|好きな人/.test(text);}
-function isDistressingMemoryText(text){return /死|自殺|消えたい|グリーフ|陰口|嫌い|別れ|トラウマ|不安|苦痛|つらい|辛い|しんどい|自己嫌悪|人間関係|罪悪感|自分を責め|寂し|腹立|ショック/.test(text);}
-function isSensitiveMemoryText(text){return isPrivateMemoryText(text)||isDistressingMemoryText(text);}
-function isLowQualityDiaryText(text){return /Fetching Title|スクーリング時間割|\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2}|テストメモ|表示されない|表示でき|追加でき|投稿でき|コードブロック|^task\b/i.test(text);}
-function memoryTags(text){return MEMORY_THEMES.filter(t=>t.re.test(text)).map(t=>t.id);}
-function memoryValence(text){
-  const good=(text.match(/良かった|よかった|楽しい|最高|嬉し|できた|終わった|終えた|ワクワク|気持ちいい|好き|発見|ありがとう|楽しみ/g)||[]).length;
-  const hard=(text.match(/つら|辛|不安|嫌|疲|眠|だる|怒|泣|面倒|できない/g)||[]).length;
-  return good>hard?1:hard>good?-1:0;
-}
-function diaryMoment(date,time,text){
-  const cleaned=cleanDiaryText(text);
-  if(cleaned.length<5||isLowQualityDiaryText(cleaned)||/^(test|テスト|投稿|こんにちは|あ+|ー+)[.!。！]*$/i.test(cleaned))return null;
-  const short=cleaned.slice(0,240),safeTime=/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time||'')?time:'';
-  const at=new Date(`${date}T${safeTime||'12:00'}:00`).getTime();
-  if(!Number.isFinite(at))return null;
-  const privateMemory=isPrivateMemoryText(short),distress=isDistressingMemoryText(short);
-  return{id:'m'+stableHash(`${date}|${safeTime}|${short}`),date,time:safeTime,at,text:short,tags:memoryTags(short),valence:memoryValence(short),private:privateMemory,distress,sensitive:privateMemory||distress,quality:'memory',hiddenUntil:0,loved:0};
-}
-function parseDiaryMarkdown(raw){
-  const lines=String(raw||'').replace(/\r/g,'').split('\n'),sections=[];let date='',buffer=[];
-  const flush=()=>{if(date)sections.push({date,lines:[...buffer]});buffer=[];};
-  for(const line of lines){
-    const heading=line.match(/^##\s*(\d{4}-\d{2}-\d{2})(?:\s|$)/);
-    if(heading){flush();date=heading[1];continue;}
-    if(date)buffer.push(line);
-  }
-  flush();
-  const out=[];
-  for(const section of sections){
-    let current=null,prose=[],inFence=false;
-    const pushCurrent=()=>{if(!current)return;const m=diaryMoment(section.date,current.time,current.parts.join(' '));if(m)out.push(m);current=null;};
-    for(const rawLine of section.lines){
-      if(/\[deleted::/.test(rawLine))continue;
-      const line=rawLine.replace(/\t/g,' ').trim();
-      if(/^```/.test(line)){inFence=!inFence;continue;}if(inFence||/^<!--/.test(line))continue;
-      if(/^[-*]\s+\[[ xX]\]\s+/.test(line)){pushCurrent();continue;}
-      const marker=/(^|\s+|[^0-9:\s])-\s+(?:(?:20\d{2})[-:])?([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\s*/g,matches=[];let match;
-      while((match=marker.exec(line)))matches.push({index:match.index+match[1].length,end:marker.lastIndex,time:`${String(Number(match[2])).padStart(2,'0')}:${match[3]}`});
-      if(matches.length){
-        const before=line.slice(0,matches[0].index).trim();
-        if(before){if(current)current.parts.push(before);else prose.push(before);}
-        for(let i=0;i<matches.length;i++){
-          pushCurrent();
-          const body=line.slice(matches[i].end,i+1<matches.length?matches[i+1].index:line.length).trim();
-          current={time:matches[i].time,parts:body?[body]:[]};
-        }
-      }else if(line){
-        if(current)current.parts.push(line);else prose.push(line);
-      }else if(!current&&prose.length&&prose[prose.length-1]!=='\n')prose.push('\n');
-    }
-    pushCurrent();
-    for(const paragraph of prose.join(' ').split(/\s*\n\s*/)){
-      const m=diaryMoment(section.date,'',paragraph);if(m)out.push(m);
-    }
-  }
-  return[...new Map(out.map(m=>[m.id,m])).values()].sort((a,b)=>a.at-b.at);
-}
-function importDiaryFile(input){
-  const file=input&&input.files&&input.files[0];if(!file)return;
-  if(file.size>1024*1024){toast('⚠️ 1MB以下のMarkdownを選んでください');input.value='';return;}
-  const reader=new FileReader();
-  reader.onload=()=>{
-    const parsed=parseDiaryMarkdown(reader.result),old=new Map(H.moments.map(m=>[m.id,m]));
-    if(!parsed.length){toast('⚠️ 日付見出し（## YYYY-MM-DD）の記録が見つかりませんでした');input.value='';return;}
-    H.moments=parsed.map(m=>{const prev=old.get(m.id);return prev?Object.assign(m,{hiddenUntil:prev.hiddenUntil||0,loved:prev.loved||0}):m;});
-    H.includeSensitive=false;H.importedAt=Date.now();H.sourceName=file.name;if(!saveHistory()){input.value='';return;}input.value='';memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';
-    renderMemorySettings();renderMemoryCard();
-    const days=new Set(H.moments.map(m=>m.date)).size,deep=H.moments.filter(m=>m.sensitive).length;
-    toast(`📓 ${days}日・${H.moments.length}件を発掘！${deep?`（深い内容${deep}件は非表示）`:''}`);sfxDone();burst();
-  };
-  reader.onerror=()=>{toast('⚠️ 日記を読み込めませんでした');input.value='';};
-  reader.readAsText(file,'utf-8');
-}
-function clearDiaryMemories(){H.moments=[];H.seen={};H.includeSensitive=false;H.importedAt=0;H.sourceName='';saveHistory();memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';renderMemorySettings();renderMemoryCard();toast('🧹 日記のタイムカプセルをこの端末から消しました');}
-function setIncludeDeepMemories(on){H.includeSensitive=!!on;saveHistory();memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';renderMemoryCard();renderMemorySettings();toast(on?'深い内容も候補に入れました':'深い内容を候補から外しました');}
-function renderMemorySettings(){
-  const status=document.getElementById('memoryImportStatus'),check=document.getElementById('includeDeepMemories');if(!status||!check)return;
-  check.checked=!!H.includeSensitive;
-  if(!H.moments.length){status.textContent='まだ日記を読み込んでいません。';return;}
-  const days=new Set(H.moments.map(m=>m.date)).size,deep=H.moments.filter(m=>m.sensitive).length;
-  status.innerHTML=`<b>${days}日・${H.moments.length}件</b>の記憶を端末内に保存中${deep?`（深い内容 ${deep}件）`:''}<br><span class="muted">${esc(H.sourceName||'Markdown')} ・ ${new Date(H.importedAt).toLocaleDateString('ja-JP')} 読み込み</span>`;
-}
-function dateTimeParts(stamp){
-  const d=new Date(stamp);return{date:localDateKey(d),time:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
-}
-function allMemoryEvents(){
-  const list=H.moments.map(m=>Object.assign({source:'過去の日記'},m));
-  for(const note of liveLogs(D.personalNotes)){
-    const at=Number(note.createdAt)||0;if(!at)continue;const p=dateTimeParts(at),text=String(note.text||'').slice(0,240);
-    const privateMemory=isPrivateMemoryText(text),distress=isDistressingMemoryText(text);
-    list.push({id:'note-'+note.id,date:p.date,time:p.time,at,text,source:note.source==='run'?'実行中メモ':'ひとことメモ',tags:memoryTags(text),valence:memoryValence(text),private:privateMemory,distress,sensitive:privateMemory||distress,quality:'memory'});
-  }
-  for(const log of D.logs){
-    const at=activityLogStamp(log);if(!at)continue;const p=dateTimeParts(at),text=`${log.routine||'ルーチン'}を ${Number(log.done)||0}/${Number(log.total)||0} ステップ完了`;
-    list.push({id:'run-'+stableHash(`${p.date}|${p.time}|${text}`),date:p.date,time:p.time,at,text,source:'ルーチン記録',tags:['win'],valence:1,private:false,distress:false,sensitive:false,quality:'memory'});
-  }
-  for(const log of liveLogs(D.habitLogs)){
-    const at=activityLogStamp(log);if(!at)continue;const p=dateTimeParts(at),text=`「${log.habitName||'チェック項目'}」をできた`;
-    list.push({id:'habit-'+log.id,date:p.date,time:p.time,at,text,source:'チェック記録',tags:['win'],valence:1,private:false,distress:false,sensitive:false,quality:'memory'});
-  }
-  for(const log of liveLogs(D.todayTaskLogs)){
-    const at=activityLogStamp(log);if(!at)continue;const p=dateTimeParts(at),text=`「${log.taskName||'今日の項目'}」をできた`;
-    list.push({id:'task-'+log.id,date:p.date,time:p.time,at,text,source:'今日のチェック',tags:['win'],valence:1,private:false,distress:false,sensitive:false,quality:'memory'});
-  }
-  return list;
-}
-function dayOfYear(d){return Math.floor((Date.UTC(2000,d.getMonth(),d.getDate())-Date.UTC(2000,0,1))/864e5);}
-function circularDayDiff(a,b){const diff=Math.abs(dayOfYear(a)-dayOfYear(b));return Math.min(diff,366-diff);}
-function clockDistance(a,b){const diff=Math.abs(a-b);return Math.min(diff,1440-diff);}
-function memoryReason(memory,now=new Date()){
-  const d=new Date(memory.at),years=now.getFullYear()-d.getFullYear(),sameDate=d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
-  if(sameDate&&years>0)return`${years}年前の今日`;
-  const dayDiff=circularDayDiff(d,now),minutes=memory.time?clockDistance(d.getHours()*60+d.getMinutes(),now.getHours()*60+now.getMinutes()):9999;
-  if(dayDiff<=3&&years>0)return`${years}年前の今ごろ`;
-  if(minutes<=60)return'同じくらいの時間';
-  if(minutes<=120)return`同じころの${now.getHours()<5?'深夜':now.getHours()<11?'朝':now.getHours()<17?'午後':now.getHours()<22?'夜':'深夜'}`;
-  if(dayDiff<=14)return'季節が近い日の記録';
-  return'過去のあなたから';
-}
-function rankedMemories(options={}){
-  const now=new Date(),nowMs=now.getTime(),nowMin=now.getHours()*60+now.getMinutes(),quietHours=now.getHours()>=22||now.getHours()<5;
-  return allMemoryEvents().filter(m=>m.at<nowMs-20*60*60*1000&&(!m.sensitive||H.includeSensitive)&&(!quietHours||!m.distress)&&(!options.positive||(m.valence>0&&!m.sensitive&&!m.distress))).filter(m=>{
-    const state=H.seen[m.id]||{};return Number(m.hiddenUntil||state.hiddenUntil||0)<=nowMs;
-  }).map(m=>{
-    const d=new Date(m.at),sameDate=d.getMonth()===now.getMonth()&&d.getDate()===now.getDate(),dd=circularDayDiff(d,now),tm=m.time?clockDistance(d.getHours()*60+d.getMinutes(),nowMin):9999,state=H.seen[m.id]||{};
-    let score=sameDate?260:dd<=3?135:dd<=14?55:0;
-    score+=tm<=60?125:tm<=120?70:tm<=240?18:0;
-    if(d.getDay()===now.getDay())score+=12;
-    if(options.positive&&m.valence>0)score+=80;
-    if(options.help&&(m.tags||[]).some(t=>['tiny','voice','body'].includes(t)))score+=70;
-    if(m.valence>0)score+=20;else if(m.valence<0)score-=25;
-    if(state.lastShownAt&&nowMs-state.lastShownAt<14*864e5)score-=90;
-    score+=(parseInt(stableHash(`${m.id}|${today()}|${Math.floor(now.getHours()/3)}`),36)%37)/37;
-    return{memory:m,score};
-  }).sort((a,b)=>b.score-a.score).map(x=>x.memory);
-}
-let memoryDeckIndex=0,lastMemoryShownId='',pinnedMemoryId='';
-function recordMemoryShown(memory){
-  if(!memory||lastMemoryShownId===memory.id)return;lastMemoryShownId=memory.id;
-  const prev=H.seen[memory.id]||{};H.seen[memory.id]={lastShownAt:Date.now(),count:(Number(prev.count)||0)+1,hiddenUntil:prev.hiddenUntil||0,loved:prev.loved||0};saveHistory();
-}
-function currentMemory(options={}){
-  const deck=rankedMemories(options);if(!deck.length)return null;
-  if(!options.positive&&pinnedMemoryId){const pinned=deck.find(m=>m.id===pinnedMemoryId);if(pinned)return pinned;}
-  const memory=deck[memoryDeckIndex%deck.length];if(!options.positive)pinnedMemoryId=memory.id;return memory;
-}
-function renderMemoryCard(){
-  const el=document.getElementById('memoryCard');if(!el)return;const deck=rankedMemories(),memories=deck.slice(memoryDeckIndex,memoryDeckIndex+3);el.classList.remove('found');
-  if(!memories.length){
-    el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><span class="memory-source">端末内だけ</span></div><div class="memory-empty"><p class="muted">日記を読み込むか、メモや完了記録が育つと、同じころの過去がここに現れるよ。</p><button class="btn btn-c btn-sm" type="button" onclick="document.getElementById('diaryFile').click()">📓 読み込む</button></div>`;return;
-  }
-  memories.forEach(recordMemoryShown);
-  const cards=memories.map(memory=>{const stamp=new Date(memory.at),date=`${stamp.getFullYear()}/${stamp.getMonth()+1}/${stamp.getDate()}${memory.time?` ${memory.time}`:''}`;return `<article class="memory-item"><div class="memory-quote">「${esc(memory.text)}」</div><div class="memory-date">${date} ・ ${esc(memory.source||'過去の記録')}</div><div class="memory-item-actions"><button class="btn btn-g" type="button" onclick="hideMemory('${memory.id}')" aria-label="30日隠す">🙈 隠す</button></div></article>`;}).join('');
-  el.innerHTML=`<div class="memory-head"><span class="memory-kicker">🪩 PAST YOU DROP</span><button class="text-link" type="button" onclick="cycleMemory()">🎰 入れ替え</button></div><div class="memory-grid">${cards}</div>`;
-}
-function cycleMemory(){memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';renderMemoryCard();const el=document.getElementById('memoryCard');el.classList.add('found');sfxDone();setTimeout(()=>el.classList.remove('found'),450);}
-function hideMemory(id){
-  const until=Date.now()+30*864e5,local=H.moments.find(m=>m.id===id),state=H.seen[id]||{};if(local)local.hiddenUntil=until;state.hiddenUntil=until;H.seen[id]=state;saveHistory();toast('🙈 30日間そっとしまいました');cycleMemory();
-}
-
 /* ============ PERSONAL INSIGHTS ============ */
 function timeBandFromTime(time){const raw=String(time||''),match=raw.match(/^(\d{1,2}):/);if(!match)return null;const h=Number(match[1]);if(h<5)return'深夜';if(h<11)return'朝';if(h<17)return'昼〜午後';if(h<22)return'夕方〜夜';return'深夜';}
 function median(values){const list=values.map(Number).filter(Number.isFinite).sort((a,b)=>a-b);if(!list.length)return 0;const i=Math.floor(list.length/2);return list.length%2?list[i]:(list[i-1]+list[i])/2;}
-function themeDateCount(id){const theme=MEMORY_THEMES.find(t=>t.id===id);return theme?new Set(H.moments.filter(m=>theme.re.test(m.text)).map(m=>m.date)).size:0;}
 function buildPersonalInsights(){
   const insights=[];
   if(D.logs.length>=3){
@@ -3297,13 +3131,6 @@ function buildPersonalInsights(){
   }
   const supports=liveLogs(D.journeyLogs).filter(x=>x.type==='support'&&['micro','start','postpone'].includes(x.choice));
   if(supports.length){const returned=supports.filter(x=>x.returnedAt||x.completedAt).length;insights.push({copy:returned?`重いと感じたあとも、${returned}回は行動へ戻れてる。立ち止まることと、やめることは同じじゃないよ。`:'「重い」と気づいた記録が育ち始めたよ。次は最初の1個だけで十分。',evidence:`動き出しサポート ${supports.length}件`});}
-  if(H.moments.length){
-    const themes=MEMORY_THEMES.map(t=>({theme:t,count:themeDateCount(t.id)})).filter(x=>x.count).sort((a,b)=>b.count-a.count);
-    if(themes[0])insights.push({copy:themes[0].count>=3?themes[0].theme.copy:`「${themes[0].theme.label}」について書いた日があるよ。もう少したまるまで、傾向とは決めずに見守るね。`,evidence:`過去日記 ${themes[0].count}日で登場`});
-    const bodyDates=new Set(H.moments.filter(m=>MEMORY_THEMES[1].re.test(m.text)).map(m=>m.date)),digitalDates=new Set(H.moments.filter(m=>MEMORY_THEMES[3].re.test(m.text)).map(m=>m.date));
-    const overlap=[...bodyDates].filter(d=>digitalDates.has(d)).length;
-    if(overlap>=2)insights.push({copy:'疲れ・眠さの言葉と、デジタルへの寄り道が同じ日に出ることがあったよ。意志より先に、電池残量を見てもよさそう。',evidence:`同じ日に出た記録 ${overlap}日`});
-  }
   const stepMap=new Map();for(const log of D.logs)for(const s of Array.isArray(log.stepTimes)?log.stepTimes:[]){if(!s.name||s.outcome==='skipped')continue;const x=stepMap.get(s.name)||[];x.push(s);stepMap.set(s.name,x);}
   const stepHint=[...stepMap.entries()].filter(([,v])=>v.length>=3).map(([name,v])=>({name,v,actual:median(v.map(x=>x.actualSec)),planned:median(v.map(x=>x.plannedSec))})).filter(x=>x.planned&&x.actual<x.planned*.8).sort((a,b)=>(a.actual/a.planned)-(b.actual/b.planned))[0];
   if(stepHint)insights.push({copy:`「${stepHint.name}」は、予定より実際の方が短め。始める前の想像ほど長くないのかも。`,evidence:`中央値 ${Math.round(stepHint.actual)}秒 / 予定${Math.round(stepHint.planned)}秒・${stepHint.v.length}件`});
@@ -3318,9 +3145,8 @@ function latestUnresolvedJourney(){
   return liveLogs(D.journeyLogs).filter(x=>!x.returnedAt&&!x.completedAt&&!['dismissed','superseded'].includes(x.choice)&&(x.type==='stopped'||x.choice==='postpone'||x.choice==='rest')).sort((a,b)=>(b.updatedAt||b.at)-(a.updatedAt||a.at))[0]||null;
 }
 function rescueAdvice(){
-  const hour=new Date().getHours(),body=themeDateCount('body'),voice=themeDateCount('voice');
-  if((hour>=22||hour<5)&&body)return'眠い時間なら、意志の弱さじゃなくて電池の残量かも。今日は最初の1個で十分。';
-  if(voice)return'文字や段取りが重い日は、声に出すだけでもいい。前のあなたにも「声」が助けになった日があるよ。';
+  const hour=new Date().getHours();
+  if(hour>=22||hour<5)return'眠い時間なら、意志の弱さじゃなくて電池の残量かも。今日は最初の1個で十分。';
   return'やる気が足りないんじゃなくて、入口がちょっと大きいだけかも。いちばん小さい入口にしよう。なんとかなると思うよ。';
 }
 function openRescue(routineId){
@@ -4008,14 +3834,8 @@ function showResult({log,perfect,bonus,xpGained,durSec}){
   document.getElementById('resStreak').textContent=streak();
   document.getElementById('resTotal').textContent=D.logs.length;
   document.getElementById('resSub').textContent=perfect?`ノースキップ完走ボーナス +${bonus}XP！`:(log.skips?`⏭ スキップ ${log.skips}件`:'');
-  const reward=rankedMemories({positive:true})[0]||null,resMemory=document.getElementById('resMemory');
-  resMemory.hidden=false;
-  if(reward){
-    recordMemoryShown(reward);const d=new Date(reward.at);
-    resMemory.innerHTML=`<div class="res-memory-kicker">🎁 PAST YOU UNLOCKED</div><div class="res-memory-text">「${esc(reward.text)}」</div><div class="res-memory-date">${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ・ ${esc(memoryReason(reward))}</div>`;
-  }else resMemory.innerHTML='<div class="res-memory-kicker">🎁 FUTURE MEMORY SAVED</div><div class="res-memory-text">今日の「できた」が、未来のあなたのタイムカプセルに入りました。</div>';
   document.getElementById('result').classList.add('show');
-  // 20秒カウントダウンで自動ホーム（記憶カードを読める長さ）
+  // 20秒カウントダウンで自動ホーム
   let left=20;
   document.getElementById('resCount').textContent=left;
   clearInterval(resCountTimer);
@@ -5568,6 +5388,118 @@ async function syncPullSafe(btn){
   syncPull();
 }
 
+/* ============ 📓 Notionタスク表示 (同期GAS経由) ============ */
+const NOTION_TASK_LIMIT=5,NOTION_TASK_TTL=5*60*1000;
+let notionTaskCache=null,notionTaskCacheAt=0,notionTaskCacheSource='',notionTaskLoading=null;
+function safeNotionUrl(value){
+  const raw=String(value||'').trim();if(!raw)return'';
+  try{
+    const url=new URL(raw),host=url.hostname.toLowerCase();
+    const notionHost=host==='notion.com'||host.endsWith('.notion.com')||host==='notion.so'||host.endsWith('.notion.so')||host==='notion.site'||host.endsWith('.notion.site');
+    return url.protocol==='https:'&&notionHost?url.href:'';
+  }catch(e){return'';}
+}
+function notionTaskPriorityClass(value){
+  const p=String(value||'');
+  if(p.includes('高')||p.includes('🔴'))return'priority-high';
+  if(p.includes('中')||p.includes('🟡'))return'priority-mid';
+  if(p.includes('低')||p.includes('🟢'))return'priority-low';
+  return'priority-none';
+}
+function notionDueInfo(value){
+  const raw=String(value||''),m=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m)return{label:'期限なし',className:''};
+  const due=new Date(+m[1],+m[2]-1,+m[3]),now=new Date(),base=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const days=Math.round((due-base)/864e5),short=`${+m[2]}/${+m[3]}`;
+  if(days<0)return{label:`期限超過 ${short}`,className:'overdue'};
+  if(days===0)return{label:'今日',className:'today'};
+  if(days===1)return{label:'明日',className:'soon'};
+  return{label:short,className:days<=7?'soon':''};
+}
+function notionTaskTime(ms){
+  const d=new Date(ms);return`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function setNotionTaskLoading(loading){
+  const btn=document.getElementById('notionTaskRefresh');if(!btn)return;
+  btn.classList.toggle('loading',!!loading);btn.disabled=!!loading;btn.setAttribute('aria-busy',loading?'true':'false');
+}
+function renderNotionTaskSetup(message){
+  const list=document.getElementById('notionTaskList'),count=document.getElementById('notionTaskCount'),fresh=document.getElementById('notionTaskFreshness'),footer=document.getElementById('notionTaskFooter');
+  if(!list)return;
+  count.hidden=true;fresh.textContent='';fresh.classList.remove('error');footer.hidden=true;footer.innerHTML='';list.innerHTML='';
+  const state=document.createElement('div');state.className='notion-state';state.textContent=message;
+  const btn=document.createElement('button');btn.className='text-link';btn.type='button';btn.textContent='設定へ →';btn.onclick=()=>openManage('sync');
+  state.appendChild(btn);list.appendChild(state);
+}
+function renderNotionTasks(statusText='',statusError=false){
+  const list=document.getElementById('notionTaskList'),count=document.getElementById('notionTaskCount'),fresh=document.getElementById('notionTaskFreshness'),footer=document.getElementById('notionTaskFooter');
+  if(!list||!notionTaskCache)return;
+  const tasks=notionTaskCache.tasks,total=Math.max(tasks.length,notionTaskCache.total||0),shown=tasks.slice(0,NOTION_TASK_LIMIT);
+  count.textContent=`${total}件`;count.hidden=false;
+  fresh.textContent=statusText||`${notionTaskTime(notionTaskCacheAt)}更新`;fresh.classList.toggle('error',!!statusError);
+  list.innerHTML='';
+  if(!shown.length){const state=document.createElement('div');state.className='notion-state';state.textContent='🎉 春香ボールのタスクはありません';list.appendChild(state);}
+  for(const task of shown){
+    const url=safeNotionUrl(task.url),row=document.createElement(url?'a':'div'),due=notionDueInfo(task.due),priority=String(task.priority||'').trim();
+    row.className=`notion-task ${notionTaskPriorityClass(priority)}`;
+    if(url){row.href=url;row.target='_blank';row.rel='noopener noreferrer';row.setAttribute('aria-label',`${task.title}をNotionで開く`);}
+    const accent=document.createElement('span');accent.className='notion-task-accent';accent.setAttribute('aria-hidden','true');
+    const main=document.createElement('span');main.className='notion-task-main';
+    const title=document.createElement('span');title.className='notion-task-title';title.textContent=task.title||'(無題)';main.appendChild(title);
+    const meta=document.createElement('span');meta.className='notion-task-meta';
+    const dueTag=document.createElement('span');dueTag.className=`notion-task-tag notion-due ${due.className}`;dueTag.textContent=due.label;meta.appendChild(dueTag);
+    if(priority){const priorityTag=document.createElement('span');priorityTag.className='notion-task-tag';priorityTag.textContent=priority;meta.appendChild(priorityTag);}
+    main.appendChild(meta);
+    const open=document.createElement('span');open.className='notion-task-open';open.textContent=url?'↗':'';open.setAttribute('aria-hidden','true');
+    row.append(accent,main,open);list.appendChild(row);
+  }
+  footer.innerHTML='';
+  const more=Math.max(0,total-shown.length),dbUrl=safeNotionUrl(notionTaskCache.databaseUrl);
+  if(more){const moreEl=document.createElement('span');moreEl.className='notion-more';moreEl.textContent=`ほか${more}件`;footer.appendChild(moreEl);}
+  if(dbUrl){const link=document.createElement('a');link.className='text-link';link.href=dbUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Notionですべて見る →';footer.appendChild(link);}
+  footer.hidden=!footer.childElementCount;
+}
+function loadNotionTasks(force=false){
+  const list=document.getElementById('notionTaskList');if(!list)return Promise.resolve();
+  const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
+  if(!url||!key){notionTaskCache=null;notionTaskCacheAt=0;notionTaskCacheSource='';renderNotionTaskSetup('同期URLと合言葉を設定すると、Notionタスクを表示できます。');return Promise.resolve();}
+  const source=stableHash(url+'\n'+key);
+  if(notionTaskCacheSource&&notionTaskCacheSource!==source){notionTaskCache=null;notionTaskCacheAt=0;notionTaskCacheSource='';}
+  if(!force&&notionTaskCache&&Date.now()-notionTaskCacheAt<NOTION_TASK_TTL){renderNotionTasks();return Promise.resolve();}
+  if(notionTaskLoading)return notionTaskLoading;
+  setNotionTaskLoading(true);
+  if(notionTaskCache){const fresh=document.getElementById('notionTaskFreshness');fresh.textContent='更新中…';fresh.classList.remove('error');}
+  else list.innerHTML='<div class="notion-state">Notionからタスクを読み込み中…</div>';
+  notionTaskLoading=(async()=>{
+    let timeoutId=null;
+    try{
+      const api=new URL(url);api.searchParams.set('key',key);api.searchParams.set('action','notionTasks');
+      const controller=typeof AbortController==='function'?new AbortController():null;
+      if(controller)timeoutId=setTimeout(()=>controller.abort(),15000);
+      const res=await fetch(api.toString(),controller?{signal:controller.signal}:undefined);
+      if(!res.ok)throw Object.assign(new Error('http'),{code:'network'});
+      const j=await res.json();
+      if(!j.ok)throw Object.assign(new Error('api'),{code:String(j.error||'api')});
+      if(!Array.isArray(j.tasks))throw Object.assign(new Error('upgrade'),{code:'upgrade'});
+      const tasks=j.tasks.map(task=>({
+        id:String(task&&task.id||'').slice(0,80),
+        title:String(task&&task.title||'(無題)').slice(0,240),
+        priority:String(task&&task.priority||'').slice(0,40),
+        due:String(task&&task.due||'').slice(0,40),
+        url:safeNotionUrl(task&&task.url)
+      }));
+      notionTaskCache={tasks,total:Math.max(tasks.length,Math.floor(Number(j.total)||0)),databaseUrl:safeNotionUrl(j.databaseUrl)};
+      notionTaskCacheAt=Date.now();notionTaskCacheSource=source;renderNotionTasks();
+    }catch(e){
+      if(notionTaskCache)renderNotionTasks(`更新失敗・${notionTaskTime(notionTaskCacheAt)}時点`,true);
+      else renderNotionTaskSetup(e&&e.code==='upgrade'?'GASをNotionタスク対応版へ更新すると表示できます。':'Notionタスクを取得できませんでした。連携設定を確認してください。');
+    }finally{
+      if(timeoutId)clearTimeout(timeoutId);notionTaskLoading=null;setNotionTaskLoading(false);
+    }
+  })();
+  return notionTaskLoading;
+}
+
 /* ============ 📅 Googleカレンダー連携 (GAS経由) ============ */
 let calCache=null,calCacheAt=0;
 const CAL_EVENT_COLORS={
@@ -5640,7 +5572,6 @@ function askCalLog(log,startMs,endMs){
 
 /* ============ SETTINGS / CSV ============ */
 function renderSet(){
-  renderMemorySettings();
   document.getElementById('setRate').value=D.settings.rate;
   document.getElementById('setVoiceVolume').value=D.settings.voiceVolume;
   document.getElementById('setSfxVolume').value=D.settings.sfxVolume;
@@ -5823,7 +5754,7 @@ function restoreAll(input){
   rd.readAsText(f,'utf-8');
 }
 function resetAll(){
-  stopMealWaitTimer();stopMealSafetyTimer();D=seed();H=defaultHistory();localStorage.removeItem(HISTORY_KEY);memoryDeckIndex=0;lastMemoryShownId='';pinnedMemoryId='';mealState.safetyView='idle';mealState.safetyFear=null;mealState.safetyDoneId=null;save();renderHome();renderMemorySettings();renderMealWaitBar(0);renderMealSafetyCard();toast('🧹 日記を含む端末内データを初期化しました');
+  stopMealWaitTimer();stopMealSafetyTimer();D=seed();mealState.safetyView='idle';mealState.safetyFear=null;mealState.safetyDoneId=null;save();renderHome();renderMealWaitBar(0);renderMealSafetyCard();toast('🧹 端末内データを初期化しました');
 }
 
 // ボタン押下：やわらかいポワン＋光の波紋。クリック成立時にバネで戻す
