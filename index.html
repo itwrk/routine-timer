@@ -263,6 +263,14 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .activity-item.check .activity-text{font-weight:700}
 .activity-item.stopwatch .activity-icon{border-color:var(--cyan);box-shadow:0 0 8px rgba(53,224,255,.2)}
 .activity-item.stopwatch .activity-text{font-weight:800;color:#167fa3}
+.activity-item.routine .activity-text{font-weight:800}
+.activity-item.routine-auto .activity-icon{border-color:var(--mint);box-shadow:0 0 8px rgba(14,171,114,.2)}
+.activity-item.routine-auto .activity-mood-tag{background:rgba(14,171,114,.08);border-color:rgba(14,171,114,.25)}
+.activity-item.routine-manual .activity-icon{border-color:var(--purple);box-shadow:0 0 8px rgba(130,87,230,.18)}
+.activity-item.routine-manual .activity-mood-tag{background:rgba(130,87,230,.08);border-color:rgba(130,87,230,.24)}
+.activity-item.routine-interrupted .activity-icon{border-color:var(--pink);box-shadow:0 0 8px rgba(255,77,141,.18)}
+.activity-item.routine-interrupted .activity-text{color:#a33a68}
+.activity-item.routine-legacy .activity-icon{border-color:var(--gold);box-shadow:0 0 8px rgba(255,201,60,.18)}
 .activity-item.mood .activity-icon{border-color:var(--pink);box-shadow:0 0 8px rgba(255,77,141,.18)}
 .activity-item.mood .activity-text{font-weight:800;color:var(--pink)}
 .activity-mood-tag{display:inline-flex;align-items:center;padding:2px 7px;background:rgba(255,77,141,.08);border:1px solid rgba(255,77,141,.22);border-radius:999px;color:var(--text);font-size:10px;font-weight:700;line-height:1.5;white-space:nowrap;flex-shrink:0}
@@ -1461,7 +1469,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
         <button class="btn btn-p btn-sm" onclick="exportUrgeCsv()">⚡ 衝動CSV</button>
         <button class="btn btn-p btn-sm" onclick="exportLocCsv()">🧭 LOC CSV</button>
       </div>
-      <p class="muted" style="margin-top:8px">ChatGPT用CSVには、ルーチン完了・チェック完了・1ボタン計測・気分・自由記述メモと、設定に応じて食事・起床・衝動・LOCを時系列で収録します。設定、APIキー、同期合言葉、内部IDは含めません。</p>
+      <p class="muted" style="margin-top:8px">ChatGPT用CSVには、ルーチン終了（自動・手動・中断）・チェック完了・1ボタン計測・気分・自由記述メモと、設定に応じて食事・起床・衝動・LOCを時系列で収録します。設定、APIキー、同期合言葉、内部IDは含めません。</p>
       <input type="file" id="csvFile" accept=".csv,text/csv" style="display:none" onchange="importTexts(this)">
     </div>
     <div class="card" id="mealPrefsCard">
@@ -1852,7 +1860,21 @@ function normalizeStopwatchLog(log){
   n.durationSec=Math.max(0,Number(n.durationSec)||Math.round((n.endedAt-n.startedAt)/1000));
   return n;
 }
-const CURRENT_SCHEMA=12;
+function normalizeRoutineRunLog(log){
+  const n=Object.assign({id:uid(),routineId:'',routineName:'ルーチン',startedAt:0,endedAt:0,durationSec:0,status:'completed',endType:'legacy',done:0,total:0,skips:0,stepIndex:0,stepName:'',currentStepSec:0,stepTimes:[],source:'normal',microEntry:false,updatedAt:0,deletedAt:null},log||{});
+  n.id=String(n.id||uid());n.routineId=String(n.routineId||'');n.routineName=String(n.routineName||'ルーチン').trim().slice(0,120)||'ルーチン';
+  n.endedAt=Math.max(0,Number(n.endedAt)||0);n.durationSec=Math.max(0,Math.round(Number(n.durationSec)||0));
+  n.startedAt=Math.max(0,Number(n.startedAt)||(n.endedAt?Math.max(0,n.endedAt-n.durationSec*1000):0));
+  n.status=n.status==='interrupted'?'interrupted':'completed';
+  n.endType=['auto','manual','interrupted','legacy'].includes(n.endType)?n.endType:(n.status==='interrupted'?'interrupted':'legacy');
+  if(n.status==='interrupted')n.endType='interrupted';
+  n.done=Math.max(0,Math.floor(Number(n.done)||0));n.total=Math.max(0,Math.floor(Number(n.total)||0));n.skips=Math.max(0,Math.floor(Number(n.skips)||0));
+  n.stepIndex=Math.max(0,Math.floor(Number(n.stepIndex)||0));n.stepName=String(n.stepName||'').slice(0,120);n.currentStepSec=Math.max(0,Math.round(Number(n.currentStepSec)||0));
+  n.stepTimes=Array.isArray(n.stepTimes)?n.stepTimes.map(x=>Object.assign({},x)):[];n.source=String(n.source||'normal').slice(0,40);n.microEntry=!!n.microEntry;
+  n.updatedAt=Math.max(0,Number(n.updatedAt)||n.endedAt||Date.now());
+  return n;
+}
+const CURRENT_SCHEMA=13;
 
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
@@ -1873,6 +1895,7 @@ function normalizeData(raw){
   d.rewardPointEvents=(Array.isArray(d.rewardPointEvents)?d.rewardPointEvents:[]).map(normalizeRewardPointEvent);
   d.journeyLogs=(Array.isArray(d.journeyLogs)?d.journeyLogs:[]).map(normalizeJourneyLog);
   d.stopwatchLogs=(Array.isArray(d.stopwatchLogs)?d.stopwatchLogs:[]).map(normalizeStopwatchLog);
+  d.routineRunLogs=(Array.isArray(d.routineRunLogs)?d.routineRunLogs:[]).map(normalizeRoutineRunLog);
   d.activityPages=(Array.isArray(d.activityPages)?d.activityPages:[]).map(normalizeActivityPage);
   if(d.activeStopwatch&&Number(d.activeStopwatch.startedAt)>0){
     d.activeStopwatch=Object.assign({id:uid(),label:'作業',pageId:'',startedAt:Date.now(),updatedAt:0},d.activeStopwatch);
@@ -1906,6 +1929,18 @@ function migrateData(d){
     ensureOpeningRewardPointSnapshot(d,legacyXpOpeningCandidate(d));
   }
   if(from<12&&!Array.isArray(d.activityPages))d.activityPages=[];
+  if(from<13){
+    if(!Array.isArray(d.routineRunLogs))d.routineRunLogs=[];
+    const known=new Set(d.routineRunLogs.map(log=>log.id));
+    for(const old of d.logs){
+      if(!old||typeof old!=='object')continue;
+      const stamp=activityLogStamp(old),durationSec=Math.max(0,Number(old.durationSec)||Math.max(0,Number(old.durationMin)||0)*60);
+      const id=String(old.runLogId||uid());old.runLogId=id;
+      if(known.has(id))continue;
+      d.routineRunLogs.push(normalizeRoutineRunLog({id,routineName:old.routine||'ルーチン',startedAt:Number(old.startedAt)||Math.max(0,stamp-durationSec*1000),endedAt:stamp,durationSec,status:'completed',endType:'legacy',done:old.done,total:old.total,skips:old.skips,stepTimes:old.stepTimes,source:'legacy',updatedAt:stamp||Date.now()}));
+      known.add(id);
+    }
+  }
   d.mealSessions=(Array.isArray(d.mealSessions)?d.mealSessions:[]).map(normalizeMealSession);
   d.mealTemplates=(Array.isArray(d.mealTemplates)?d.mealTemplates:[]).map(normalizeMealTemplate);
   d.foodRules=(Array.isArray(d.foodRules)?d.foodRules:[]).map(normalizeFoodRule);
@@ -1932,13 +1967,14 @@ function migrateData(d){
   if(d.mealSafetyLogs.length>1000){d.mealSafetyLogs.sort((a,b)=>(a.startedAt||0)-(b.startedAt||0));d.mealSafetyLogs=d.mealSafetyLogs.slice(-1000);}
   if(d.journeyLogs.length>1000){d.journeyLogs.sort((a,b)=>(a.at||0)-(b.at||0));d.journeyLogs=d.journeyLogs.slice(-1000);}
   if(d.stopwatchLogs.length>2000){d.stopwatchLogs.sort((a,b)=>(a.endedAt||0)-(b.endedAt||0));d.stopwatchLogs=d.stopwatchLogs.slice(-2000);}
+  if(d.routineRunLogs.length>2000){d.routineRunLogs.sort((a,b)=>(a.endedAt||0)-(b.endedAt||0));d.routineRunLogs=d.routineRunLogs.slice(-2000);}
   if(d.activityPages.length>500){d.activityPages.sort((a,b)=>(a.updatedAt||0)-(b.updatedAt||0));d.activityPages=d.activityPages.slice(-500);}
   d.schemaVersion=CURRENT_SCHEMA;
   return d;
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','activityPages'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -1958,8 +1994,8 @@ const seed=()=>({
   todayTasks:[],todayTaskLogs:[],
   rewards:[],rewardRedemptions:[],rewardPointEvents:[],
   journeyLogs:[],
-  stopwatchLogs:[],activityPages:[],activeStopwatch:null,
-  schemaVersion:12,
+  stopwatchLogs:[],routineRunLogs:[],activityPages:[],activeStopwatch:null,
+  schemaVersion:13,
   mealSessions:[],
   mealTemplates:builtinMealTemplates(),
   foodRules:[],
@@ -2578,6 +2614,19 @@ function activityTimeLabel(stamp){
   if(localDateKey(d)===localDateKey(yesterday))return `昨日 ${time}`;
   return `${d.getMonth()+1}/${d.getDate()} ${time}`;
 }
+function routineRunDisplay(log){
+  if(log.status==='interrupted'||log.endType==='interrupted')return{icon:'⏹️',label:'中断',tone:'routine-interrupted'};
+  if(log.endType==='auto')return{icon:'⏰',label:'自動終了',tone:'routine-auto'};
+  if(log.endType==='manual')return{icon:'🏁',label:'手動終了',tone:'routine-manual'};
+  return{icon:'✅',label:'完了（旧記録）',tone:'routine-legacy'};
+}
+function routineRunTag(log,display=routineRunDisplay(log)){
+  const parts=[display.label];
+  if(log.microEntry)parts.push('10秒入口');
+  parts.push(quickTimerDurationLabel(log.durationSec));
+  if(log.total>0)parts.push(`${log.done}/${log.total}`);
+  return parts.join('・');
+}
 function collectActivityTimelineItems(cutoff,now){
   const items=[];
   for(const note of liveLogs(D.personalNotes)){
@@ -2598,6 +2647,10 @@ function collectActivityTimelineItems(cutoff,now){
     const stamp=activityLogStamp(log);
     if(stamp>=cutoff&&stamp<=now)items.push({id:`task-${log.id}`,kind:'check',icon:'✅',label:'チェックリスト・今日だけ',text:log.taskName||'削除済みの項目',tag:log.memo?'📝 メモあり':'',stamp});
   }
+  for(const log of liveLogs(D.routineRunLogs)){
+    const stamp=Number(log.endedAt)||0,display=routineRunDisplay(log);
+    if(stamp>=cutoff&&stamp<=now)items.push({id:`routine-${log.id}`,kind:'routine',tone:display.tone,icon:display.icon,label:`ルーチン・${display.label}`,text:log.routineName||'ルーチン',tag:routineRunTag(log,display),stamp});
+  }
   for(const log of liveLogs(D.stopwatchLogs)){
     const stamp=Number(log.endedAt)||0;
     const page=activityPageById(log.pageId);
@@ -2611,9 +2664,9 @@ function renderActivityTimeline(){
   if(!el)return;
   const now=Date.now(),cutoff=now-24*60*60*1000,items=collectActivityTimelineItems(cutoff,now);
   el.innerHTML='';
-  if(!items.length){el.innerHTML='<p class="muted">過去24時間のメモ、気分、チェック完了、計測記録はまだありません。</p>';return;}
+  if(!items.length){el.innerHTML='<p class="muted">過去24時間のメモ、気分、チェック完了、ルーチン、計測記録はまだありません。</p>';return;}
   for(const item of items){
-    const row=document.createElement('article');row.className=`activity-item ${item.kind}`;
+    const row=document.createElement('article');row.className=`activity-item ${item.kind}${item.tone?` ${item.tone}`:''}`;
     row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-summary"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</span><time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>`;
     if(item.kind==='stopwatch'){
       row.classList.add('activity-page-link');row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label',`${item.text}の活動ページを開く`);
@@ -3212,9 +3265,10 @@ function completeMicroEntry(){
 function showMicroWin(){if(!run)return;rescueState={mode:'micro-win'};renderRescueSheet();document.getElementById('rescueModal').classList.add('show');sfxJackpot();burst();}
 function continueMicroRun(){if(!run)return;document.getElementById('rescueModal').classList.remove('show');rescueState=null;run.microEntry=false;run.microEntryDone=false;run.paused=false;loadStep(true);toast('🔥 その勢い、借りていこう！');}
 function finishMicroRun(){
-  if(!run)return;const journeyId=run.journeyId;
+  if(!run)return;advanceRunClock();const stopped=run,journeyId=run.journeyId,endedAt=Date.now();
   document.getElementById('rescueModal').classList.remove('show');rescueState=null;clearInterval(timer);timer=null;speechSynthesis.cancel();
-  const log=journeyId&&D.journeyLogs.find(x=>x.id===journeyId);if(log){log.tinyEndedAt=Date.now();log.updatedAt=log.tinyEndedAt;save();}
+  addRoutineRunLog(stopped,{endedAt,status:'completed',endType:'manual',microEntry:true,done:0,total:0});
+  const log=journeyId&&D.journeyLogs.find(x=>x.id===journeyId);if(log){log.tinyEndedAt=endedAt;log.updatedAt=endedAt;}save();
   document.getElementById('run').classList.remove('active');run=null;renderHome();jackpot('ENTRY CLEAR!!','10秒の入口突破 +3XP');toast('🌱 今日はここまでで成功。ちゃんと記録したよ');
 }
 /* confirm代替：2度押し確認（アプリ内ビューはダイアログ不可のため） */
@@ -3787,6 +3841,16 @@ function recordCurrentStep(outcome){
   run.stepRecords.push({stepId:s.id,name:s.name,actualSec:Math.max(0,Math.round((run.stepElapsedMs||0)/1000)),plannedSec:s.sec,mode:run.usedCountUp?'countup':'countdown',outcome});
   run.currentRecorded=true;
 }
+function addRoutineRunLog(active,options={}){
+  if(!active||!active.r)return null;
+  const endedAt=Math.max(0,Number(options.endedAt)||Date.now()),steps=Array.isArray(active.stepRecords)?active.stepRecords.map(x=>Object.assign({},x)):[];
+  const current=active.r.steps&&active.r.steps[active.idx],status=options.status==='interrupted'?'interrupted':'completed';
+  const done=options.done===undefined?steps.filter(step=>step.outcome==='done').length:Math.max(0,Number(options.done)||0);
+  const total=options.total===undefined?(active.r.steps||[]).length:Math.max(0,Number(options.total)||0);
+  const entry=normalizeRoutineRunLog({id:uid(),routineId:active.r.id,routineName:active.r.name,startedAt:active.startedAt,endedAt,durationSec:Math.max(0,Math.round((endedAt-active.startedAt)/1000)),status,endType:options.endType||status,done,total,skips:active.skips,stepIndex:active.idx,stepName:current?current.name:'',currentStepSec:active.currentRecorded?0:Math.max(0,Math.round((active.stepElapsedMs||0)/1000)),stepTimes:steps,source:active.source||'normal',microEntry:!!options.microEntry,updatedAt:endedAt});
+  D.routineRunLogs.unshift(entry);if(D.routineRunLogs.length>2000)D.routineRunLogs.length=2000;
+  return entry;
+}
 function nextStep(outcome,auto=false){
   recordCurrentStep(outcome);
   if(run.idx<run.r.steps.length-1){run.idx++;loadStep(true);}
@@ -3802,17 +3866,17 @@ function finishRun(autoCompleted=false){
   const perfect=skips===0;
   const bonus=perfect?30:0;
   D.xp+=bonus;
-  r.lastRun=Date.now();
-  const durationSec=Math.round((Date.now()-run.startedAt)/1000);
-  const log={date:today(),time:new Date().toTimeString().slice(0,5),routine:r.name,done:doneCount,total:r.steps.length,skips,durationMin:Math.round(durationSec/60),durationSec,stepTimes:run.stepRecords.map(x=>Object.assign({},x))};
+  const endedAt=Date.now();r.lastRun=endedAt;
+  const durationSec=Math.round((endedAt-run.startedAt)/1000),runLog=addRoutineRunLog(run,{endedAt,status:'completed',endType:autoCompleted?'auto':'manual',done:doneCount,total:r.steps.length});
+  const log={date:today(),time:new Date(endedAt).toTimeString().slice(0,5),routine:r.name,done:doneCount,total:r.steps.length,skips,durationMin:Math.round(durationSec/60),durationSec,startedAt:run.startedAt,completedAt:endedAt,completionType:autoCompleted?'auto':'manual',runLogId:runLog&&runLog.id,stepTimes:run.stepRecords.map(x=>Object.assign({},x))};
   D.logs.unshift(log);
   if(D.logs.length>500)D.logs.length=500;
   markJourneyComplete(run.journeyId);
   save();
   sendNotion(log);
   const mode=D.settings.calLog||'off';
-  if(mode==='auto')calAddEvent(log,run.startedAt,Date.now());
-  else if(mode==='ask'){const st=run.startedAt;setTimeout(()=>askCalLog(log,st,Date.now()),1200);}
+  if(mode==='auto')calAddEvent(log,run.startedAt,endedAt);
+  else if(mode==='ask'){const st=run.startedAt;setTimeout(()=>askCalLog(log,st,endedAt),1200);}
   sfxJackpot();burst(true);
   const completionSpeech=runCompletionSpeech(r.name,perfect);
   if(autoCompleted)setTimeout(()=>speak(completionSpeech),300);
@@ -3853,6 +3917,7 @@ function closeResult(){
 function endRun(){
   if(!run)return;
   advanceRunClock();const stopped=run,now=Date.now();
+  addRoutineRunLog(stopped,{endedAt:now,status:'interrupted',endType:'interrupted'});
   const log=normalizeJourneyLog({id:uid(),at:now,updatedAt:now,type:'stopped',choice:'stopped',routineId:stopped.r.id,routineName:stopped.r.name,stepIndex:stopped.idx,stepRecords:stopped.stepRecords.map(x=>Object.assign({},x)),skips:stopped.skips,elapsedSec:Math.max(0,Math.round((now-stopped.startedAt)/1000)),parentJourneyId:stopped.journeyId||''});
   D.journeyLogs.unshift(log);save();
   clearInterval(timer);timer=null;speechSynthesis.cancel();
@@ -3911,7 +3976,7 @@ function renderProg(){
   const li=levelInfo();
   renderInsights();
   renderRewardShop();
-  document.getElementById('pRuns').textContent=D.logs.length;
+  document.getElementById('pRuns').textContent=liveLogs(D.routineRunLogs).length;
   document.getElementById('pNotes').textContent=liveLogs(D.personalNotes).length;
   document.getElementById('pChecks').textContent=liveLogs(D.habitLogs).length+liveLogs(D.todayTaskLogs).length;
   document.getElementById('pLevel').textContent=li.level;
@@ -5239,7 +5304,7 @@ function buildLocCsv(){
   return lines.join('\n');
 }
 function exportLocCsv(){download('loc_logs.csv',buildLocCsv());toast('🧭 LOC CSVを書き出しました');}
-const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','activityPages','rewards','rewardRedemptions','rewardPointEvents'];
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages','rewards','rewardRedemptions','rewardPointEvents'];
 function mergeMealCollections(local,remote){
   const legacyXp=Math.max(legacyXpOpeningCandidate(local),legacyXpOpeningCandidate(remote));
   const openingAmounts=[...(Array.isArray(local&&local.rewardPointEvents)?local.rewardPointEvents:[]),...(Array.isArray(remote&&remote.rewardPointEvents)?remote.rewardPointEvents:[])].filter(isOpeningRewardPointEvent).map(event=>Math.floor(Number(event.amount)||0));
@@ -5676,11 +5741,12 @@ function importTexts(input){
   rd.readAsText(f,'utf-8');
 }
 function exportLogs(){
-  let rows=['日付,時刻,ルーチン,完了,合計,スキップ,実時間秒,ステップ実時間'];
-  for(const g of D.logs){
-    const durationSec=Number(g.durationSec)||Math.max(0,Number(g.durationMin)||0)*60;
+  let rows=['日付,時刻,ルーチン,完了,合計,スキップ,実時間秒,ステップ実時間,状態,終了方法,開始日時,終了日時,終了時ステップ'];
+  for(const g of [...liveLogs(D.routineRunLogs)].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))){
+    const ended=new Date(g.endedAt||0),date=g.endedAt?localDateKey(ended):'',time=g.endedAt?ended.toTimeString().slice(0,5):'';
     const steps=(Array.isArray(g.stepTimes)?g.stepTimes:[]).map(s=>`${s.name}:${Math.max(0,Number(s.actualSec)||0)}秒${s.mode==='countup'?'(実時間計測)':''}`).join(' / ');
-    rows.push([g.date,g.time,csvEsc(g.routine),g.done,g.total,g.skips,durationSec,csvEsc(steps)].join(','));
+    const display=routineRunDisplay(g),status=g.status==='interrupted'?'中断':'完了',lastStep=g.stepName?`${g.stepName}${g.status==='interrupted'?`（${g.currentStepSec}秒地点）`:''}`:'';
+    rows.push([date,time,csvEsc(g.routineName),g.done,g.total,g.skips,g.durationSec,csvEsc(steps),status,display.label,timelineDateTime(g.startedAt),timelineDateTime(g.endedAt),csvEsc(lastStep)].join(','));
   }
   download('ルーチンログ.csv',rows.join('\n'));toast('📤 書き出しました');
 }
@@ -5722,11 +5788,9 @@ function chatgptTimelineRows(){
     const stamp=Number(log.startedAt)||0,end=Number(log.endedAt)||0;
     rows.push({stamp,dateTime:timelineDateTime(stamp),type:'1ボタン計測',content:log.label||'作業',routine:'',step:'',detail:`終了:${timelineDateTime(end)}・実時間:${Math.max(0,Number(log.durationSec)||0)}秒`});
   }
-  for(const log of D.logs){
-    const stamp=activityLogStamp(log);
-    const durationSec=Number(log.durationSec)||Math.max(0,Number(log.durationMin)||0)*60;
-    const detail=[`${Number(log.done)||0}/${Number(log.total)||0}ステップ完了`,Number(log.skips)?`${Number(log.skips)}スキップ`:'スキップなし',`実時間${durationSec}秒`].join('・');
-    rows.push({stamp,dateTime:timelineDateTime(stamp,log.date,log.time),type:'ルーチン完了',content:log.routine||'ルーチン',routine:log.routine||'',step:'',detail});
+  for(const log of liveLogs(D.routineRunLogs)){
+    const stamp=Number(log.endedAt)||0,display=routineRunDisplay(log),detail=[display.label,log.total>0?`${Number(log.done)||0}/${Number(log.total)||0}ステップ完了`:'',Number(log.skips)?`${Number(log.skips)}スキップ`:'',`開始:${timelineDateTime(log.startedAt)}`,`実時間${Math.max(0,Number(log.durationSec)||0)}秒`,log.status==='interrupted'&&log.stepName?`中断地点:${log.stepName}（${log.currentStepSec}秒）`:log.microEntry?'10秒の入口まで':''].filter(Boolean).join('・');
+    rows.push({stamp,dateTime:timelineDateTime(stamp),type:log.status==='interrupted'?'ルーチン中断':'ルーチン終了',content:log.routineName||'ルーチン',routine:log.routineName||'',step:log.status==='interrupted'?log.stepName||'':'',detail});
   }
   if(D.mealPrefs&&D.mealPrefs.includeInChatGptCsv)rows.push(...mealTimelineRows());
   return rows.sort((a,b)=>(a.stamp||0)-(b.stamp||0));
