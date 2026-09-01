@@ -273,7 +273,7 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .habit-editor-actions button{flex:1;white-space:nowrap;padding:8px 6px}
 @media(max-width:390px){.habit-editor-grid{grid-template-columns:1fr}.habit-row,.habit-toggle-area{gap:5px}.habit-main{align-items:flex-start;flex-direction:column;gap:2px}.habit-condition,.manage-habit-row .manage-condition{font-size:8px;padding:1px 4px}.manage-habit-row{gap:5px}.manage-habit-row .manage-primary{gap:4px}.habit-guide-preview,.habit-day-note,.habit-memo-editor{margin-left:28px;width:calc(100% - 28px)}}
 
-/* 24-hour activity timeline */
+/* recent activity timeline */
 .activity-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .activity-head h2{margin:0;font-size:16px!important}
 .activity-range{color:var(--dim);font-size:11px;white-space:nowrap}
@@ -990,7 +990,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div id="calList" class="muted">読み込み中…</div>
     </div>
     <div class="sect card" id="activityTimelineCard">
-      <div class="activity-head"><h2>🧭 活動と気持ちのタイムライン</h2><span class="activity-range">過去24時間・新しい順</span></div>
+      <div class="activity-head"><h2>🧭 活動と気持ちのタイムライン</h2><span class="activity-range">過去30件・新しい順</span></div>
       <div id="activityTimeline" class="activity-timeline"></div>
     </div>
   </div>
@@ -1517,7 +1517,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
       <div class="field"><label><input type="checkbox" id="setMealCsv" onchange="saveSettings()" style="width:auto;margin-right:6px">食事の記録をChatGPT用CSVに含める</label></div>
       <div class="field"><label><input type="checkbox" id="setMealCsvItems" onchange="saveSettings()" style="width:auto;margin-right:6px">品目名も含める</label></div>
       <div class="field"><label><input type="checkbox" id="setMealCsvNotes" onchange="saveSettings()" style="width:auto;margin-right:6px">自由記述メモも含める</label></div>
-      <div class="field"><label><input type="checkbox" id="setMealTimeline" onchange="saveSettings()" style="width:auto;margin-right:6px">24時間タイムラインに食後・待機後も表示する</label></div>
+      <div class="field"><label><input type="checkbox" id="setMealTimeline" onchange="saveSettings()" style="width:auto;margin-right:6px">活動タイムラインに食後・待機後も表示する</label></div>
       <div class="field"><label><input type="checkbox" id="setMealUrges" onchange="saveSettings()" style="width:auto;margin-right:6px">衝動の記録もChatGPT用CSVに含める</label></div>
       <div class="field"><label><input type="checkbox" id="setMealStartTiming" onchange="saveSettings()" style="width:auto;margin-right:6px">食事開始時に「これから／もう食べてる」を聞く</label></div>
       <p class="muted">☁️ 同期をONにすると、食事の記録（内容・数値・タグ・メモ）もGoogle Driveに保存されます。</p>
@@ -2823,9 +2823,9 @@ function collectActivityTimelineItems(cutoff,now){
 function renderActivityTimeline(){
   const el=document.getElementById('activityTimeline');
   if(!el)return;
-  const now=Date.now(),cutoff=now-24*60*60*1000,items=collectActivityTimelineItems(cutoff,now);
+  const now=Date.now(),items=collectActivityTimelineItems(1,now).slice(0,30);
   el.innerHTML='';
-  if(!items.length){el.innerHTML='<p class="muted">過去24時間のメモ、気分、チェック完了、ルーチン、計測記録はまだありません。</p>';return;}
+  if(!items.length){el.innerHTML='<p class="muted">メモ、気分、チェック完了、ルーチン、計測記録はまだありません。</p>';return;}
   for(const item of items){
     const row=document.createElement('article');row.className=`activity-item ${item.kind}${item.tone?` ${item.tone}`:''}`;
     row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-summary"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</span><time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>`;
