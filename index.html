@@ -584,6 +584,8 @@ body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-botto
 .timer-mode-switch button{border:1px solid transparent;border-radius:9px;background:none;color:var(--dim);font-family:inherit;font-size:11px;font-weight:800;padding:7px 5px;white-space:nowrap;cursor:pointer}
 .timer-mode-switch button.on{color:var(--cyan);background:var(--card2);border-color:#4b45a0;box-shadow:0 0 10px rgba(53,224,255,.15)}
 .timer-mode-switch button.up.on{color:var(--gold);box-shadow:0 0 10px rgba(255,201,60,.18)}
+.voice-repeat-btn{width:100%;max-width:360px;margin:0 0 4px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--dim);font-family:inherit;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
+.voice-repeat-btn.on{color:var(--pink);background:rgba(255,77,141,.09);border-color:rgba(255,77,141,.55);box-shadow:0 0 10px rgba(255,77,141,.13)}
 .ringwrap.countup .ring-fg{stroke:var(--gold);filter:drop-shadow(0 0 8px rgba(255,201,60,.8)) drop-shadow(0 0 18px rgba(255,77,141,.4))}
 .ringwrap.countup .time{color:var(--gold);text-shadow:0 0 12px rgba(255,201,60,.7)}
 .nextstep{color:var(--dim);font-size:13px;margin-top:10px}
@@ -1601,6 +1603,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     <button id="btnModeDown" class="on" type="button" onclick="setTimerMode('down')">⌛ カウントダウン</button>
     <button id="btnModeUp" class="up" type="button" onclick="setTimerMode('up')">⏱ 実時間計測</button>
   </div>
+  <button id="btnVoiceRepeat" class="voice-repeat-btn" type="button" onclick="toggleVoiceRepeat()" aria-pressed="false">🔁 読み上げリピート OFF</button>
   <div class="ringwrap">
     <svg viewBox="0 0 100 100">
       <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
@@ -1940,7 +1943,7 @@ const CURRENT_SCHEMA=15;
 
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
-  d.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true},d.settings||{});
+  d.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false},d.settings||{});
   d.routines=Array.isArray(d.routines)?d.routines:[];
   d.hitokoto=Array.isArray(d.hitokoto)?d.hitokoto:[];
   d.logs=Array.isArray(d.logs)?d.logs:[];
@@ -2074,7 +2077,7 @@ const seed=()=>({
   urgeLogs:[],foodItems:[],wakeLogs:[],locLogs:[],mealPlans:[],mealSafetyLogs:[],
   mealPrefs:defaultMealPrefs(),
   logs:[], xp:0, combo:0,
-  settings:{rate:1.0,voiceVolume:1,sfxVolume:.45,moti:true,sound:true}
+  settings:{rate:1.0,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false}
 });
 let D;
 try{D=normalizeData(JSON.parse(localStorage.getItem(KEY))||seed());}
@@ -3697,11 +3700,12 @@ function startRun(id,options={}){
   const priorSkips=Number.isFinite(Number(options.skips))?Number(options.skips):stepRecords.filter(x=>x.outcome==='skipped').length;
   const journeyId=claimJourneyForStart(r.id,options.journeyId||'');
   showScreen('scr-home');
-  run={r,idx:startIndex,left:0,leftMs:0,paused:false,skips:priorSkips,startedAt:Date.now(),timerMode:'down',stepRecords,microEntry:!!options.micro,microEntryDone:false,source:options.source||'normal',journeyId};
+  run={r,idx:startIndex,left:0,leftMs:0,paused:false,skips:priorSkips,startedAt:Date.now(),timerMode:'down',repeatSpeech:!!D.settings.repeatSpeech,repeatText:'',repeatLastAt:0,stepRecords,microEntry:!!options.micro,microEntryDone:false,source:options.source||'normal',journeyId};
   D.combo=D.combo||0;
   document.getElementById('run').classList.add('active');
   document.getElementById('runTitle').textContent=`${r.emoji} ${r.name}`;
   document.getElementById('btnPause').textContent='⏸ 一時停止';
+  updateVoiceRepeatUi();
   beep(660,.1);// unlock audio on iOS
   loadStep(true);
   timer=setInterval(tick,1000);
@@ -3732,6 +3736,7 @@ function loadStep(speakIt){
   updateTimerModeUi();updateRing();renderUpcoming();
   const pool=[...(s.texts||[]),...D.hitokoto];
   const moti=pool.length?pool[Math.random()*pool.length|0]:'';
+  run.repeatText=`${s.name}。${D.settings.moti&&moti?moti:''}`.trim();run.repeatLastAt=Date.now();
   document.getElementById('runMoti').textContent=moti||'（テキスト未登録：編集画面から手動 or 🤖AIで追加できます）';
   const memoEl=document.getElementById('runMemo');
   memoEl.style.display='block';
@@ -3933,6 +3938,7 @@ function tick(){
     if(iv&&Math.floor(elapsed/iv)>Math.floor((run.lastSignalElapsed||0)/iv))beep(660,.12,'sine',.09);
   }
   run.lastSignalElapsed=elapsed;
+  repeatCurrentSpeech();
   if(run.timerMode==='down'&&run.leftMs<=0){
     if(run.microEntry){speak('10秒できた！');completeMicroEntry();}
     else{
@@ -3942,6 +3948,25 @@ function tick(){
     return;
   }
   updateRing();updateRemain();
+}
+function updateVoiceRepeatUi(){
+  const btn=document.getElementById('btnVoiceRepeat');if(!btn)return;
+  const on=!!(run&&run.repeatSpeech);
+  btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',String(on));
+  btn.textContent=`🔁 読み上げリピート ${on?'ON':'OFF'}`;
+}
+function repeatCurrentSpeech(force=false){
+  if(!run||!run.repeatSpeech||run.paused||!run.repeatText)return;
+  if(run.timerMode==='down'&&(run.left<=10||run.halfSpeechActive))return;
+  const now=Date.now();if(!force&&now-(run.repeatLastAt||0)<12000)return;
+  if('speechSynthesis' in window&&speechSynthesis.speaking)return;
+  run.repeatLastAt=now;speak(run.repeatText);
+}
+function toggleVoiceRepeat(){
+  if(!run)return;
+  run.repeatSpeech=!run.repeatSpeech;D.settings.repeatSpeech=run.repeatSpeech;save();updateVoiceRepeatUi();
+  if(run.repeatSpeech){run.repeatLastAt=0;repeatCurrentSpeech(true);toast('🔁 読み上げリピート ON');}
+  else{speechSynthesis.cancel();toast('🔁 読み上げリピート OFF');}
 }
 function updateTimerModeUi(){
   if(!run)return;
