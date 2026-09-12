@@ -929,6 +929,31 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   #rescueModal .sheet{padding:14px 9px calc(14px + env(safe-area-inset-bottom))}.rescue-title{font-size:17px}.rescue-actions button{font-size:10px;padding:10px 3px}
   .rescard{max-height:92dvh;overflow-y:auto;padding:16px 12px}.restitle{font-size:35px}
 }
+/* Life plan: keep wide cash-flow tables inside their own scroll region. */
+#scr-life.active{display:block;max-width:1000px;margin:0 auto}
+.life-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.life-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.life-grid label{display:block;font-size:11px;color:var(--dim);font-weight:700}
+.life-grid input,.life-grid select{margin-top:4px;width:100%;min-width:0;font-size:16px}
+.life-entry{padding:10px 0;border-top:1px dashed var(--line);margin-top:8px}
+.life-entry .life-head input{min-width:0;flex:1;font-size:16px}
+#scr-life button{white-space:nowrap}
+.life-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.life-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.life-summary div{padding:12px;background:var(--card2);border-radius:12px}
+.life-summary span{display:block;font-size:11px;color:var(--dim)}
+.life-summary b{font-size:19px;color:var(--cyan-text);overflow-wrap:anywhere}
+.life-negative{color:var(--pink)!important}
+.life-scroll{overflow-x:auto;max-width:100%;margin-top:10px}
+.life-table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+.life-table th,.life-table td{text-align:right;padding:9px;white-space:nowrap;border-bottom:1px solid var(--line)}
+.life-table th:first-child,.life-table td:first-child{text-align:left}
+.life-table caption{text-align:left;color:var(--dim);font-size:11px;margin-bottom:6px}
+.life-chart{display:block;width:100%;height:auto;margin-top:12px}
+.life-note{font-size:11px;color:var(--dim);line-height:1.65;margin:8px 0}
+.life-error{font-size:12px;color:var(--pink);margin:8px 0}
+@media(min-width:760px){.life-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.life-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:430px){.tabbar button{font-size:10px;padding-left:2px;padding-right:2px}}
 </style>
 </head>
 <body>
@@ -941,6 +966,26 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
     </div>
   </div>
 
+  <div class="screen" id="scr-life">
+    <div class="card">
+      <div class="life-head"><h2>🌱 ライフプラン</h2><button class="btn btn-g btn-sm" onclick="showScreen('scr-home')">ホームへ</button></div>
+      <p class="life-note">毎年のお金の出入りから、将来の資産を見通す。金額はすべて万円で入力します（例：月25万円 → 25）。</p>
+      <div id="lifeBasics" class="life-grid"></div>
+      <p class="life-note">開始年の1月〜12月を1年分として計算します。現在の資産は開始年の前年末時点の金額です。</p>
+    </div>
+    <div class="life-columns">
+      <div class="card"><h2>↗ 収入</h2><p class="life-note">給与・年金は手取りで入力。退職金など一度だけの収入は開始年と終了年を同じにします。</p><div id="lifeIncome"></div><button class="btn btn-c btn-sm" onclick="addLifeEntry('income')">＋ 収入を追加</button></div>
+      <div class="card"><h2>↘ 支出</h2><p class="life-note">生活費・家賃・保険など。家の購入など一度だけの支出も追加できます。</p><div id="lifeExpense"></div><button class="btn btn-p btn-sm" onclick="addLifeEntry('expense')">＋ 支出を追加</button></div>
+    </div>
+    <div class="card">
+      <h2>📈 収支と資産の見通し</h2>
+      <div id="lifeError" class="life-error" role="status"></div>
+      <div id="lifeResults"></div>
+      <p class="life-note">年末資産 ＝ 前年末資産 ＋ 年間収入 − 年間支出。変化率は各項目の開始年を基準に毎年複利で反映します。運用益・税金・借入利息の自動計算は含みません。資産がマイナスの年は資金不足額を表します。</p>
+      <p class="life-note">入力は自動保存されます。設定でクラウド同期がONの場合、このプランも同期されます。参考：エクセル・ライフプラン表 ver.1.79 の収支・資産推移。</p>
+      <div class="life-actions"><button class="btn btn-c btn-sm" onclick="exportLifeCsv()">年次表をCSV保存</button><button class="btn btn-g btn-sm" onclick="showScreen('scr-home')">ホームへ</button></div>
+    </div>
+  </div>
   <!-- HOME -->
   <div class="screen active" id="scr-home">
     <div class="card quick-timer-card" id="quickTimerCard" aria-live="polite"></div>
@@ -1699,6 +1744,7 @@ h2{font-size:16px;margin-bottom:10px;color:var(--cyan)}
   <button class="on" data-scr="scr-home" onclick="tab(this)"><span class="ti">🏠</span>ホーム</button>
   <button data-scr="scr-prog" onclick="tab(this)"><span class="ti">📊</span>進捗</button>
   <button data-scr="scr-meal" onclick="tab(this)"><span class="ti">🍽</span>食事</button>
+  <button data-scr="scr-life" onclick="tab(this)"><span class="ti">🌱</span>ライフプラン</button>
   <button data-scr="scr-set" onclick="tab(this)"><span class="ti">⚙️</span>設定</button>
 </nav>
 
@@ -1941,8 +1987,97 @@ function normalizeBoredomLog(log){
 }
 const CURRENT_SCHEMA=15;
 
+/* ============ LIFE PLAN ============ */
+function normalizeLifePlan(raw){
+  const year=new Date().getFullYear();
+  const p=Object.assign({startYear:year,years:30,assets:0,entries:null},raw&&typeof raw==='object'?raw:{});
+  const num=(v,f,min,max)=>Number.isFinite(Number(v))&&v!==''?Math.min(max,Math.max(min,Number(v))):f;
+  p.startYear=Math.round(num(p.startYear,year,1900,2200));p.years=Math.round(num(p.years,30,1,100));p.assets=num(p.assets,0,-1e9,1e9);
+  if(!Array.isArray(p.entries))p.entries=[{kind:'income',name:'給与（手取り）'},{kind:'expense',name:'生活費'}];
+  p.entries=p.entries.filter(e=>e&&typeof e==='object').map(e=>({
+    kind:e.kind==='income'?'income':'expense',name:String(e.name||'').slice(0,60),
+    amount:num(e.amount,0,0,1e8),unit:e.unit==='year'?'year':'month',
+    start:Math.round(num(e.start,p.startYear,1900,2299)),end:Math.round(num(e.end,p.startYear+p.years-1,1900,2299)),growth:num(e.growth,0,-100,100)
+  }));
+  return p;
+}
+function calculateLifePlan(p){
+  let assets=p.assets;const rows=[];
+  for(let i=0;i<p.years;i++){
+    const year=p.startYear+i;let income=0,expense=0;
+    for(const e of p.entries){
+      if(year<e.start||year>e.end)continue;
+      const value=e.amount*(e.unit==='month'?12:1)*Math.pow(1+e.growth/100,year-e.start);
+      if(e.kind==='income')income+=value;else expense+=value;
+    }
+    const net=income-expense;assets+=net;
+    rows.push({year,income,expense,net,assets});
+  }
+  return rows;
+}
+function lifeNumber(value){return value.toLocaleString('ja-JP',{maximumFractionDigits:1});}
+function lifeInput(label,key,value,min,max,step='1',index=null){
+  const target=index===null?'null':index;
+  return `<label>${label}<input type="number" required inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${value}" data-life-key="${key}" data-life-index="${target}" oninput="updateLifeField(this,${target},'${key}')"></label>`;
+}
+function renderLifePlan(){
+  D.lifePlan=normalizeLifePlan(D.lifePlan);const p=D.lifePlan;
+  document.getElementById('lifeBasics').innerHTML=lifeInput('開始年','startYear',p.startYear,1900,2200)+lifeInput('表示年数（1〜100年）','years',p.years,1,100)+lifeInput('現在の資産（万円）','assets',p.assets,-1e9,1e9,'any');
+  for(const kind of ['income','expense']){
+    document.getElementById(kind==='income'?'lifeIncome':'lifeExpense').innerHTML=p.entries.map((e,i)=>e.kind!==kind?'':`<div class="life-entry">
+      <div class="life-head"><input type="text" aria-label="${kind==='income'?'収入':'支出'}の項目名" maxlength="60" value="${esc(e.name)}" onchange="updateLifeField(this,${i},'name')"><button class="btn btn-g btn-sm" onclick="twoTap(this,'削除する？',()=>removeLifeEntry(${i}))">削除</button></div>
+      <div class="life-grid">${lifeInput('金額（万円）','amount',e.amount,0,1e8,'any',i)}
+      <label>金額の単位<select onchange="updateLifeField(this,${i},'unit')"><option value="month" ${e.unit==='month'?'selected':''}>月額 × 12</option><option value="year" ${e.unit==='year'?'selected':''}>年額</option></select></label>
+      ${lifeInput('年変化率（%）','growth',e.growth,-100,100,'any',i)}${lifeInput('開始年','start',e.start,1900,2299,'1',i)}${lifeInput('終了年（この年を含む）','end',e.end,1900,2299,'1',i)}</div></div>`).join('');
+  }
+  renderLifeResults();
+}
+function lifeValidation(){
+  const invalid=[...document.querySelectorAll('#scr-life input')].find(el=>!el.checkValidity());
+  if(invalid)return '入力値を確認してください。年は整数、金額は範囲内の数値で入力してください。';
+  const e=D.lifePlan.entries.find(e=>e.start>e.end);
+  return e?`「${e.name||'項目'}」の終了年は開始年以降にしてください。`:'';
+}
+function updateLifeField(input,index,key){
+  if(!input.checkValidity()){renderLifeResults();return;}
+  const target=index===null?D.lifePlan:D.lifePlan.entries[index];if(!target)return;
+  target[key]=key==='name'||key==='unit'?input.value:Number(input.value);
+  save();renderLifeResults();
+}
+function addLifeEntry(kind){
+  if(lifeValidation()){renderLifeResults();return;}
+  const p=D.lifePlan;p.entries.push({kind,name:kind==='income'?'その他の収入':'その他の支出',amount:0,unit:'year',start:p.startYear,end:p.startYear+p.years-1,growth:0});save();renderLifePlan();
+}
+function removeLifeEntry(index){D.lifePlan.entries.splice(index,1);save();renderLifePlan();}
+function renderLifeResults(){
+  const error=lifeValidation();document.getElementById('lifeError').textContent=error;
+  const el=document.getElementById('lifeResults');if(error){el.innerHTML='';return;}
+  const p=D.lifePlan,rows=calculateLifePlan(p),first=rows[0],last=rows[rows.length-1],shortfall=rows.find(r=>r.assets<0);
+  if(rows.some(r=>Object.values(r).some(v=>!Number.isFinite(v)||Math.abs(v)>Number.MAX_SAFE_INTEGER))){document.getElementById('lifeError').textContent='計算結果が大きすぎます。金額・変化率・期間を小さくしてください。';el.innerHTML='';return;}
+  const metric=(label,value)=>`<div><span>${label}</span><b class="${value<0?'life-negative':''}">${lifeNumber(value)} 万円</b></div>`;
+  const points=[{year:p.startYear-1,assets:p.assets},...rows];
+  const low=Math.min(0,...points.map(r=>r.assets)),high=Math.max(1,...points.map(r=>r.assets));
+  const x=i=>72+i*544/(points.length-1),y=v=>190-(v-low)/(high-low)*162;
+  const line=points.map((r,i)=>`${x(i)},${y(r.assets)}`).join(' ');
+  const ticks=[high,(high+low)/2,low];
+  el.innerHTML=`<p class="life-note">${p.startYear}〜${last.year}年・${p.years}年間</p><div class="life-summary">${metric('初年度の年間収支',first.net)}${metric(`${last.year}年末の資産`,last.assets)}</div>
+    <p class="${shortfall?'life-error':'life-note'}">${shortfall?`${shortfall.year}年に年末資産がマイナスになります。`:'表示期間内の年末資産はマイナスになりません。'}${p.entries.every(e=>e.amount===0)?' 収入と支出の金額を入力して試算を始めましょう。':''}</p>
+    <svg class="life-chart" viewBox="0 0 640 228" role="img" aria-label="年末資産の推移。数値は下の年次表で確認できます。">
+      <title>資産推移（万円）</title>${ticks.map(v=>`<line x1="72" x2="616" y1="${y(v)}" y2="${y(v)}" stroke="var(--line2)"/><text x="65" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--dim)">${lifeNumber(v)}</text>`).join('')}
+      <line x1="72" x2="616" y1="${y(0)}" y2="${y(0)}" stroke="var(--pink)" stroke-dasharray="4 4"/>
+      <polyline points="${line}" fill="none" stroke="var(--cyan-text)" stroke-width="3" stroke-linejoin="round"/>
+      <text x="72" y="217" font-size="12" fill="var(--dim)">${p.startYear-1}年末</text><text x="616" y="217" text-anchor="end" font-size="12" fill="var(--dim)">${last.year}年末</text>
+    </svg><div class="life-scroll" tabindex="0" role="region" aria-label="年次収支表・横にスクロールできます"><table class="life-table"><caption>単位：万円 ／ スマホでは横にスクロールできます</caption><thead><tr><th scope="col">年</th><th scope="col">収入</th><th scope="col">支出</th><th scope="col">年間収支</th><th scope="col">年末資産</th></tr></thead><tbody>${rows.map(r=>`<tr><th scope="row">${r.year}</th>${['income','expense','net','assets'].map(k=>`<td class="${r[k]<0?'life-negative':''}">${lifeNumber(r[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function exportLifeCsv(){
+  if(lifeValidation()||document.getElementById('lifeError').textContent){toast('入力内容を確認してください');return;}
+  const rows=calculateLifePlan(D.lifePlan);
+  download(`life-plan-${D.lifePlan.startYear}.csv`,[['年','収入（万円）','支出（万円）','年間収支（万円）','年末資産（万円）'],...rows.map(r=>[r.year,...['income','expense','net','assets'].map(k=>Math.round(r[k]*100)/100)])].map(r=>r.join(',')).join('\r\n'));
+}
+/* ============ LIFE PLAN END ============ */
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
+  d.lifePlan=normalizeLifePlan(d.lifePlan);
   d.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false},d.settings||{});
   d.routines=Array.isArray(d.routines)?d.routines:[];
   d.hitokoto=Array.isArray(d.hitokoto)?d.hitokoto:[];
@@ -2313,6 +2448,7 @@ function renderActiveDataScreen(){
   else if(active.id==='scr-activity-page')renderActivityPage();
   else if(active.id==='scr-meal')renderMeal();
   else if(active.id==='scr-prog')renderProg();
+  else if(active.id==='scr-life')renderLifePlan();
   else if(active.id==='scr-set'){renderManage();renderSet();}
 }
 function tab(btn){
@@ -2332,6 +2468,7 @@ function showScreen(id){
   if(id==='scr-activity-page')renderActivityPage();
   if(id==='scr-meal')renderMeal();
   if(id==='scr-prog')renderProg();
+  if(id==='scr-life')renderLifePlan();
   if(id==='scr-set'){renderManage();renderSet();}
   if(savedActivityDraft)toast('💾 編集内容を保存しました');
   return true;
