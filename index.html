@@ -1028,7 +1028,7 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
         <button class="btn btn-c btn-sm" type="button" onclick="addTodayTask()">＋ 今日だけ</button>
       </div>
     </div>
-    <div class="card notion-card" id="notionTaskCard">
+    <div class="card notion-card" id="notionTaskCard" hidden>
       <div class="notion-head">
         <h2>📓 春香ボール</h2>
         <span class="notion-count" id="notionTaskCount" hidden></span>
@@ -2594,7 +2594,7 @@ function renderHome(){
   const hc=document.getElementById('hitokotoChips');hc.innerHTML='';
   document.getElementById('aiToneInput').value=D.settings.aiTone||'';
   loadCalEvents();
-  loadNotionTasks();
+  if(!document.getElementById('notionTaskCard')?.hidden)loadNotionTasks();
   D.hitokoto.forEach((t,i)=>{
     const c=document.createElement('span');c.className='txtchip';
     c.innerHTML=`${esc(t)}<button title="削除">✕</button>`;
