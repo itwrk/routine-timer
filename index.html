@@ -133,6 +133,34 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .mood-add .mood-label-input{flex:1;min-width:0}
 .mood-add button{white-space:nowrap;flex-shrink:0;padding:8px 10px}
 
+/* simple notes */
+.simple-notes-shell{width:100%;max-width:920px;margin:0 auto}
+.simple-notes-head{display:flex;align-items:center;gap:10px;padding:11px 12px;background:linear-gradient(145deg,#fffdf3,#fff8d9)}
+.simple-notes-head h2{flex:1;min-width:0;margin:0;color:var(--gold-text)}
+.simple-notes-count{color:var(--dim);font-size:calc(10px * var(--text-scale));white-space:nowrap}
+.simple-notes-head .btn{white-space:nowrap;flex-shrink:0}
+.simple-notes-list{display:grid;grid-template-columns:1fr;gap:7px}
+.simple-note-card{position:relative;min-width:0;border:1px solid rgba(217,154,6,.3);border-radius:13px;background:linear-gradient(145deg,#fffef8,#fff8dc);box-shadow:0 4px 14px rgba(105,83,16,.08);overflow:hidden}
+.simple-note-open{display:block;width:100%;min-height:116px;padding:12px 45px 11px 13px;border:0;background:none;color:var(--text);text-align:left;cursor:pointer}
+.simple-note-title{font-size:calc(15px * var(--text-scale));font-weight:800;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.simple-note-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;margin-top:5px;color:#5f587f;font-size:calc(11px * var(--text-scale));line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.simple-note-meta{display:block;margin-top:8px;color:#908762;font-size:calc(9px * var(--text-scale));white-space:nowrap}
+.simple-note-del{position:absolute;right:7px;top:7px;width:36px;height:36px;border:0;border-radius:9px;background:rgba(255,255,255,.6);color:var(--dim);font-size:calc(12px * var(--text-scale));cursor:pointer}
+.simple-notes-empty{padding:42px 18px;text-align:center;border:1px dashed rgba(217,154,6,.38);border-radius:14px;background:rgba(255,248,220,.48)}
+.simple-notes-empty strong{display:block;color:var(--gold-text);font-size:calc(17px * var(--text-scale));margin-bottom:6px}
+.simple-note-editor{padding:12px;background:linear-gradient(145deg,#fffef9,#fff9df)}
+.simple-note-editor-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.simple-note-editor-head .text-link{font-size:calc(12px * var(--text-scale))}
+.simple-note-editor-time{flex:1;min-width:0;color:#908762;font-size:calc(9px * var(--text-scale));text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.simple-note-editor-title{border:0!important;border-bottom:1px solid rgba(217,154,6,.26)!important;border-radius:0!important;background:transparent!important;padding:8px 4px!important;font-size:calc(21px * var(--text-scale))!important;font-weight:800}
+.simple-note-editor-body{min-height:440px;border:0!important;background:transparent!important;padding:12px 4px!important;font-size:calc(15px * var(--text-scale))!important;line-height:1.75;resize:vertical}
+.simple-note-editor-title:focus,.simple-note-editor-body:focus{outline:none;box-shadow:none}
+.simple-note-editor-actions{display:flex;gap:7px;border-top:1px solid rgba(217,154,6,.24);padding-top:9px}
+.simple-note-editor-actions .btn{flex:1;min-width:0;white-space:nowrap}
+.simple-note-editor-actions .simple-note-delete{flex:0 0 auto}
+@media(min-width:700px){.simple-notes-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:390px){.simple-notes-head{gap:6px}.simple-notes-head .btn{padding:8px 9px;font-size:calc(11px * var(--text-scale))}.simple-note-editor{padding:10px 9px}.simple-note-editor-title{font-size:calc(19px * var(--text-scale))!important}.simple-note-editor-body{min-height:54vh;font-size:calc(16px * var(--text-scale))!important}}
+
 /* one-button activity timer */
 .quick-timer-card{border-color:rgba(53,224,255,.4);background:linear-gradient(135deg,#fff 0%,#effcff 55%,#f7efff 100%)}
 .quick-timer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
@@ -872,6 +900,7 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
   #routineList{display:contents}
   #scr-home .memo-composer{grid-row:span 2}
   #scr-home #activityTimelineCard{grid-column:span 2}
+  #scr-notes>.simple-notes-shell{grid-column:1/-1}
   #scr-preview>.card,#scr-edit>.card{grid-column:1 / span 2}
   #scr-activity-page>.card{grid-column:1/-1}
   #scr-set>.btn-full{grid-column:1/-1}
@@ -1046,6 +1075,18 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
     <div class="sect card" id="activityTimelineCard">
       <div class="activity-head"><h2>🧭 活動と気持ちのタイムライン</h2><span class="activity-range">過去30件・新しい順</span></div>
       <div id="activityTimeline" class="activity-timeline"></div>
+    </div>
+  </div>
+
+  <!-- SIMPLE NOTES -->
+  <div class="screen" id="scr-notes">
+    <div class="simple-notes-shell">
+      <div class="card simple-notes-head">
+        <h2>🗒️ メモ</h2>
+        <span class="simple-notes-count" id="simpleNotesCount"></span>
+        <button class="btn btn-p btn-sm" id="simpleNoteNewButton" type="button" onclick="newSimpleNote()">＋ 新規メモ</button>
+      </div>
+      <div id="simpleNotesContent"></div>
     </div>
   </div>
 
@@ -1751,6 +1792,7 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
 <nav class="tabbar" aria-label="メインメニュー">
   <div class="tabbar-brand" aria-hidden="true"><span>🕹️</span><strong>ROUTINE</strong><small>VOICE TIMER</small></div>
   <button class="on" data-scr="scr-home" onclick="tab(this)"><span class="ti">🏠</span>ホーム</button>
+  <button data-scr="scr-notes" onclick="tab(this)"><span class="ti">🗒️</span>メモ</button>
   <button data-scr="scr-prog" onclick="tab(this)"><span class="ti">📊</span>進捗</button>
   <button data-scr="scr-meal" onclick="tab(this)"><span class="ti">🍽</span>食事</button>
   <button data-scr="scr-life" onclick="tab(this)"><span class="ti">🌱</span>ライフプラン</button>
@@ -1790,6 +1832,12 @@ function normalizeHabitLog(log){
   n.memo=String(n.memo||'').slice(0,500);n.completedAt=Math.max(0,Number(n.completedAt)||0);
   n.xpAward=Math.max(0,Math.floor(Number(n.xpAward)||0));n.updatedAt=Math.max(0,Number(n.updatedAt)||n.completedAt);
   return n;
+}
+function normalizeSimpleNote(note){
+  const now=Date.now(),n=Object.assign({id:uid(),title:'',body:'',createdAt:now,updatedAt:now,deletedAt:null},note||{});
+  n.id=String(n.id||uid());n.title=String(n.title||'').slice(0,120);n.body=String(n.body||'').slice(0,50000);
+  n.createdAt=Math.max(0,Number(n.createdAt)||Number(n.updatedAt)||now);n.updatedAt=Math.max(n.createdAt,Number(n.updatedAt)||n.createdAt);
+  n.deletedAt=Number(n.deletedAt)>0?Number(n.deletedAt):null;return n;
 }
 function normalizeTodayTaskLog(log){
   const n=Object.assign({id:uid(),taskId:'',taskName:'',date:'',time:'',completedAt:0,memo:'',xpAward:0,updatedAt:0,deletedAt:null},log||{});
@@ -1997,7 +2045,7 @@ function normalizeBoredomLog(log){
   n.startedAt=Math.max(0,Number(n.startedAt)||0);n.endedAt=Math.max(n.startedAt,Number(n.endedAt)||0);n.updatedAt=Math.max(0,Number(n.updatedAt)||n.endedAt||Date.now());
   return n;
 }
-const CURRENT_SCHEMA=16;
+const CURRENT_SCHEMA=17;
 
 /* ============ LIFE PLAN ============ */
 function normalizeLifePlan(raw){
@@ -2096,6 +2144,7 @@ function normalizeData(raw){
   d.logs=Array.isArray(d.logs)?d.logs:[];
   d.xp=Math.max(0,Math.floor(Number(d.xp)||0));
   d.personalNotes=Array.isArray(d.personalNotes)?d.personalNotes:[];
+  d.simpleNotes=(Array.isArray(d.simpleNotes)?d.simpleNotes:[]).map(normalizeSimpleNote);
   d.moods=(Array.isArray(d.moods)?d.moods:defaultMoods()).map(normalizeMood);
   d.moodLogs=(Array.isArray(d.moodLogs)?d.moodLogs:[]).filter(log=>log&&typeof log==='object'&&!Array.isArray(log)&&Object.keys(log).length).map(normalizeMoodLog);
   d.habits=(Array.isArray(d.habits)?d.habits:[]).map(normalizeHabit);
@@ -2196,7 +2245,7 @@ function migrateData(d){
 }
 function purgeMealTombstones(d){
   const limit=Date.now()-60*24*60*60*1000;
-  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages','boredomLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
+  for(const k of ['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','simpleNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages','boredomLogs'])d[k]=(Array.isArray(d[k])?d[k]:[]).filter(x=>!x||!x.deletedAt||x.deletedAt>limit);
 }
 
 const seed=()=>({
@@ -2210,14 +2259,14 @@ const seed=()=>({
     ]
   }],
   hitokoto:['始めた時点で50点、続いてる今は80点！','完璧じゃなくていい、進んでいればいい。','ドーパミンは行動の後からやってくる。まず動こう！'],
-  personalNotes:[],
+  personalNotes:[],simpleNotes:[],
   moods:defaultMoods(),moodLogs:[],
   habits:[],habitLogs:[],
   todayTasks:[],todayTaskLogs:[],
   rewards:[],rewardRedemptions:[],rewardPointEvents:[],
   journeyLogs:[],
   stopwatchLogs:[],routineRunLogs:[],activityPages:[],boredomLogs:[],activeBoredom:null,activeStopwatch:null,
-  schemaVersion:16,
+  schemaVersion:17,
   mealSessions:[],
   mealTemplates:builtinMealTemplates(),
   foodRules:[],
@@ -2451,7 +2500,7 @@ function toast(msg){
 }
 function hasVisibleDataEditor(){
   const focused=document.activeElement,focusedInput=focused&&focused.matches('input,textarea,select,[contenteditable="true"]')&&focused.offsetParent!==null;
-  return !!focusedInput||[...document.querySelectorAll('.habit-memo-editor,.habit-editor,.reward-editor,.activity-page-editor')].some(editor=>editor.offsetParent!==null);
+  return !!focusedInput||[...document.querySelectorAll('.habit-memo-editor,.habit-editor,.reward-editor,.activity-page-editor,.simple-note-editor')].some(editor=>editor.offsetParent!==null);
 }
 function renderActiveDataScreen(){
   if(hasVisibleDataEditor())return;
@@ -2461,6 +2510,7 @@ function renderActiveDataScreen(){
   else if(active.id==='scr-meal')renderMeal();
   else if(active.id==='scr-prog')renderProg();
   else if(active.id==='scr-life')renderLifePlan();
+  else if(active.id==='scr-notes')renderSimpleNotes();
   else if(active.id==='scr-set'){renderManage();renderSet();}
 }
 function tab(btn){
@@ -2468,6 +2518,7 @@ function tab(btn){
 }
 function showScreen(id){
   const current=document.querySelector('.screen.active');let savedActivityDraft=false;
+  if(id!=='scr-notes'&&current&&current.id==='scr-notes'&&simpleNoteEditingId){commitSimpleNoteDraft(true);simpleNoteEditingId=null;}
   if(id!=='scr-activity-page'&&current&&current.id==='scr-activity-page'&&activityPageEditing){
     if(activityPageById(selectedActivityPageId)){if(!commitActivityPageEditor())return false;savedActivityDraft=true;}
     activityPageEditing=false;
@@ -2481,6 +2532,7 @@ function showScreen(id){
   if(id==='scr-meal')renderMeal();
   if(id==='scr-prog')renderProg();
   if(id==='scr-life')renderLifePlan();
+  if(id==='scr-notes')renderSimpleNotes();
   if(id==='scr-set'){renderManage();renderSet();}
   if(savedActivityDraft)toast('💾 編集内容を保存しました');
   return true;
@@ -2559,6 +2611,58 @@ function openManage(section){
   if(section==='mealTemplates')requestAnimationFrame(()=>document.getElementById('mealTemplateManageCard').scrollIntoView({behavior:'smooth',block:'start'}));
   if(section==='foodItems')requestAnimationFrame(()=>document.getElementById('foodItemManageCard').scrollIntoView({behavior:'smooth',block:'start'}));
   if(section==='sync')requestAnimationFrame(()=>document.getElementById('syncSettingsCard').scrollIntoView({behavior:'smooth',block:'start'}));
+}
+
+/* ============ SIMPLE NOTES ============ */
+let simpleNoteEditingId=null;
+function simpleNoteDateLabel(stamp){
+  const d=new Date(Number(stamp)||Date.now()),now=new Date(),time=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  if(localDateKey(d)===localDateKey(now))return`今日 ${time}`;
+  if(d.getFullYear()===now.getFullYear())return`${d.getMonth()+1}/${d.getDate()} ${time}`;
+  return`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${time}`;
+}
+function newSimpleNote(){simpleNoteEditingId='__new__';renderSimpleNotes();requestAnimationFrame(()=>document.getElementById('simpleNoteTitle')?.focus());}
+function editSimpleNote(id){if(!liveLogs(D.simpleNotes).some(note=>note.id===id))return;simpleNoteEditingId=id;renderSimpleNotes();requestAnimationFrame(()=>document.getElementById('simpleNoteBody')?.focus());}
+function commitSimpleNoteDraft(silent=false){
+  if(!simpleNoteEditingId)return false;
+  const titleInput=document.getElementById('simpleNoteTitle'),bodyInput=document.getElementById('simpleNoteBody');if(!titleInput||!bodyInput)return false;
+  const title=titleInput.value.trim().slice(0,120),body=bodyInput.value.slice(0,50000),now=Date.now();let changed=false;
+  if(simpleNoteEditingId==='__new__'){
+    if(!title&&!body.trim())return false;
+    const note=normalizeSimpleNote({id:uid(),title,body,createdAt:now,updatedAt:now});D.simpleNotes.unshift(note);simpleNoteEditingId=note.id;changed=true;
+  }else{
+    const note=D.simpleNotes.find(item=>item.id===simpleNoteEditingId&&!item.deletedAt);if(!note)return false;
+    if(note.title!==title||note.body!==body){note.title=title;note.body=body;note.updatedAt=now;changed=true;}
+  }
+  if(changed){save();if(!silent)toast('💾 メモを保存しました');}
+  return changed;
+}
+function finishSimpleNoteEdit(){commitSimpleNoteDraft(false);simpleNoteEditingId=null;renderSimpleNotes();}
+function deleteSimpleNote(id){
+  const note=D.simpleNotes.find(item=>item.id===id&&!item.deletedAt);if(!note)return;
+  tombstoneLog(D.simpleNotes,id);if(simpleNoteEditingId===id)simpleNoteEditingId=null;save();renderSimpleNotes();toast('🗑 メモを削除しました');
+}
+function renderSimpleNotes(){
+  const content=document.getElementById('simpleNotesContent'),count=document.getElementById('simpleNotesCount'),newBtn=document.getElementById('simpleNoteNewButton');if(!content||!count||!newBtn)return;
+  const notes=liveLogs(D.simpleNotes).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));count.textContent=`${notes.length}件`;content.innerHTML='';newBtn.hidden=!!simpleNoteEditingId;
+  if(simpleNoteEditingId){
+    const existing=simpleNoteEditingId==='__new__'?null:notes.find(note=>note.id===simpleNoteEditingId);
+    if(simpleNoteEditingId!=='__new__'&&!existing){simpleNoteEditingId=null;renderSimpleNotes();return;}
+    const note=existing||{title:'',body:'',createdAt:Date.now(),updatedAt:Date.now()},editor=document.createElement('section');editor.className='card simple-note-editor';
+    editor.innerHTML=`<div class="simple-note-editor-head"><button class="text-link simple-note-back" type="button">← メモ</button><span class="simple-note-editor-time">${existing?`編集 ${esc(simpleNoteDateLabel(note.updatedAt))}`:'新しいメモ'}</span><button class="btn btn-p btn-sm simple-note-done" type="button">完了</button></div><input class="simple-note-editor-title" id="simpleNoteTitle" type="text" maxlength="120" value="${esc(note.title)}" placeholder="タイトル" aria-label="メモのタイトル"><textarea class="simple-note-editor-body" id="simpleNoteBody" maxlength="50000" placeholder="メモを入力…" aria-label="メモの内容">${esc(note.body)}</textarea>${existing?'<div class="simple-note-editor-actions"><button class="btn btn-g btn-sm simple-note-delete" type="button">🗑 削除</button></div>':''}`;
+    editor.querySelector('.simple-note-back').onclick=finishSimpleNoteEdit;editor.querySelector('.simple-note-done').onclick=finishSimpleNoteEdit;
+    const del=editor.querySelector('.simple-note-delete');if(del)del.onclick=e=>twoTap(e.currentTarget,'もう一度で削除',()=>deleteSimpleNote(note.id));
+    content.appendChild(editor);return;
+  }
+  if(!notes.length){content.innerHTML='<div class="simple-notes-empty"><strong>メモはまだありません</strong><span class="muted">タイトルと内容を自由に残せます。</span></div>';return;}
+  const list=document.createElement('div');list.className='simple-notes-list';
+  for(const note of notes){
+    const card=document.createElement('article');card.className='simple-note-card';
+    const title=note.title.trim()||((note.body||'').trim().split(/\n/)[0]||'タイトルなし'),preview=(note.body||'').trim()||'本文なし';
+    card.innerHTML=`<button class="simple-note-open" type="button" aria-label="${esc(title)}を開く"><span class="simple-note-title">${esc(title)}</span><span class="simple-note-preview">${esc(preview)}</span><time class="simple-note-meta">${esc(simpleNoteDateLabel(note.updatedAt))}</time></button><button class="simple-note-del" type="button" aria-label="${esc(title)}を削除">✕</button>`;
+    card.querySelector('.simple-note-open').onclick=()=>editSimpleNote(note.id);card.querySelector('.simple-note-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteSimpleNote(note.id));list.appendChild(card);
+  }
+  content.appendChild(list);
 }
 
 /* ============ HOME ============ */
@@ -5723,7 +5827,7 @@ function buildLocCsv(){
   return lines.join('\n');
 }
 function exportLocCsv(){download('loc_logs.csv',buildLocCsv());toast('🧭 LOC CSVを書き出しました');}
-const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages','rewards','rewardRedemptions','rewardPointEvents'];
+const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','simpleNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages','rewards','rewardRedemptions','rewardPointEvents'];
 function mergeMealCollections(local,remote){
   const legacyXp=Math.max(legacyXpOpeningCandidate(local),legacyXpOpeningCandidate(remote));
   const openingAmounts=[...(Array.isArray(local&&local.rewardPointEvents)?local.rewardPointEvents:[]),...(Array.isArray(remote&&remote.rewardPointEvents)?remote.rewardPointEvents:[])].filter(isOpeningRewardPointEvent).map(event=>Math.floor(Number(event.amount)||0));
