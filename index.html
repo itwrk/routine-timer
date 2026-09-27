@@ -697,9 +697,12 @@ body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-botto
 /* memo */
 .runmemo{max-width:460px;width:100%;background:rgba(237,234,249,.9);border:1px dashed var(--line2);border-radius:14px;padding:10px 14px;font-size:calc(13px * var(--text-scale));line-height:1.7;margin-top:8px;color:var(--dim);word-break:break-all}
 .runmemo a{color:var(--cyan)}
+.run-memo-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;color:var(--cyan);font-size:calc(9px * var(--text-scale));font-weight:800;line-height:1.4}
+.run-memo-head .memoedit-btn{font-size:calc(9px * var(--text-scale));padding:1px 3px}
+.run-memo-body{color:var(--dim)}
 .run-note-composer{max-width:460px;width:100%;background:rgba(237,234,249,.92);border:1px solid var(--line2);border-radius:14px;padding:9px 10px;margin-top:8px}
-.run-note-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;font-size:calc(11px * var(--text-scale));font-weight:800;color:var(--cyan)}
-.run-note-context{color:var(--dim);font-size:calc(9px * var(--text-scale));min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.run-note-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;font-size:calc(9px * var(--text-scale));font-weight:800;color:var(--cyan)}
+.run-note-context{color:var(--dim);font-size:calc(8px * var(--text-scale));min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .run-note-row{display:flex;gap:6px;align-items:stretch}
 .run-note-row textarea{flex:1;min-width:0;resize:none;height:48px;min-height:48px;font-size:calc(12px * var(--text-scale));padding:6px 8px}
 .run-note-row button{white-space:nowrap;flex-shrink:0;padding:6px 10px;font-size:calc(11px * var(--text-scale));border-radius:9px}
@@ -4085,12 +4088,12 @@ function loadStep(speakIt){
   memoEl.style.display='block';
   const renderMemo=()=>{
     if((s.memo||'').trim()){
-      memoEl.innerHTML='📎 '+esc(s.memo).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>')+' <button class="memoedit-btn">✏️</button>';
+      memoEl.innerHTML='<div class="run-memo-head"><span>📎 手順メモ</span><button class="memoedit-btn">✏️ 編集</button></div><div class="run-memo-body">'+esc(s.memo).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>')+'</div>';
     }else{
-      memoEl.innerHTML='<button class="memoedit-btn">＋ メモ追加</button>';
+      memoEl.innerHTML='<div class="run-memo-head"><span>📎 手順メモ</span></div><button class="memoedit-btn">＋ 手順メモを追加</button>';
     }
     memoEl.querySelector('.memoedit-btn').onclick=()=>{
-      memoEl.innerHTML='';
+      memoEl.innerHTML='<div class="run-memo-head"><span>📎 手順メモ</span></div>';
       const ta=document.createElement('textarea');ta.rows=2;ta.value=s.memo||'';ta.placeholder='メモ・リンク';
       const ok=document.createElement('button');ok.className='btn btn-c btn-sm';ok.textContent='✔ 保存';ok.style.marginTop='6px';
       ok.onclick=()=>{s.memo=ta.value.trim();syncShared(s);save();renderMemo();};
