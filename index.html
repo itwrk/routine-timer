@@ -608,7 +608,7 @@ body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-botto
 .tabbar button.on{color:var(--cyan);background:rgba(53,224,255,.08)}
 
 /* RUN screen */
-#run{position:fixed;inset:0;background:radial-gradient(900px 500px at 50% 0%, #e3dcfb 0%, var(--bg) 60%);z-index:100;display:none;flex-direction:column;align-items:center;padding:max(calc(20px + env(safe-area-inset-top)),56px) 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto}
+#run{position:fixed;inset:0;background:radial-gradient(900px 500px at 50% 0%, #e3dcfb 0%, var(--bg) 60%);z-index:100;display:none;flex-direction:column;align-items:center;padding:max(calc(8px + env(safe-area-inset-top)),24px) 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto}
 #run.active{display:flex}
 #run .rhead{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
 #run .rtitle{font-weight:800}
@@ -640,7 +640,12 @@ body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-botto
 .voice-repeat-btn.on{color:var(--pink);background:rgba(255,77,141,.09);border-color:rgba(255,77,141,.55);box-shadow:0 0 10px rgba(255,77,141,.13)}
 .ringwrap.countup .ring-fg{stroke:var(--gold);filter:drop-shadow(0 0 8px rgba(255,201,60,.8)) drop-shadow(0 0 18px rgba(255,77,141,.4))}
 .ringwrap.countup .time{color:var(--gold);text-shadow:0 0 12px rgba(255,201,60,.7)}
-.nextstep{color:var(--dim);font-size:calc(13px * var(--text-scale));margin-top:10px}
+.nextstep{display:flex;align-items:center;gap:7px;width:100%;max-width:460px;min-height:32px;margin:0 0 4px;padding:5px 9px;background:rgba(255,255,255,.68);border:1px solid var(--line);border-radius:10px;color:var(--dim);font-size:calc(11px * var(--text-scale));font-weight:700}
+.nextstep-label{flex-shrink:0;padding:2px 6px;border-radius:999px;background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff;font-family:'DotGothic16',monospace;font-size:calc(9px * var(--text-scale));letter-spacing:.06em;white-space:nowrap}
+.nextstep-emoji{flex-shrink:0;font-size:calc(15px * var(--text-scale))}
+.nextstep-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.nextstep-time{flex-shrink:0;color:var(--gold-text);white-space:nowrap}
+.nextstep.last{justify-content:center;color:var(--pink);background:rgba(229,56,127,.06);border-color:rgba(229,56,127,.2)}
 .runstats{display:flex;gap:20px;margin-top:5px;justify-content:center;color:var(--dim);font-size:calc(13px * var(--text-scale));font-weight:700}
 .runstats b{color:var(--gold);font-family:'DotGothic16',monospace}
 .runck{max-width:460px;width:100%;background:rgba(237,234,249,.8);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px}
@@ -1698,6 +1703,7 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
     <button class="close" onclick="twoTap(this,'もう一度で中断',endRun)">✕ 中断</button>
   </div>
   <div class="stepprog" id="runProg"></div>
+  <div class="nextstep" id="runNext" aria-live="polite"></div>
   <div class="combo" id="combo"></div>
   <div class="timer-mode-switch" aria-label="タイマーモード">
     <button id="btnModeDown" class="on" type="button" onclick="setTimerMode('down')">⌛ カウントダウン</button>
@@ -4157,6 +4163,7 @@ function renderRunCk(s){
 function renderUpcoming(){
   const el=document.getElementById('upcoming');el.innerHTML='';
   const rest=run.r.steps.slice(run.idx+1);
+  renderRunNext();
   if(!rest.length){el.innerHTML='<p class="muted">これが最後のステップ！ラストスパート🔥</p>';}
   const secLabel=v=>v>=60?`${Math.floor(v/60)}分${v%60?v%60+'秒':''}`:`${v}秒`;
   rest.forEach((s,j)=>{
@@ -4204,6 +4211,13 @@ function renderUpcoming(){
     save();renderUpcoming();sfxSlam();
   });
   updateRemain();
+}
+function renderRunNext(){
+  const el=document.getElementById('runNext');if(!el||!run)return;
+  const next=run.r.steps[run.idx+1];
+  if(!next){el.className='nextstep last';el.innerHTML='<span>🏁 このステップで完了</span>';return;}
+  el.className='nextstep';
+  el.innerHTML=`<span class="nextstep-label">NEXT</span><span class="nextstep-emoji">${esc(next.emoji||'✅')}</span><span class="nextstep-name">次：${esc(next.name||'名前なしステップ')}</span><span class="nextstep-time">${esc(stepDurationLabel(next.sec))}</span>`;
 }
 function updateRemain(){
   if(!run)return;
