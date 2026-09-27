@@ -345,6 +345,8 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 .activity-item.routine-auto .activity-mood-tag{background:rgba(14,171,114,.08);border-color:rgba(14,171,114,.25)}
 .activity-item.routine-manual .activity-icon{border-color:var(--purple);box-shadow:0 0 8px rgba(130,87,230,.18)}
 .activity-item.routine-manual .activity-mood-tag{background:rgba(130,87,230,.08);border-color:rgba(130,87,230,.24)}
+.activity-item.routine-saved .activity-icon{border-color:var(--cyan);box-shadow:0 0 8px rgba(14,156,199,.2)}
+.activity-item.routine-saved .activity-mood-tag{background:rgba(14,156,199,.08);border-color:rgba(14,156,199,.24)}
 .activity-item.routine-interrupted .activity-icon{border-color:var(--pink);box-shadow:0 0 8px rgba(255,77,141,.18)}
 .activity-item.routine-interrupted .activity-text{color:#a33a68}
 .activity-item.routine-legacy .activity-icon{border-color:var(--gold);box-shadow:0 0 8px rgba(255,201,60,.18)}
@@ -632,6 +634,7 @@ body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-botto
 .memoedit-btn{background:none;border:none;color:var(--cyan);cursor:pointer;font-size:calc(13px * var(--text-scale));padding:2px 6px}
 .runbtns{display:flex;gap:8px;margin-top:8px;width:100%;max-width:460px}
 .runbtns .btn{flex:1;white-space:nowrap;font-size:calc(14px * var(--text-scale));padding:13px 6px;letter-spacing:0}
+.run-save-end{width:100%;max-width:460px;margin-top:6px;padding:9px 10px!important;font-size:calc(11px * var(--text-scale))!important;white-space:nowrap}
 .timer-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:100%;max-width:360px;margin:2px 0 4px;padding:4px;background:var(--bg2);border:1px solid var(--line);border-radius:12px}
 .timer-mode-switch button{border:1px solid transparent;border-radius:9px;background:none;color:var(--dim);font-family:inherit;font-size:calc(11px * var(--text-scale));font-weight:800;padding:7px 5px;white-space:nowrap;cursor:pointer}
 .timer-mode-switch button.on{color:var(--cyan);background:var(--card2);border-color:#4b45a0;box-shadow:0 0 10px rgba(53,224,255,.15)}
@@ -1736,6 +1739,7 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
     <button class="btn btn-g" id="btnSkipStep" onclick="skipStep()">⏭ スキップ</button>
     <button class="btn btn-p" id="btnDoneStep" onclick="doneStep()">✅ できた！</button>
   </div>
+  <button class="btn btn-c run-save-end" type="button" onclick="twoTap(this,'もう一度で途中保存',saveAndEndRun)">💾 途中保存して終わります</button>
   <div class="moti" id="runMoti">…</div>
   <div class="run-note-composer">
     <div class="run-note-head"><span>📝 実行中のひとこと</span><span class="run-note-context" id="runNoteContext"></span></div>
@@ -2043,8 +2047,8 @@ function normalizeRoutineRunLog(log){
   n.endedAt=Math.max(0,Number(n.endedAt)||0);n.durationSec=Math.max(0,Math.round(Number(n.durationSec)||0));
   n.startedAt=Math.max(0,Number(n.startedAt)||(n.endedAt?Math.max(0,n.endedAt-n.durationSec*1000):0));
   n.status=n.status==='interrupted'?'interrupted':'completed';
-  n.endType=['auto','manual','interrupted','legacy'].includes(n.endType)?n.endType:(n.status==='interrupted'?'interrupted':'legacy');
-  if(n.status==='interrupted')n.endType='interrupted';
+  n.endType=['auto','manual','interrupted','saved','legacy'].includes(n.endType)?n.endType:(n.status==='interrupted'?'interrupted':'legacy');
+  if(n.status==='interrupted'&&!['interrupted','saved'].includes(n.endType))n.endType='interrupted';
   n.done=Math.max(0,Math.floor(Number(n.done)||0));n.total=Math.max(0,Math.floor(Number(n.total)||0));n.skips=Math.max(0,Math.floor(Number(n.skips)||0));
   n.stepIndex=Math.max(0,Math.floor(Number(n.stepIndex)||0));n.stepName=String(n.stepName||'').slice(0,120);n.currentStepSec=Math.max(0,Math.round(Number(n.currentStepSec)||0));
   n.stepTimes=Array.isArray(n.stepTimes)?n.stepTimes.map(x=>Object.assign({},x)):[];n.source=String(n.source||'normal').slice(0,40);n.microEntry=!!n.microEntry;
@@ -3060,6 +3064,7 @@ function activityTimeLabel(stamp){
   return `${d.getMonth()+1}/${d.getDate()} ${time}`;
 }
 function routineRunDisplay(log){
+  if(log.endType==='saved')return{icon:'💾',label:'途中保存',tone:'routine-saved'};
   if(log.status==='interrupted'||log.endType==='interrupted')return{icon:'⏹️',label:'中断',tone:'routine-interrupted'};
   if(log.endType==='auto')return{icon:'⏰',label:'自動終了',tone:'routine-auto'};
   if(log.endType==='manual')return{icon:'🏁',label:'手動終了',tone:'routine-manual'};
@@ -3782,6 +3787,7 @@ function renderJourneyCard(){
   const el=document.getElementById('journeyCard');if(!el)return;const log=latestUnresolvedJourney();
   if(!log){el.hidden=true;el.innerHTML='';return;}el.hidden=false;const due=!log.dueAt||log.dueAt<=Date.now();el.classList.toggle('due',due);
   if(log.type==='stopped'&&!due)el.innerHTML=`<div class="journey-title">🫧 いまは休む作戦</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の続き・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 今なら続ける</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">＋15分</button></div>`;
+  else if(log.type==='stopped'&&log.choice==='saved')el.innerHTML=`<div class="journey-title">💾 途中保存できています</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の保存したステップを、最初から再開できるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">🕰 15分のばす</button></div>`;
   else if(log.type==='stopped')el.innerHTML=`<div class="journey-title">🌱 止まったところも消えてない</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の止まったステップを、最初から再開できるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">🕰 15分のばす</button></div>`;
   else el.innerHTML=`<div class="journey-title">${due?'🔔 戻りどきが来たよ':'🫧 休むのも作戦'}</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}',true)">${due?'⚡ 10秒だけ':'▶ 今なら10秒'}</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">＋15分</button></div>`;
 }
@@ -4489,16 +4495,18 @@ function closeResult(){
   document.getElementById('result').classList.remove('show');
   renderHome();
 }
-function endRun(){
+function stopRun(saved=false){
   if(!run)return;
   advanceRunClock();const stopped=run,now=Date.now();
-  addRoutineRunLog(stopped,{endedAt:now,status:'interrupted',endType:'interrupted'});
-  const log=normalizeJourneyLog({id:uid(),at:now,updatedAt:now,type:'stopped',choice:'stopped',routineId:stopped.r.id,routineName:stopped.r.name,stepIndex:stopped.idx,stepRecords:stopped.stepRecords.map(x=>Object.assign({},x)),skips:stopped.skips,elapsedSec:Math.max(0,Math.round((now-stopped.startedAt)/1000)),parentJourneyId:stopped.journeyId||''});
+  addRoutineRunLog(stopped,{endedAt:now,status:'interrupted',endType:saved?'saved':'interrupted'});
+  const log=normalizeJourneyLog({id:uid(),at:now,updatedAt:now,type:'stopped',choice:saved?'saved':'stopped',routineId:stopped.r.id,routineName:stopped.r.name,stepIndex:stopped.idx,stepRecords:stopped.stepRecords.map(x=>Object.assign({},x)),skips:stopped.skips,elapsedSec:Math.max(0,Math.round((now-stopped.startedAt)/1000)),parentJourneyId:stopped.journeyId||''});
   D.journeyLogs.unshift(log);save();
   clearInterval(timer);timer=null;speechSynthesis.cancel();
   document.getElementById('run').classList.remove('active');run=null;renderHome();
-  toast('🌱 止まったところも保存したよ。できた分は消えない');
+  toast(saved?'💾 ここまでを保存しました。「続きから」で再開できます':'🌱 止まったところも保存したよ。できた分は消えない');
 }
+function endRun(){stopRun(false);}
+function saveAndEndRun(){stopRun(true);}
 
 /* ============ PROGRESS ============ */
 function trackerDates(count=14){
@@ -6323,7 +6331,7 @@ function exportLogs(){
   for(const g of [...liveLogs(D.routineRunLogs)].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0))){
     const ended=new Date(g.endedAt||0),date=g.endedAt?localDateKey(ended):'',time=g.endedAt?ended.toTimeString().slice(0,5):'';
     const steps=(Array.isArray(g.stepTimes)?g.stepTimes:[]).map(s=>`${s.name}:${Math.max(0,Number(s.actualSec)||0)}秒${s.mode==='countup'?'(実時間計測)':''}`).join(' / ');
-    const display=routineRunDisplay(g),status=g.status==='interrupted'?'中断':'完了',lastStep=g.stepName?`${g.stepName}${g.status==='interrupted'?`（${g.currentStepSec}秒地点）`:''}`:'';
+    const display=routineRunDisplay(g),status=g.endType==='saved'?'途中保存':g.status==='interrupted'?'中断':'完了',lastStep=g.stepName?`${g.stepName}${g.status==='interrupted'?`（${g.currentStepSec}秒地点）`:''}`:'';
     rows.push([date,time,csvEsc(g.routineName),g.done,g.total,g.skips,g.durationSec,csvEsc(steps),status,display.label,timelineDateTime(g.startedAt),timelineDateTime(g.endedAt),csvEsc(lastStep)].join(','));
   }
   download('ルーチンログ.csv',rows.join('\n'));toast('📤 書き出しました');
@@ -6368,8 +6376,8 @@ function chatgptTimelineRows(){
     rows.push({stamp,dateTime:timelineDateTime(stamp),type:'1ボタン計測',content:log.label||'作業',routine:'',step:'',detail:`終了:${timelineDateTime(end)}・実時間:${Math.max(0,Number(log.durationSec)||0)}秒`});
   }
   for(const log of liveLogs(D.routineRunLogs)){
-    const stamp=Number(log.endedAt)||0,display=routineRunDisplay(log),detail=[display.label,log.total>0?`${Number(log.done)||0}/${Number(log.total)||0}ステップ完了`:'',Number(log.skips)?`${Number(log.skips)}スキップ`:'',`開始:${timelineDateTime(log.startedAt)}`,`実時間${Math.max(0,Number(log.durationSec)||0)}秒`,log.status==='interrupted'&&log.stepName?`中断地点:${log.stepName}（${log.currentStepSec}秒）`:log.microEntry?'10秒の入口まで':''].filter(Boolean).join('・');
-    rows.push({stamp,dateTime:timelineDateTime(stamp),type:log.status==='interrupted'?'ルーチン中断':'ルーチン終了',content:log.routineName||'ルーチン',routine:log.routineName||'',step:log.status==='interrupted'?log.stepName||'':'',detail});
+    const saved=log.endType==='saved',stamp=Number(log.endedAt)||0,display=routineRunDisplay(log),detail=[display.label,log.total>0?`${Number(log.done)||0}/${Number(log.total)||0}ステップ完了`:'',Number(log.skips)?`${Number(log.skips)}スキップ`:'',`開始:${timelineDateTime(log.startedAt)}`,`実時間${Math.max(0,Number(log.durationSec)||0)}秒`,log.status==='interrupted'&&log.stepName?`${saved?'保存':'中断'}地点:${log.stepName}（${log.currentStepSec}秒）`:log.microEntry?'10秒の入口まで':''].filter(Boolean).join('・');
+    rows.push({stamp,dateTime:timelineDateTime(stamp),type:saved?'ルーチン途中保存':log.status==='interrupted'?'ルーチン中断':'ルーチン終了',content:log.routineName||'ルーチン',routine:log.routineName||'',step:log.status==='interrupted'?log.stepName||'':'',detail});
   }
   if(D.mealPrefs&&D.mealPrefs.includeInChatGptCsv)rows.push(...mealTimelineRows());
   return rows.sort((a,b)=>(a.stamp||0)-(b.stamp||0));
