@@ -645,6 +645,12 @@ body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-botto
 .runstats b{color:var(--gold);font-family:'DotGothic16',monospace}
 .runck{max-width:460px;width:100%;background:rgba(237,234,249,.8);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px}
 .runck h4{font-size:calc(12px * var(--text-scale));color:var(--cyan);margin-bottom:6px;letter-spacing:.06em}
+.run-daily-checklist{max-width:460px;width:100%;background:rgba(255,255,255,.88);border:1px solid var(--line2);border-radius:14px;padding:11px 12px;margin-top:12px;box-shadow:0 6px 18px rgba(84,70,150,.08)}
+.run-daily-checklist .habit-head h2{font-size:calc(14px * var(--text-scale));color:var(--cyan-text)}
+.run-daily-checklist .habit-row{padding:7px 2px}
+.run-daily-checklist .habit-multi{padding:7px 2px}
+.run-daily-checklist .habit-slot-list{margin-left:30px}
+.run-daily-checklist-empty{padding:7px 2px 2px;font-size:calc(11px * var(--text-scale))}
 .ckrow{display:flex;align-items:center;gap:9px;padding:6px 2px;font-size:calc(14px * var(--text-scale));cursor:pointer;user-select:none}
 .ckrow .box{width:22px;height:22px;border:2px solid #b7afe0;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:calc(14px * var(--text-scale));flex-shrink:0;transition:all .15s;color:transparent}
 .ckrow.on .box{background:linear-gradient(135deg,var(--mint),var(--cyan));border-color:var(--mint);color:#0a2a1c;box-shadow:0 0 10px rgba(61,255,168,.6)}
@@ -1747,6 +1753,7 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
       <button class="btn btn-g btn-sm" style="flex:1" onclick="twoTap(this,'ほんとに中断？',endRun)">✕ 中断する</button>
     </div>
   </div>
+  <section class="run-daily-checklist" id="runHabitCard" aria-label="今日のチェックリスト" aria-live="polite"></section>
 </div>
 <div id="flash"></div>
 
@@ -3301,12 +3308,7 @@ function renderHabits(){
   if(!list)return;
   list.innerHTML='';
   const taskList=document.getElementById('todayTaskList');taskList.innerHTML='';
-  const visibleHabits=D.habits.filter(h=>habitVisibleAt(h));
-  const todays=D.todayTasks.filter(t=>t.date===today());
-  const habitTotal=visibleHabits.reduce((sum,h)=>sum+Math.max(1,(h.times||[]).length),0);
-  const habitDone=visibleHabits.reduce((sum,h)=>sum+((h.times||[]).length?(h.times||[]).filter(slot=>habitLogForToday(h,new Date(),slot)).length:Number(!!habitLogForToday(h))),0);
-  const done=habitDone+todays.filter(t=>todayTaskLog(t.id)).length;
-  const total=habitTotal+todays.length;
+  const {visibleHabits,todays,done,total}=todayChecklistState();
   document.getElementById('habitScore').textContent=`${done} / ${total}`;
   document.getElementById('habitBarFill').style.width=(total?done/total*100:0)+'%';
   if(!visibleHabits.length&&!todays.length)list.innerHTML=`<p class="muted" style="padding:5px 0">${D.habits.length?'今は表示条件に合う項目がありません。':'下から今日やることを追加できます。'}</p>`;
@@ -3346,6 +3348,42 @@ function renderHabits(){
     bindCheckMemo(item,log,key);taskList.appendChild(item);
   }
 }
+function todayChecklistState(now=new Date()){
+  const visibleHabits=D.habits.filter(h=>habitVisibleAt(h,now));
+  const todays=D.todayTasks.filter(t=>t.date===today());
+  const habitTotal=visibleHabits.reduce((sum,h)=>sum+Math.max(1,(h.times||[]).length),0);
+  const habitDone=visibleHabits.reduce((sum,h)=>sum+((h.times||[]).length?(h.times||[]).filter(slot=>habitLogForToday(h,now,slot)).length:Number(!!habitLogForToday(h,now))),0);
+  const done=habitDone+todays.filter(t=>todayTaskLog(t.id)).length;
+  return{visibleHabits,todays,done,total:habitTotal+todays.length};
+}
+function renderRunHabits(){
+  const card=document.getElementById('runHabitCard');if(!card)return;
+  const {visibleHabits,todays,done,total}=todayChecklistState();
+  card.innerHTML=`<div class="habit-head"><h2>✅ 今日のチェックリスト</h2><span class="habit-score">${done} / ${total}</span></div><div class="habit-bar"><div style="width:${total?done/total*100:0}%"></div></div><div class="run-habit-list"></div>`;
+  const list=card.querySelector('.run-habit-list');
+  if(!visibleHabits.length&&!todays.length){list.innerHTML=`<p class="muted run-daily-checklist-empty">${D.habits.length?'今は表示条件に合う項目がありません。':'今日の項目はまだありません。'}</p>`;return;}
+  for(const habit of visibleHabits){
+    const slots=habit.times||[];
+    if(slots.length){
+      const logs=slots.map(slot=>habitLogForToday(habit,new Date(),slot)),completed=logs.filter(Boolean).length;
+      const item=document.createElement('div');item.className='habit-item habit-multi';
+      item.innerHTML=`<div class="habit-multi-head"><span>☑️</span><span class="habit-name">${esc(habit.name)}</span><span class="habit-multi-progress">${completed}/${slots.length}</span></div><div class="habit-slot-list"></div>`;
+      const slotList=item.querySelector('.habit-slot-list');
+      slots.forEach((slot,index)=>{
+        const log=logs[index],btn=document.createElement('button');btn.type='button';btn.className='habit-slot-toggle'+(log?' done':'');btn.setAttribute('aria-pressed',log?'true':'false');btn.setAttribute('aria-label',`${habit.name} ${slot}を${log?'未完了に戻す':'完了にする'}`);btn.innerHTML=`<span class="habit-slot-check">✓</span><span class="habit-slot-label">${esc(slot)}</span>${log?`<span class="habit-slot-done-time">${esc(log.time)}</span>`:''}`;btn.onclick=()=>toggleHabit(habit,slot);slotList.appendChild(btn);
+      });
+      list.appendChild(item);continue;
+    }
+    const log=habitLogForToday(habit),item=document.createElement('div');item.className='habit-item';
+    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(habit.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-name">${esc(habit.name)}</span></button>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>`;
+    item.querySelector('.habit-toggle-area').onclick=()=>toggleHabit(habit);list.appendChild(item);
+  }
+  for(const task of todays){
+    const log=todayTaskLog(task.id),item=document.createElement('div');item.className='habit-item';
+    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(task.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-name">${esc(task.name)}</span></button><span class="today-badge">今日だけ</span>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>`;
+    item.querySelector('.habit-toggle-area').onclick=()=>toggleTodayTask(task);list.appendChild(item);
+  }
+}
 function addHabit(){
   const input=document.getElementById('habitInput');
   const name=input.value.trim();
@@ -3357,14 +3395,14 @@ function toggleHabit(habit,slot=''){
   if(old){
     for(const log of D.habitLogs)if(!log.deletedAt&&log.habitId===habit.id&&log.date===date&&(slot?log.slot===slot||(!log.slot&&slot===first):!log.slot))tombstoneLog(D.habitLogs,log.id);
     if(checkMemoEditorKey===key)checkMemoEditorKey='';
-    save();renderHabits();renderActivityTimeline();toast('↩️ チェックを戻しました（獲得済みポイントはそのまま）');return;
+    save();renderHabits();renderRunHabits();renderActivityTimeline();toast('↩️ チェックを戻しました（獲得済みポイントはそのまま）');return;
   }
   const history=D.habitLogs.filter(g=>g&&g.habitId===habit.id&&g.date===date&&(slot?g.slot===slot||(!g.slot&&slot===first):!g.slot)).sort((a,b)=>(Number(!!b.memo)-Number(!!a.memo))||((b.completedAt||0)-(a.completedAt||0))||((b.updatedAt||0)-(a.updatedAt||0)));
   const stamp=now.getTime(),sourceId=slot?`habit:${habit.id}:${date}:${slot}`:`habit:${habit.id}:${date}`,gain=awardRewardPoints(CHECK_POINTS,sourceId,`チェック：${habit.name}${slot?` ${slot}`:''}`,stamp);
   const logId=`habit-day-${stableHash(slot?`${habit.id}|${date}|${slot}`:`${habit.id}|${date}`)}`,data=normalizeHabitLog({id:logId,habitId:habit.id,habitName:habit.name,date,slot,time:now.toTimeString().slice(0,5),completedAt:stamp,memo:history[0]?.memo||'',updatedAt:stamp,deletedAt:null}),existing=D.habitLogs.find(log=>log.id===logId);
   if(existing)Object.assign(existing,data);else D.habitLogs.unshift(data);
   if(D.habitLogs.length>2000)D.habitLogs.length=2000;
-  save();renderHabits();renderActivityTimeline();sfxDone();if(gain)pointPop(gain,'✅');toast(`✅ 記録しました！${gain?` +${gain}pt`:''}`);
+  save();renderHabits();renderRunHabits();renderActivityTimeline();sfxDone();if(gain)pointPop(gain,'✅');toast(`✅ 記録しました！${gain?` +${gain}pt`:''}`);
 }
 function addTodayTask(){
   const input=document.getElementById('todayTaskInput');
@@ -3378,14 +3416,14 @@ function toggleTodayTask(task){
   if(old){
     for(const log of D.todayTaskLogs)if(!log.deletedAt&&log.taskId===task.id&&log.date===task.date)tombstoneLog(D.todayTaskLogs,log.id);
     if(checkMemoEditorKey===key)checkMemoEditorKey='';
-    save();renderHabits();renderActivityTimeline();toast('↩️ チェックを戻しました（獲得済みポイントはそのまま）');return;
+    save();renderHabits();renderRunHabits();renderActivityTimeline();toast('↩️ チェックを戻しました（獲得済みポイントはそのまま）');return;
   }
   const history=D.todayTaskLogs.filter(g=>g&&g.taskId===task.id&&g.date===task.date).sort((a,b)=>(Number(!!b.memo)-Number(!!a.memo))||((b.completedAt||0)-(a.completedAt||0))||((b.updatedAt||0)-(a.updatedAt||0)));
   const now=new Date(),stamp=now.getTime(),sourceId=`task:${task.id}:${task.date}`,gain=awardRewardPoints(CHECK_POINTS,sourceId,`今日の項目：${task.name}`,stamp);
   const logId=`task-day-${stableHash(`${task.id}|${task.date}`)}`,data=normalizeTodayTaskLog({id:logId,taskId:task.id,taskName:task.name,date:task.date,time:now.toTimeString().slice(0,5),completedAt:stamp,memo:history[0]?.memo||'',updatedAt:stamp,deletedAt:null}),existing=D.todayTaskLogs.find(log=>log.id===logId);
   if(existing)Object.assign(existing,data);else D.todayTaskLogs.unshift(data);
   if(D.todayTaskLogs.length>2000)D.todayTaskLogs.length=2000;
-  save();renderHabits();renderActivityTimeline();sfxDone();if(gain)pointPop(gain,'✅');toast(`✅ 今日の項目を記録しました！${gain?` +${gain}pt`:''}`);
+  save();renderHabits();renderRunHabits();renderActivityTimeline();sfxDone();if(gain)pointPop(gain,'✅');toast(`✅ 今日の項目を記録しました！${gain?` +${gain}pt`:''}`);
 }
 function renderManage(){renderHabitManager();renderRewardManager();renderMoodManager();renderStepLibraryManager();renderMealTemplateManager();renderFoodItemManager();renderAllNotes();}
 let rewardEditId=null,rewardAddOpen=false;
@@ -4004,6 +4042,7 @@ function startRun(id,options={}){
   document.getElementById('runTitle').textContent=`${r.emoji} ${r.name}`;
   document.getElementById('btnPause').textContent='⏸ 一時停止';
   updateVoiceRepeatUi();
+  renderRunHabits();
   beep(660,.1);// unlock audio on iOS
   loadStep(true);
   timer=setInterval(tick,1000);
