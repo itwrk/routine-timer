@@ -21,7 +21,7 @@ Hal個人用のルーチン実行支援アプリ。「タイマー × 二重音�
 1. 作業開始時にまず `git pull`（ブラウザ経由やclaude.ai経由の更新と食い違うことがあるため）
 2. index.html を編集
 3. 動作確認（可能なら。少なくとも `node -e "new Function(スクリプト部)"` 相当の構文チェック）
-4. commit → push（pushは実行前にHalに確認）
+4. 変更を検証したら、今回の作業に関係するファイルだけを commit → push まで毎回実行する。Hal の明示指示により、通常の push の都度確認は不要（main への push が GitHub Pages 公開につながることも含む）。変更がなければ空コミットは作らない。
 5. 反映は1〜2分後。https://itwrk.github.io/routine-timer/
 
 ## ファイル構成
@@ -61,3 +61,14 @@ Hal個人用のルーチン実行支援アプリ。「タイマー × 二重音�
 - [ ] prompt/confirm/alert を追加していない
 - [ ] ステップ編集処理に `syncShared` が付いている
 - [ ] スマホ幅(~380px)でボタン文字が折り返さない
+
+## Codexとの共通ルール
+- Mac / Codex Cloud の引き継ぎと安全な Git 操作は AGENTS.md を参照する。
+
+## push の実行と検証
+- 作業開始時は git status と現在の branch / upstream を確認し、未コミット変更がない場合のみ git pull --ff-only。
+- 正常なチェック後、今回の作業に関係するファイルのみを明示してステージする。無関係な変更や秘密情報を含めない。
+- 現在の作業ブランチへ通常の push を実行する。新規ブランチは origin に upstream を設定する。Cloud では main に勝手に切り替えず、作業ブランチを push する。
+- push 後に remote の対象ブランチのコミットIDがローカルの HEAD と一致することを確認し、ブランチ名・コミットID・実行結果を報告する。
+- push 拒否・認証エラー・競合時は未送信と明記して状況を報告する。force push、履歴の書き換え、ユーザーの変更の破棄は行わない。
+- Cloud の Pull Request を main へマージする操作は、引き続き Hal の承認を得る。
