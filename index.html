@@ -149,13 +149,17 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .simple-notes-head h2{flex:1;min-width:0;margin:0;color:var(--gold-text)}
 .simple-notes-count{color:var(--dim);font-size:calc(10px * var(--text-scale));white-space:nowrap}
 .simple-notes-head .btn{white-space:nowrap;flex-shrink:0}
-.simple-notes-list{display:grid;grid-template-columns:1fr;gap:7px}
-.simple-note-card{position:relative;min-width:0;border:1px solid rgba(217,154,6,.3);border-radius:13px;background:linear-gradient(145deg,#fffef8,#fff8dc);box-shadow:0 4px 14px rgba(105,83,16,.08);overflow:hidden}
-.simple-note-open{display:block;width:100%;min-height:116px;padding:12px 45px 11px 13px;border:0;background:none;color:var(--text);text-align:left;cursor:pointer}
-.simple-note-title{font-size:calc(15px * var(--text-scale));font-weight:800;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.simple-note-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;margin-top:5px;color:#5f587f;font-size:calc(11px * var(--text-scale));line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
-.simple-note-meta{display:block;margin-top:8px;color:#908762;font-size:calc(9px * var(--text-scale));white-space:nowrap}
-.simple-note-del{position:absolute;right:7px;top:7px;width:36px;height:36px;border:0;border-radius:9px;background:rgba(255,255,255,.6);color:var(--dim);font-size:calc(12px * var(--text-scale));cursor:pointer}
+.simple-notes-table-wrap{border:1px solid var(--line2);border-radius:12px;background:var(--card);overflow:hidden}
+.simple-notes-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:calc(12px * var(--text-scale))}
+.simple-notes-table .note-title-col{width:27%}.simple-notes-table .note-date-col{width:120px}.simple-notes-table .note-action-col{width:48px}
+.simple-notes-table th,.simple-notes-table td{padding:10px 9px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.simple-notes-table th{background:var(--card2);color:var(--dim);font-size:calc(10px * var(--text-scale));white-space:nowrap}
+.simple-notes-table tbody tr:last-child td{border-bottom:0}
+.simple-notes-table tbody tr:hover{background:rgba(14,156,199,.04)}
+.simple-note-open{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;width:100%;border:0;background:none;color:var(--cyan-text);font-size:inherit;font-weight:800;text-align:left;line-height:1.5;cursor:pointer;overflow-wrap:anywhere}
+.simple-note-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--dim);line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.simple-note-meta{color:var(--dim);font-size:calc(10px * var(--text-scale))}
+.simple-note-del{width:32px;height:36px;border:0;border-radius:8px;background:var(--card2);color:var(--dim);font-size:calc(12px * var(--text-scale));cursor:pointer;white-space:nowrap}
 .simple-notes-empty{padding:42px 18px;text-align:center;border:1px dashed rgba(217,154,6,.38);border-radius:14px;background:rgba(255,248,220,.48)}
 .simple-notes-empty strong{display:block;color:var(--gold-text);font-size:calc(17px * var(--text-scale));margin-bottom:6px}
 .simple-note-editor{padding:12px;background:linear-gradient(145deg,#fffef9,#fff9df)}
@@ -168,7 +172,7 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .simple-note-editor-actions{display:flex;gap:7px;border-top:1px solid rgba(217,154,6,.24);padding-top:9px}
 .simple-note-editor-actions .btn{flex:1;min-width:0;white-space:nowrap}
 .simple-note-editor-actions .simple-note-delete{flex:0 0 auto}
-@media(min-width:700px){.simple-notes-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.simple-notes-table .note-date-col{width:72px}.simple-notes-table .note-action-col{width:38px}.simple-notes-table th,.simple-notes-table td{padding:8px 5px}.simple-notes-table{font-size:11px}.simple-note-meta{font-size:9px}.simple-note-del{width:28px}}
 @media(max-width:390px){.simple-notes-head{gap:6px}.simple-notes-head .btn{padding:8px 9px;font-size:calc(11px * var(--text-scale))}.simple-note-editor{padding:10px 9px}.simple-note-editor-title{font-size:calc(19px * var(--text-scale))!important}.simple-note-editor-body{min-height:54vh;font-size:calc(16px * var(--text-scale))!important}}
 
 /* one-button activity timer */
@@ -904,6 +908,10 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
 #scr-home h2{font-size:calc(14px * var(--text-scale));margin-bottom:6px}
 #scr-home .rcard{padding:7px 8px;margin-bottom:5px}
 #scr-home>.btn-full{padding:9px!important;white-space:nowrap}
+.home-column{display:contents}
+#scr-home.active{display:flex;flex-direction:column}
+#journeyCard{order:0}#habitCard{order:1}#notionTaskCard{order:2}#routineSection{order:3}#calCard{order:4}#activityTimelineCard{order:5}
+#routineSection{min-width:0}
 @media(min-width:960px){
   :root{--text-scale:.8;--ring-size:min(22vw,190px);--desktop-menu:156px}
   body{padding-left:var(--desktop-menu);font-size:calc(16px * var(--text-scale))}
@@ -923,8 +931,6 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
   body.meal-waiting #app{padding-bottom:96px}
   .screen.active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row dense;gap:6px;align-items:start}
   .screen.active>.card,.screen.active>.sect,.screen.active>.btn-full,.screen.active>.statgrid{margin:0}
-  #routineList{display:contents}
-  #scr-home #activityTimelineCard{grid-column:span 2}
   #scr-notes>.simple-notes-shell{grid-column:1/-1}
   #scr-preview>.card,#scr-edit>.card{grid-column:1 / span 2}
   #scr-activity-page>.card{grid-column:1/-1}
@@ -980,6 +986,14 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
 }
 @media(min-width:1120px){
   .screen.active{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(min-width:960px){
+  #scr-home.active{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-auto-flow:row;gap:10px;align-items:start}
+  .home-column{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .home-main{order:0}.home-side{order:1}
+  #scr-home .home-column>.card{margin:0}
+  #routineList{display:flex;flex-direction:column;gap:6px}
+  #scr-home #activityTimelineCard{order:2;grid-column:1/-1}
 }
 @media(max-width:390px){
   #rescueModal .sheet{padding:14px 9px calc(14px + env(safe-area-inset-bottom))}.rescue-title{font-size:calc(17px * var(--text-scale))}.rescue-actions button{font-size:calc(10px * var(--text-scale));padding:10px 3px}
@@ -1054,31 +1068,38 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
   </div>
   <!-- HOME -->
   <div class="screen active" id="scr-home">
-    <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
-    <div class="card" id="habitCard">
-      <div class="habit-head"><h2>✅ 今日のチェックリスト</h2><span class="habit-score" id="habitScore">0 / 0</span></div>
-      <div class="habit-bar"><div id="habitBarFill" style="width:0%"></div></div>
-      <div id="habitList"></div>
-      <div id="todayTaskList"></div>
-      <div class="habit-add">
-        <input type="text" id="todayTaskInput" maxlength="60" placeholder="今日だけやることを追加">
-        <button class="btn btn-c btn-sm" type="button" onclick="addTodayTask()">＋ 今日だけ</button>
-      </div>
+    <div class="home-column home-main">
+      <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
+      <section id="routineSection" aria-labelledby="routineSectionTitle">
+        <h2 id="routineSectionTitle">▶ ルーチン</h2>
+        <div id="routineList"></div>
+      </section>
     </div>
-    <div class="card notion-card" id="notionTaskCard" hidden>
-      <div class="notion-head">
-        <h2>📓 春香ボール</h2>
-        <span class="notion-count" id="notionTaskCount" hidden></span>
-        <span class="notion-freshness" id="notionTaskFreshness"></span>
-        <button class="notion-refresh" id="notionTaskRefresh" type="button" aria-label="Notionタスクを更新" title="更新" onclick="loadNotionTasks(true)">↻</button>
+    <div class="home-column home-side">
+      <div class="card" id="habitCard">
+        <div class="habit-head"><h2>✅ 今日のチェックリスト</h2><span class="habit-score" id="habitScore">0 / 0</span></div>
+        <div class="habit-bar"><div id="habitBarFill" style="width:0%"></div></div>
+        <div id="habitList"></div>
+        <div id="todayTaskList"></div>
+        <div class="habit-add">
+          <input type="text" id="todayTaskInput" maxlength="60" placeholder="今日だけやることを追加">
+          <button class="btn btn-c btn-sm" type="button" onclick="addTodayTask()">＋ 今日だけ</button>
+        </div>
       </div>
-      <div class="notion-task-list" id="notionTaskList" aria-live="polite"><div class="notion-state">Notionからタスクを読み込み中…</div></div>
-      <div class="notion-footer" id="notionTaskFooter" hidden></div>
-    </div>
-    <div id="routineList"></div>
-    <div class="sect card" id="calCard">
-      <h2>📅 今後の予定 <button class="btn btn-g btn-sm" style="float:right;padding:4px 10px;font-size:calc(11px * var(--text-scale))" onclick="loadCalEvents(true)">🔄 更新</button></h2>
-      <div id="calList" class="muted">読み込み中…</div>
+      <div class="card notion-card" id="notionTaskCard" hidden>
+        <div class="notion-head">
+          <h2>📓 春香ボール</h2>
+          <span class="notion-count" id="notionTaskCount" hidden></span>
+          <span class="notion-freshness" id="notionTaskFreshness"></span>
+          <button class="notion-refresh" id="notionTaskRefresh" type="button" aria-label="Notionタスクを更新" title="更新" onclick="loadNotionTasks(true)">↻</button>
+        </div>
+        <div class="notion-task-list" id="notionTaskList" aria-live="polite"><div class="notion-state">Notionからタスクを読み込み中…</div></div>
+        <div class="notion-footer" id="notionTaskFooter" hidden></div>
+      </div>
+      <div class="sect card" id="calCard">
+        <h2>📅 今後の予定 <button class="btn btn-g btn-sm" style="float:right;padding:4px 10px;font-size:calc(11px * var(--text-scale))" onclick="loadCalEvents(true)">🔄 更新</button></h2>
+        <div id="calList" class="muted">読み込み中…</div>
+      </div>
     </div>
     <div class="sect card" id="activityTimelineCard">
       <div class="activity-head"><h2>🧭 活動と気持ちのタイムライン</h2><span class="activity-range">過去30件・新しい順</span></div>
@@ -2690,12 +2711,14 @@ function renderSimpleNotes(){
     content.appendChild(editor);return;
   }
   if(!notes.length){content.innerHTML='<div class="simple-notes-empty"><strong>メモはまだありません</strong><span class="muted">タイトルと内容を自由に残せます。</span></div>';return;}
-  const list=document.createElement('div');list.className='simple-notes-list';
+  const list=document.createElement('div');list.className='simple-notes-table-wrap';
+  list.innerHTML='<table class="simple-notes-table" aria-label="保存したメモ"><colgroup><col class="note-title-col"><col><col class="note-date-col"><col class="note-action-col"></colgroup><thead><tr><th scope="col">タイトル</th><th scope="col">内容</th><th scope="col">更新日時</th><th scope="col" aria-label="操作"></th></tr></thead><tbody></tbody></table>';
+  const rows=list.querySelector('tbody');
   for(const note of notes){
-    const card=document.createElement('article');card.className='simple-note-card';
+    const row=document.createElement('tr');
     const title=note.title.trim()||((note.body||'').trim().split(/\n/)[0]||'タイトルなし'),preview=(note.body||'').trim()||'本文なし';
-    card.innerHTML=`<button class="simple-note-open" type="button" aria-label="${esc(title)}を開く"><span class="simple-note-title">${esc(title)}</span><span class="simple-note-preview">${esc(preview)}</span><time class="simple-note-meta">${esc(simpleNoteDateLabel(note.updatedAt))}</time></button><button class="simple-note-del" type="button" aria-label="${esc(title)}を削除">✕</button>`;
-    card.querySelector('.simple-note-open').onclick=()=>editSimpleNote(note.id);card.querySelector('.simple-note-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteSimpleNote(note.id));list.appendChild(card);
+    row.innerHTML=`<td><button class="simple-note-open" type="button" aria-label="${esc(title)}を開く">${esc(title)}</button></td><td><span class="simple-note-preview">${esc(preview)}</span></td><td><time class="simple-note-meta" datetime="${new Date(note.updatedAt).toISOString()}">${esc(simpleNoteDateLabel(note.updatedAt))}</time></td><td><button class="simple-note-del" type="button" aria-label="${esc(title)}を削除">✕</button></td>`;
+    row.querySelector('.simple-note-open').onclick=()=>editSimpleNote(note.id);row.querySelector('.simple-note-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>deleteSimpleNote(note.id));rows.appendChild(row);
   }
   content.appendChild(list);
 }
@@ -3836,12 +3859,21 @@ function journeyTimeLabel(stamp){const ms=stamp-Date.now();if(ms>0&&ms<3600000)r
 function renderJourneyCard(){
   const el=document.getElementById('journeyCard');if(!el)return;const log=latestUnresolvedJourney();
   if(!log){el.hidden=true;el.innerHTML='';return;}el.hidden=false;const due=!log.dueAt||log.dueAt<=Date.now();el.classList.toggle('due',due);
-  if(log.type==='stopped'&&!due)el.innerHTML=`<div class="journey-title">🫧 いまは休む作戦</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の続き・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 今なら続ける</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">＋15分</button></div>`;
-  else if(log.type==='stopped'&&log.choice==='saved')el.innerHTML=`<div class="journey-title">💾 途中保存できています</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の保存したステップを、最初から再開できるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">🕰 15分のばす</button></div>`;
-  else if(log.type==='stopped')el.innerHTML=`<div class="journey-title">🌱 止まったところも消えてない</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の止まったステップを、最初から再開できるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">🕰 15分のばす</button></div>`;
-  else el.innerHTML=`<div class="journey-title">${due?'🔔 戻りどきが来たよ':'🫧 休むのも作戦'}</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}',true)">${due?'⚡ 10秒だけ':'▶ 今なら10秒'}</button><button class="btn btn-g btn-sm" type="button" onclick="delayJourney('${log.id}',15)">＋15分</button></div>`;
+  if(log.type==='stopped'&&!due)el.innerHTML=`<div class="journey-title">🫧 いまは休む作戦</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の続き・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 今なら続ける</button><button class="btn btn-g btn-sm" type="button" onclick="dismissJourney('${log.id}')">再開しない</button></div>`;
+  else if(log.type==='stopped'&&log.choice==='saved')el.innerHTML=`<div class="journey-title">💾 途中保存できています</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の保存したステップを、最初から再開できるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="dismissJourney('${log.id}')">再開しない</button></div>`;
+  else if(log.type==='stopped')el.innerHTML=`<div class="journey-title">🌱 止まったところも消えてない</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}の止まったステップを、最初から再開できるよ。</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}')">▶ 続きから</button><button class="btn btn-g btn-sm" type="button" onclick="dismissJourney('${log.id}')">再開しない</button></div>`;
+  else el.innerHTML=`<div class="journey-title">${due?'🔔 戻りどきが来たよ':'🫧 休むのも作戦'}</div><div class="journey-copy">${esc(log.routineName||'ルーチン')}・${journeyTimeLabel(log.dueAt)}</div><div class="journey-actions"><button class="btn btn-p btn-sm" type="button" onclick="resumeJourney('${log.id}',true)">${due?'⚡ 10秒だけ':'▶ 今なら10秒'}</button><button class="btn btn-g btn-sm" type="button" onclick="dismissJourney('${log.id}')">再開しない</button></div>`;
 }
-function delayJourney(id,minutes){const log=D.journeyLogs.find(x=>x.id===id);if(!log)return;log.dueAt=Date.now()+minutes*60000;log.updatedAt=Date.now();save();renderJourneyCard();toast('🫧 15分のばしたよ。責めなくて大丈夫');}
+function dismissJourney(id){
+  const log=D.journeyLogs.find(x=>x.id===id&&!x.deletedAt);if(!log)return;
+  const now=Date.now();
+  for(const pending of liveLogs(D.journeyLogs)){
+    if(pending.routineId===log.routineId&&!pending.returnedAt&&!pending.completedAt&&!['dismissed','superseded'].includes(pending.choice)){
+      pending.choice='dismissed';pending.updatedAt=now;
+    }
+  }
+  save();renderJourneyCard();toast('再開案内を閉じました。ここまでの記録は残ります');
+}
 function resumeJourney(id,micro=false){
   const log=D.journeyLogs.find(x=>x.id===id);if(!log)return;
   if(!D.routines.some(r=>r.id===log.routineId)){log.choice='dismissed';log.updatedAt=Date.now();save();renderJourneyCard();toast('🫧 このルーチンはもうないので、戻るカードをしまいました');return;}
