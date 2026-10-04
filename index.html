@@ -72,6 +72,16 @@ button.tap-pop{animation:tapPop .3s cubic-bezier(.15,1.8,.3,1)}
 
 /* personal memo composer */
 .memo-composer{padding:8px 10px}
+#memoFab{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(96px + env(safe-area-inset-bottom));z-index:60;border-radius:999px;padding:13px 18px;font-size:14px;white-space:nowrap;box-shadow:0 5px 22px rgba(229,56,127,.35)}
+#memoModal{--text-scale:1;position:fixed;inset:0;background:rgba(18,16,42,.55);backdrop-filter:blur(4px);z-index:220;display:flex;align-items:flex-end;justify-content:center}
+#memoModal[hidden]{display:none}
+#memoModal h2{margin-right:auto}
+#memoModal .sheet{width:100%;max-width:520px;max-height:85vh;max-height:85dvh;overflow-y:auto;overscroll-behavior:contain;background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--line2);border-radius:20px 20px 0 0;padding:14px 12px calc(14px + env(safe-area-inset-bottom));animation:sheetUp .2s ease-out}
+#memoModal .memo-inputrow textarea{height:88px;min-height:88px;font-size:16px}
+#memoModal .memo-actions button{min-width:60px;min-height:40px}
+.memo-close{border:0;background:var(--card2);color:var(--dim);border-radius:50%;width:36px;height:36px;flex-shrink:0;font-size:18px;cursor:pointer}
+body.memo-open{overflow:hidden}
+body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .memo-composer h2{margin-bottom:5px}
 .memo-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
 .memo-section-head h2{margin:0}
@@ -914,7 +924,6 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
   .screen.active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row dense;gap:6px;align-items:start}
   .screen.active>.card,.screen.active>.sect,.screen.active>.btn-full,.screen.active>.statgrid{margin:0}
   #routineList{display:contents}
-  #scr-home .memo-composer{grid-row:span 2}
   #scr-home #activityTimelineCard{grid-column:span 2}
   #scr-notes>.simple-notes-shell{grid-column:1/-1}
   #scr-preview>.card,#scr-edit>.card{grid-column:1 / span 2}
@@ -935,14 +944,6 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
   #scr-home .card{padding:6px 8px}
   #scr-home h2{font-size:calc(12px * var(--text-scale));margin-bottom:4px}
   #scr-home .btn{padding:6px 9px;font-size:calc(10px * var(--text-scale))}
-  #scr-home .memo-inputrow{gap:4px}
-  #scr-home .memo-inputrow textarea{height:36px;min-height:36px;padding:4px 6px;font-size:calc(10px * var(--text-scale))}
-  #scr-home .memo-actions{gap:3px}
-  #scr-home .memo-actions button{width:48px;font-size:calc(9px * var(--text-scale))}
-  #scr-home .mood-quick{margin-top:3px;padding-top:4px}
-  #scr-home .mood-quick-head{margin-bottom:3px}
-  #scr-home .mood-btn{padding:3px 6px;font-size:calc(9px * var(--text-scale))}
-  #scr-home .memo-post{gap:4px;padding:3px 0;font-size:calc(10px * var(--text-scale));line-height:1.3}
   #scr-home .habit-row,#scr-home .habit-toggle-area{gap:4px}
   #scr-home .habit-row{padding:3px 1px}
   #scr-home .habit-row .habit-check{width:19px;height:19px;border-radius:5px}
@@ -1009,6 +1010,16 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
 .life-error{font-size:calc(12px * var(--text-scale));color:var(--pink);margin:8px 0}
 @media(min-width:760px){.life-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.life-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:430px){.tabbar button{font-size:calc(10px * var(--text-scale));padding-left:2px;padding-right:2px}}
+#app{padding-bottom:calc(160px + env(safe-area-inset-bottom))}
+body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
+@media(min-width:960px){
+  #memoFab{bottom:20px;right:20px}
+  body.meal-waiting #memoFab{bottom:100px}
+  #app{padding-bottom:84px}
+  body.meal-waiting #app{padding-bottom:164px}
+  #memoModal{align-items:center;padding:20px}
+  #memoModal .sheet{border-radius:20px}
+}
 </style>
 </head>
 <body>
@@ -1044,25 +1055,6 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
   <!-- HOME -->
   <div class="screen active" id="scr-home">
     <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
-    <div class="card memo-composer">
-      <div class="memo-section-head"><h2>📝 ひとことメモ</h2><button class="text-link" type="button" onclick="openManage('memos')">すべて見る →</button></div>
-      <div class="memo-inputrow">
-        <textarea id="personalMemoInput" rows="2" maxlength="280" placeholder="いま思ったことをメモ…" oninput="updateMemoCount()" onkeydown="submitShortcut(event,addPersonalNote)"></textarea>
-        <div class="memo-actions">
-          <button id="memoMicBtn" class="btn btn-g memo-mic" type="button" onclick="toggleMemoVoice()">🎙️ 音声</button>
-          <button class="btn btn-c" type="button" onclick="addPersonalNote()">送る</button>
-        </div>
-      </div>
-      <div class="memo-meta"><span id="memoVoiceStatus">マイクで音声入力できます</span><span><b id="memoCharCount">0</b>/280</span></div>
-      <div class="mood-quick">
-        <div class="mood-quick-head"><span class="mood-quick-title">🌡️ 今の気分や活動</span><span class="mood-last" id="moodLast"></span><button class="text-link" type="button" onclick="openManage('moods')">編集 →</button></div>
-        <div class="mood-buttons" id="moodButtons"></div>
-        <div class="mood-intensity-picker" id="moodIntensityPicker" hidden></div>
-        <div class="mood-activity-picker" id="moodActivityPicker" hidden></div>
-        <div class="mood-boredom-panel" id="moodBoredomPanel" hidden aria-live="polite"><div class="boredom-card" id="boredomCard"></div></div>
-      </div>
-      <div id="personalMemoFeed" class="memo-feed"></div>
-    </div>
     <div class="card" id="habitCard">
       <div class="habit-head"><h2>✅ 今日のチェックリスト</h2><span class="habit-score" id="habitScore">0 / 0</span></div>
       <div class="habit-bar"><div id="habitBarFill" style="width:0%"></div></div>
@@ -1792,6 +1784,29 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
 
 <div id="rescueModal" onclick="if(event.target===this)closeRescue()">
   <div class="sheet" id="rescueSheet"></div>
+</div>
+
+<button id="memoFab" class="btn btn-p" type="button" aria-haspopup="dialog" aria-controls="memoModal" aria-expanded="false" onclick="openMemoComposer()">💬 つぶやく</button>
+<div id="memoModal" hidden onclick="if(event.target===this)closeMemoComposer()">
+  <div class="sheet memo-composer" role="dialog" aria-modal="true" aria-labelledby="memoComposerTitle" tabindex="-1">
+    <div class="memo-section-head"><h2 id="memoComposerTitle">💬 つぶやく</h2><button class="text-link" type="button" onclick="openManage('memos')">すべて見る →</button><button class="memo-close" type="button" aria-label="つぶやきを閉じる" onclick="closeMemoComposer()">✕</button></div>
+    <div class="memo-inputrow">
+      <textarea id="personalMemoInput" rows="2" maxlength="280" placeholder="いま思ったことをつぶやく…" aria-label="つぶやき" oninput="updateMemoCount()" onkeydown="submitShortcut(event,addPersonalNote)"></textarea>
+      <div class="memo-actions">
+        <button id="memoMicBtn" class="btn btn-g memo-mic" type="button" onclick="toggleMemoVoice()">🎙️ 音声</button>
+        <button class="btn btn-c" type="button" onclick="addPersonalNote()">投稿</button>
+      </div>
+    </div>
+    <div class="memo-meta"><span id="memoVoiceStatus">マイクで音声入力できます</span><span><b id="memoCharCount">0</b>/280</span></div>
+    <div class="mood-quick">
+      <div class="mood-quick-head"><span class="mood-quick-title">🌡️ 今の気分や活動</span><span class="mood-last" id="moodLast"></span><button class="text-link" type="button" onclick="openManage('moods')">編集 →</button></div>
+      <div class="mood-buttons" id="moodButtons"></div>
+      <div class="mood-intensity-picker" id="moodIntensityPicker" hidden></div>
+      <div class="mood-activity-picker" id="moodActivityPicker" hidden></div>
+      <div class="mood-boredom-panel" id="moodBoredomPanel" hidden aria-live="polite"><div class="boredom-card" id="boredomCard"></div></div>
+    </div>
+    <div id="personalMemoFeed" class="memo-feed"></div>
+  </div>
 </div>
 
 <div id="libModal" onclick="if(event.target===this)this.classList.remove('show')">
@@ -2542,6 +2557,7 @@ function showScreen(id){
     if(activityPageById(selectedActivityPageId)){if(!commitActivityPageEditor())return false;savedActivityDraft=true;}
     activityPageEditing=false;
   }
+  closeMemoComposer(false);
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   const nav=document.querySelector(`.tabbar button[data-scr="${id}"]`);
@@ -3135,6 +3151,39 @@ function submitShortcut(event,submit){
   if(event.key!=='Enter'||(!event.metaKey&&!event.ctrlKey)||event.isComposing||event.keyCode===229)return;
   event.preventDefault();submit();
 }
+let memoReturnFocus=null;
+function openMemoComposer(){
+  const modal=document.getElementById('memoModal');
+  if(!modal.hidden)return;
+  memoReturnFocus=document.activeElement;
+  modal.hidden=false;document.body.classList.add('memo-open');
+  document.getElementById('memoFab').setAttribute('aria-expanded','true');
+  renderPersonalNotes();renderMoodButtons();renderMoodIntensityPicker();renderMoodActivityPicker();updateMemoCount();
+  document.getElementById('personalMemoInput').focus({preventScroll:true});
+}
+function closeMemoComposer(restoreFocus=true){
+  const modal=document.getElementById('memoModal');
+  if(modal.hidden)return;
+  memoVoiceSubmitOnEnd=false;memoVoiceKeepAlive=false;
+  if(memoRecognition){
+    memoRecognition.onstart=null;memoRecognition.onresult=null;memoRecognition.onend=null;memoRecognition.onerror=null;
+    try{memoRecognition.abort();}catch(e){}
+    memoRecognition=null;
+  }
+  finishMemoVoiceUI();
+  modal.hidden=true;document.body.classList.remove('memo-open');
+  document.getElementById('memoFab').setAttribute('aria-expanded','false');
+  if(restoreFocus&&memoReturnFocus?.isConnected)memoReturnFocus.focus({preventScroll:true});
+  memoReturnFocus=null;
+}
+document.getElementById('memoModal').addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();closeMemoComposer();return;}
+  if(event.key!=='Tab')return;
+  const controls=[...event.currentTarget.querySelectorAll('button,input,textarea,select,a[href],[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);
+  const first=controls[0],last=controls[controls.length-1];
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+});
 function addPersonalNote(){
   const input=document.getElementById('personalMemoInput');
   const text=input.value.trim();
@@ -3144,6 +3193,7 @@ function addPersonalNote(){
   if(memoRecognition)try{memoRecognition.stop();}catch(e){}
   input.value='';input.blur();updateMemoCount();save();renderPersonalNotes();renderActivityTimeline();
   if(document.getElementById('scr-set').classList.contains('active'))renderAllNotes();
+  closeMemoComposer();
   toast('📮 メモしました');sfxDone();
 }
 function addRunNote(){
@@ -3986,25 +4036,30 @@ function openLib(target='edit'){
   const r=target==='run'&&run?run.r:D.routines.find(x=>x.id===editId);
   if(!r)return;
   const el=document.getElementById('libList');el.innerHTML='';
-  const items=[];
-  for(const rt of D.routines)for(const s of rt.steps)
-    if(s.name.trim())items.push({from:rt,step:s});
+  const items=[],sharedItems=new Map();
+  for(const rt of D.routines)for(const s of rt.steps){
+    if(!(s.name||'').trim())continue;
+    const existing=s.sharedId?sharedItems.get(s.sharedId):null;
+    if(existing){if(!existing.from.some(x=>x.id===rt.id))existing.from.push(rt);continue;}
+    const item={from:[rt],step:s};items.push(item);
+    if(s.sharedId)sharedItems.set(s.sharedId,item);
+  }
   if(!items.length){el.innerHTML='<p class="muted">まだ登録済みステップがありません。</p>';}
   items.forEach(({from,step})=>{
     const secLabel=step.sec>=60?`${Math.floor(step.sec/60)}分${step.sec%60?step.sec%60+'秒':''}`:`${step.sec}秒`;
     const d=document.createElement('div');d.className='librow';
-    const inCurrent=from.id===r.id;
+    const sources=from.map(rt=>`${rt.emoji||'📝'}${rt.name}${rt.id===r.id?'（このルーチン）':''}`).join('・');
     d.innerHTML=`<span>${step.emoji||'✅'}</span><span class="ln">${esc(step.name)}</span>
-      <span class="lr">${esc(from.emoji)}${esc(from.name)}${inCurrent?'（このルーチン）':''} / ${secLabel} / 💬${step.texts.length}</span>
+      <span class="lr">${esc(sources)}${step.sharedId?' / 🔗共有':''} / ${secLabel} / 💬${step.texts.length}</span>
       <button class="add">複製</button><button class="add lk">🔗共有</button>`;
     d.querySelector('.add:not(.lk)').onclick=()=>{
       r.steps.push({id:uid(),name:step.name,emoji:step.emoji,sec:step.sec,memo:step.memo||'',texts:[...step.texts],checklist:(step.checklist||[]).map(c=>({t:c.t}))});
-      save();refreshStepTarget(target);sfxDone();toast(`📚 「${step.name}」を複製しました（独立コピー）`);
+      save();refreshStepTarget(target);openLib(target);sfxDone();toast(`📚 「${step.name}」を複製しました（独立コピー）`);
     };
     d.querySelector('.lk').onclick=()=>{
       if(!step.sharedId)step.sharedId=uid();
       r.steps.push({id:uid(),sharedId:step.sharedId,name:step.name,emoji:step.emoji,sec:step.sec,memo:step.memo||'',texts:[...step.texts],checklist:(step.checklist||[]).map(c=>({t:c.t}))});
-      save();refreshStepTarget(target);sfxDone();toast(`🔗 「${step.name}」を共有で追加（編集が連動します）`);
+      save();refreshStepTarget(target);openLib(target);sfxDone();toast(`🔗 「${step.name}」を共有で追加（編集が連動します）`);
     };
     el.appendChild(d);
   });
