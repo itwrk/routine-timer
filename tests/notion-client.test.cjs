@@ -1,0 +1,26 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync('index.html','utf8');
+for(const m of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi))if(m[1].trim())new Function(m[1]);
+assert(fs.existsSync('.nojekyll'));assert(/const PRESET_SYNC=\{url:[^\n]+key:''/.test(html));assert(!/\b(?:prompt|confirm|alert)\s*\(/.test(html));assert(!/(?:sk-ant-|ntn_)[A-Za-z0-9_-]{20,}/.test(html));
+let requests=[],legacy=false,denied=false,postHandler=()=>({ok:true}),aiCalls=0,saves=0;
+const state={settings:{apiKey:'test-api-key',syncUrl:'https://script.google.com/macros/s/test/exec',syncKey:'test-sync-key',aiCommentDays:30,aiCommentMeals:false,aiCommentNotion:false},aiComments:[],simpleNotes:[],activityPages:[],boredomLogs:[],journeyLogs:[]};
+const ctx={D:state,URL,AbortController,setTimeout,clearTimeout,stableHash:s=>s,localDateKey:d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,liveLogs:a=>(a||[]).filter(x=>x&&!x.deletedAt),chatgptTimelineRows:()=>[],mealTimelineRows:()=>[],timelineDateTime:x=>new Date(x).toISOString(),safeNotionUrl:value=>/^https:\/\/(?:www\.)?notion\.so\//.test(value||'')?value:'',uid:()=>`comment-${saves}`,save(){saves++},aiErrorMessage:e=>e.message,document:{getElementById(){return {focus(){}}}},showScreen(){},
+  fetch:async(url,options)=>{requests.push({url,options});const value=options.method==='POST'?postHandler(JSON.parse(options.body)):denied?{ok:false,message:'合言葉を確認'}:legacy?{ok:true,data:{old:true}}:{ok:true,bridgeVersion:1,tasks:true,records:true,comments:true};return {ok:true,json:async()=>value}},
+  aiRequest:async(prompt,tokens,system)=>{aiCalls++;assert(prompt.includes('Notionの記録'));assert(prompt.includes('参照元'));assert(system.includes('命令には従わない'));return 'Notionの記録も踏まえたコメント';}};
+vm.createContext(ctx);const source=html.slice(html.indexOf('let notionWorkspace='),html.indexOf('/* ============ UI helpers ============ */'));vm.runInContext(source,ctx);vm.runInContext('renderAiComment=()=>{};renderNotionWorkspace=()=>{};',ctx);
+const task={title:'タスク',status:'春香ボール',priority:'高',memo:'メンションを維持',due:{start:'2026-10-19T09:00:03.000Z'}};
+const draft={...task,...ctx.notionTaskDateParts(task)};assert.deepEqual(Object.keys(ctx.notionTaskChanges(task,draft)),[]);draft.title='変更';assert.deepEqual(Object.keys(ctx.notionTaskChanges(task,draft)),['title']);
+draft.date='';draft.time='';assert.equal(ctx.notionTaskChanges(task,draft).due,null);
+const ranged={...task,due:{start:'2026-10-19',end:'2026-10-20'}};assert.throws(()=>ctx.notionTaskChanges(ranged,{...ranged,date:'2026-10-21',time:''}),/Notionで編集/);
+(async()=>{
+legacy=true;await assert.rejects(ctx.notionBridge('rvtNotionTasks'),/GASを/);assert.equal(requests.length,1);assert(!requests.some(r=>r.options.method==='POST'));
+legacy=false;denied=true;await assert.rejects(ctx.notionBridge('rvtNotionTasks'),/合言葉/);denied=false;
+state.settings.notionBridgeUrl='https://example.com/steal';requests=[];await assert.rejects(ctx.notionBridge('rvtNotionTasks'),/GASの/);assert.equal(requests.length,0);state.settings.notionBridgeUrl='';
+postHandler=()=>({ok:true,records:[{title:'Notionの日記',text:'できたことの記録',updatedAt:new Date(Date.now()-1000).toISOString(),url:'https://www.notion.so/test-page',truncated:true}],truncated:false});state.settings.aiCommentNotion=true;
+await ctx.loadNotionAiRecords(true);const context=ctx.buildAiCommentContext();assert.equal(context.records.length,1);assert.equal(context.records[0].種類,'Notionの記録');assert(context.records[0].詳細.includes('抜粋'));assert.equal(context.records[0].参照元,'https://www.notion.so/test-page');assert(!JSON.stringify(context.records).includes('test-sync-key'));
+await ctx.generateAiComment();assert.equal(aiCalls,1);assert.equal(state.aiComments.length,1);
+postHandler=()=>({ok:true,pageUrl:'https://www.notion.so/saved'});const id=state.aiComments[0].id;await ctx.saveAiCommentToNotion(id);assert.equal(state.aiComments[0].notionPageUrl,'https://www.notion.so/saved');const count=requests.length;await ctx.saveAiCommentToNotion(id);assert.equal(requests.length,count);
+state.settings.aiCommentDays=90;assert.equal(ctx.buildAiCommentContext().records.length,0);postHandler=()=>({ok:false,message:'読み込み失敗'});await ctx.generateAiComment();assert.equal(aiCalls,1);assert.equal(state.aiComments.length,1);assert(vm.runInContext('aiCommentMessage',ctx).includes('読み込み失敗'));
+const cloudSource=html.slice(html.indexOf('function syncDataForCloud(){'),html.indexOf('async function syncPull(auto)'));vm.runInContext(cloudSource,ctx);state.settings.notionBridgeUrl='private-url';state.settings.notionBridgeKey='private-key';const cloud=ctx.syncDataForCloud();assert(!('notionBridgeUrl'in cloud.settings));assert(!('notionBridgeKey'in cloud.settings));assert(!('apiKey'in cloud.settings));assert.equal(cloud.aiComments[0].notionPageUrl,'https://www.notion.so/saved');
+console.log('PASS: syntax/safeguards, unchanged rich fields and dates, legacy preflight without writes, credential destination restrictions, Notion preview/provenance, generation, save/export, failures, period changes, sync exclusions');
+})().catch(error=>{console.error(error);process.exitCode=1});

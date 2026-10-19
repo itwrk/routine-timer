@@ -412,6 +412,19 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .ai-comment-preview{white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;font-size:calc(10px * var(--text-scale));background:var(--bg2);border-radius:8px;padding:8px;margin-top:6px}
 .ai-comment-history{border-top:1px dashed var(--line);padding-top:7px;margin-top:9px}
 #aiCommentPrompt{min-height:150px;line-height:1.6}
+.notion-workspace-tools{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.notion-workspace-tools input{flex:1;min-width:100px}
+.notion-workspace-tools select{max-width:100%}
+.notion-workspace-tools button,.notion-workspace-row button{white-space:nowrap;flex-shrink:0}
+.notion-workspace-row{border-top:1px dashed var(--line);padding:8px 0}
+.notion-workspace-line{display:flex;align-items:center;gap:7px;min-width:0}
+.notion-workspace-line strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notion-task-editor{margin-top:8px;padding:9px;background:var(--bg2);border-radius:9px}
+.notion-task-editor label{display:block;font-size:calc(11px * var(--text-scale));margin:6px 0 3px}
+.notion-task-editor input,.notion-task-editor select,.notion-task-editor textarea{width:100%;min-width:0}
+.notion-task-editor textarea{min-height:90px}
+.notion-task-date{display:flex;gap:6px}.notion-task-date input{flex:1}
+.notion-task-editor input,.notion-task-editor textarea,.notion-task-editor select{font-size:16px}
 /* saved step library manager */
 .step-lib-row{display:flex;align-items:flex-start;gap:8px;padding:8px 2px;border-bottom:1px dashed var(--line)}
 .step-lib-emoji{font-size:calc(20px * var(--text-scale));line-height:1.2;flex-shrink:0}
@@ -1086,7 +1099,8 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
       <section class="card" id="aiCommentCard" aria-labelledby="aiCommentTitle">
         <div class="ai-comment-head"><h2 id="aiCommentTitle">🤖 記録へのAIコメント</h2><button class="btn btn-g btn-sm" type="button" onclick="openAiCommentSettings()">⚙️ 方針</button></div>
         <p class="ai-comment-meta" id="aiCommentScope"></p>
-        <div class="ai-comment-actions"><button class="btn btn-c btn-sm" id="aiCommentGenerate" type="button" onclick="generateAiComment()">🤖 記録を読んでコメント</button></div>
+        <div class="ai-comment-actions"><button class="btn btn-c btn-sm" id="aiCommentGenerate" type="button" onclick="generateAiComment()">🤖 記録を読んでコメント</button><button class="btn btn-g btn-sm" id="notionAiLoad" type="button" onclick="loadNotionAiRecords(true).catch(()=>{})" hidden>📓 Notionの記録を読み込み</button></div>
+        <p class="ai-comment-meta" id="notionAiStatus"></p>
         <p class="muted" id="aiCommentStatus" role="status" aria-live="polite"></p>
         <div id="aiCommentResult"></div>
         <details ontoggle="if(this.open)previewAiCommentRecords()"><summary>送信する記録を確認</summary><pre class="ai-comment-preview" id="aiCommentPreview"></pre></details>
@@ -1104,6 +1118,14 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
           <button class="btn btn-c btn-sm" type="button" onclick="addTodayTask()">＋ 今日だけ</button>
         </div>
       </div>
+      <section class="card notion-card" id="notionWorkspaceCard">
+        <h2>📓 Notionのタスク</h2>
+        <div class="notion-workspace-tools"><input id="notionWorkspaceSearch" type="search" maxlength="120" placeholder="タスク名で検索" aria-label="Notionタスク名で検索"><button class="btn btn-c btn-sm" type="button" onclick="loadNotionWorkspace()">読み込み</button><button class="btn btn-g btn-sm" type="button" onclick="openNotionBridgeSettings()">設定</button></div>
+        <div class="notion-workspace-tools"><select id="notionWorkspaceFilter" aria-label="Notionタスクのステータス絞り込み" onchange="loadNotionWorkspace()"><option value="">全ステータス</option></select></div>
+        <p class="muted" id="notionWorkspaceStatus" role="status" aria-live="polite"></p>
+        <div id="notionWorkspaceTasks"></div>
+        <button class="btn btn-g btn-sm" id="notionWorkspaceMore" type="button" onclick="loadNotionWorkspace(true)" hidden>続きを読み込む</button>
+      </section>
       <div class="card notion-card" id="notionTaskCard" hidden>
         <div class="notion-head">
           <h2>📓 春香ボール</h2>
@@ -1710,6 +1732,8 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
       <h3 style="margin-top:14px">💬 記録へのAIコメント</h3>
       <div class="field"><label for="aiCommentDays">読み取る記録の期間</label><select id="aiCommentDays" onchange="saveAiCommentSettings()"><option value="7">直近7日</option><option value="30">直近30日</option><option value="90">直近90日</option><option value="0">全期間</option></select></div>
       <div class="field"><label><input type="checkbox" id="aiCommentMeals" style="width:auto;margin-right:6px" onchange="saveAiCommentSettings()">食事・起床・衝動・LOC・安心練習の記録も含める</label></div>
+      <div class="field"><label><input type="checkbox" id="aiCommentNotion" style="width:auto;margin-right:6px" onchange="saveAiCommentSettings()">Notionの記録もAIに送信して、コメントの材料に加える</label></div>
+      <p class="muted">Notionは更新日時で期間を絞り、新しい最大10件の本文・プロパティを抜粋して読み込みます。生成時に対象の記録がAnthropicへ送信されます。</p>
       <div class="field"><label for="aiCommentPrompt">コメント用プロンプト（自由に編集）</label><textarea id="aiCommentPrompt" rows="6" maxlength="4000" oninput="saveAiCommentSettings()" placeholder="例：できていることを具体的に拾い、やさしい口調で。次にできる小さな一歩を1つ教えて。"></textarea></div>
       <p class="muted">自動保存されます。空欄なら標準の方針でコメントします。メモ・気分・チェック・ルーチン・計測などから、新しい順に最大120件・合計約3万文字まで読み取ります。長いメモは抜粋します。ホームの「送信する記録を確認」で内容を確認できます。</p>
     </div>
@@ -1725,10 +1749,16 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
       <p class="muted">ホームの「今後の予定」表示もこの連携を使います。GASを最新版（rvt-sync.gs v2）に更新し、「デプロイを管理→新バージョン」で反映してください。</p>
     </div>
     <div class="card" id="notionSettingsCard">
-      <h2>📓 Notion連携（GAS Webhook）</h2>
+      <h2>📓 Notion連携</h2>
+      <div class="field"><label for="setNotionBridgeUrl">GAS連携URL（空欄なら端末間同期のURL）</label><input type="url" id="setNotionBridgeUrl" placeholder="https://script.google.com/macros/s/…/exec" onchange="saveNotionBridgeSettings()"></div>
+      <div class="field"><label for="setNotionBridgeKey">連携用合言葉（空欄なら端末間同期の合言葉）</label><input type="password" id="setNotionBridgeKey" autocomplete="off" onchange="saveNotionBridgeSettings()"></div>
+      <button class="btn btn-c btn-sm" type="button" onclick="checkNotionBridge()">接続確認</button>
+      <p class="muted" id="notionBridgeStatus" role="status" aria-live="polite" style="margin:8px 0">タスクDB・AI材料・コメント保存先とNotionトークンは、GAS側で設定します。</p>
+      <details><summary>ルーチン完了ログの送信（従来機能）</summary>
       <div class="field"><label>GASウェブアプリURL</label><input type="text" id="setWebhook" placeholder="https://script.google.com/macros/s/..../exec" onchange="saveSettings()"></div>
       <p class="muted">完了ごとに <b>date / time / routine / done / total / skips / durationMin</b> をJSONでPOSTします。筋トレログと同様、GAS側でNotion APIに中継してください。GASの `doPost(e)` で `JSON.parse(e.postData.contents)` を受けてNotionページ作成、でOK。</p>
       <p class="muted" style="margin-top:8px">ホームの「春香ボール」は、上の端末間同期GASを安全な中継として使います。NotionトークンやタスクDB IDは公開HTMLや端末データには保存しません。</p>
+      </details>
     </div>
     <div class="card">
       <h2>💾 データ</h2>
@@ -2221,10 +2251,11 @@ function exportLifeCsv(){
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
   d.lifePlan=normalizeLifePlan(d.lifePlan);
-  d.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false,aiCommentPrompt:'',aiCommentDays:30,aiCommentMeals:true},d.settings||{});
+  d.settings=Object.assign({rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false,aiCommentPrompt:'',aiCommentDays:30,aiCommentMeals:true,aiCommentNotion:false,notionBridgeUrl:'',notionBridgeKey:''},d.settings||{});
   d.settings.aiCommentPrompt=String(d.settings.aiCommentPrompt||'').slice(0,4000);
   d.settings.aiCommentDays=[0,7,30,90].includes(Number(d.settings.aiCommentDays))?Number(d.settings.aiCommentDays):30;
   d.settings.aiCommentMeals=!!d.settings.aiCommentMeals;
+  d.settings.aiCommentNotion=!!d.settings.aiCommentNotion;
   d.aiComments=(Array.isArray(d.aiComments)?d.aiComments:[]).filter(x=>x&&typeof x.text==='string'&&Number(x.createdAt)>0).map(x=>Object.assign({},x,{text:x.text.slice(0,12000)})).sort((a,b)=>b.createdAt-a.createdAt).slice(0,20);
   d.routines=Array.isArray(d.routines)?d.routines:[];
   d.hitokoto=Array.isArray(d.hitokoto)?d.hitokoto:[];
@@ -2625,6 +2656,146 @@ async function aiHitokoto(btn){
   btn.classList.remove('busy');btn.textContent='🤖 AIで追加';
 }
 
+/* ============ Notion tasks, reference records and comment export ============ */
+let notionWorkspace={tasks:[],schema:null,nextCursor:null,loaded:false,signature:'',busy:false,message:'',editId:null,draft:null};
+let notionAiContext=null,notionAiLoading=null,notionBridgeCapability=null,notionCommentSaving=null;
+function notionBridgeConfig(){return{url:(D.settings.notionBridgeUrl||D.settings.syncUrl||'').trim(),key:(D.settings.notionBridgeKey||D.settings.syncKey||'').trim()};}
+function notionBridgeSignature(){const c=notionBridgeConfig();return stableHash(c.url+'\n'+c.key);}
+function openNotionBridgeSettings(){showScreen('scr-set');document.getElementById('setNotionBridgeUrl').focus();}
+function saveNotionBridgeSettings(){
+  const previous=notionBridgeSignature();
+  D.settings.notionBridgeUrl=document.getElementById('setNotionBridgeUrl').value.trim();
+  D.settings.notionBridgeKey=document.getElementById('setNotionBridgeKey').value.trim();
+  if(previous!==notionBridgeSignature()){notionBridgeCapability=null;notionAiContext=null;notionWorkspace={tasks:[],schema:null,nextCursor:null,loaded:false,signature:'',busy:false,message:'',editId:null,draft:null};}
+  save();renderNotionWorkspace();renderAiComment();
+}
+async function notionBridgeFetch(action,data={},statusOnly=false){
+  const config=notionBridgeConfig();
+  if(!config.url||!config.key)throw new Error('Notion連携のGAS URLと合言葉を設定してください。');
+  let url;try{url=new URL(config.url);}catch(_){throw new Error('GAS連携URLを確認してください。');}
+  if(url.protocol!=='https:'||url.hostname!=='script.google.com'||!/\/s\/[^/]+\/exec$/.test(url.pathname))throw new Error('GASの /exec URLを設定してください。');
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),90000);
+  try{
+    let options={signal:controller.signal};
+    if(statusOnly){url.searchParams.set('action','rvtNotionStatus');url.searchParams.set('key',config.key);}
+    else options=Object.assign(options,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(Object.assign({},data,{action,key:config.key}))});
+    const response=await fetch(url.toString(),options);if(!response.ok)throw new Error('Notion連携サーバーに接続できませんでした。');
+    let result;try{result=await response.json();}catch(_){throw new Error('GASの応答を読み取れませんでした。ウェブアプリのURLと公開設定を確認してください。');}
+    if(!result.ok)throw new Error(result.message||'Notion連携に失敗しました。設定を確認してください。');
+    if(statusOnly&&result.bridgeVersion!==1)throw new Error('GASをNotionタスク編集・記録連携対応版へ更新してください。');
+    return result;
+  }catch(error){if(error.name==='AbortError')throw new Error('Notion連携がタイムアウトしました。保存操作の場合は、Notion側の結果を確認してから再試行してください。');throw error;}
+  finally{clearTimeout(timeout);}
+}
+async function notionBridge(action,data={}){
+  const signature=notionBridgeSignature();
+  const result=await notionBridgeFetch('',{},true);notionBridgeCapability={signature,result};
+  if(signature!==notionBridgeSignature())throw new Error('連携設定が変更されました。もう一度操作してください。');
+  return notionBridgeFetch(action,data);
+}
+async function checkNotionBridge(){
+  saveNotionBridgeSettings();const status=document.getElementById('notionBridgeStatus');status.textContent='接続を確認しています…';
+  try{const signature=notionBridgeSignature(),result=await notionBridgeFetch('',{},true);notionBridgeCapability={signature,result};status.textContent=`✅ GAS接続成功 ／ タスクDB:${result.tasks?'設定済み':'未設定'}・AI材料:${result.records?'設定済み':'未設定'}・保存先:${result.comments?'設定済み':'未設定'}`;}
+  catch(error){status.textContent='⚠️ '+aiErrorMessage(error);}
+}
+function notionTaskDateParts(task){
+  const start=task.due&&task.due.start;if(!start)return{date:'',time:''};
+  if(/^\d{4}-\d{2}-\d{2}$/.test(start))return{date:start,time:''};
+  const date=new Date(start);if(!Number.isFinite(date.getTime()))return{date:'',time:''};
+  return{date:localDateKey(date),time:`${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`};
+}
+function notionTaskChanges(task,draft){
+  const changes={};for(const key of ['title','status','priority','memo'])if(draft[key]!==task[key])changes[key]=draft[key];
+  const original=notionTaskDateParts(task);
+  if(draft.date!==original.date||draft.time!==original.time){
+    if(task.due&&(task.due.end||task.due.time_zone))throw new Error('期間・タイムゾーン付きの期限はNotionで編集してください。');
+    if(!draft.date)changes.due=null;
+    else if(draft.time){const stamp=new Date(`${draft.date}T${draft.time}`);if(!Number.isFinite(stamp.getTime()))throw new Error('期限を確認してください。');changes.due=stamp.toISOString();}
+    else changes.due=draft.date;
+  }
+  return changes;
+}
+function renderNotionWorkspace(){
+  const host=document.getElementById('notionWorkspaceTasks');if(!host)return;
+  if(notionWorkspace.signature&&notionWorkspace.signature!==notionBridgeSignature()){notionWorkspace.tasks=[];notionWorkspace.loaded=false;notionWorkspace.schema=null;notionWorkspace.editId=null;notionWorkspace.draft=null;notionWorkspace.nextCursor=null;notionWorkspace.signature='';}
+  const state=notionWorkspace,filter=document.getElementById('notionWorkspaceFilter'),selected=filter.value;
+  filter.innerHTML='<option value="">全ステータス</option>'+(state.schema&&state.schema.status?state.schema.status.options:[]).map(option=>`<option value="${esc(option.name)}">${esc(option.name)}</option>`).join('');filter.value=selected;
+  for(const control of document.querySelectorAll('#notionWorkspaceCard>.notion-workspace-tools input,#notionWorkspaceCard>.notion-workspace-tools select,#notionWorkspaceCard>.notion-workspace-tools button'))control.disabled=state.busy||!!state.editId;
+  document.getElementById('notionWorkspaceStatus').textContent=state.busy?'Notionと通信しています…':state.message||(state.loaded?`${state.tasks.length}件読み込み済み`:'「読み込み」でNotionのタスクを取得します。');
+  const more=document.getElementById('notionWorkspaceMore');more.hidden=!state.nextCursor;more.disabled=state.busy||!!state.editId;
+  host.innerHTML='';
+  for(const task of state.tasks){
+    const row=document.createElement('article');row.className='notion-workspace-row';
+    row.innerHTML=`<div class="notion-workspace-line"><strong title="${esc(task.title)}">${esc(task.title||'無題')}</strong><button class="btn btn-g btn-sm notion-workspace-edit" type="button">編集</button></div><div class="ai-comment-meta">${esc([task.status,task.priority,task.due&&task.due.start].filter(Boolean).join(' ／ '))}</div>`;
+    const url=safeNotionUrl(task.url);if(url){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.className='ai-comment-meta';link.textContent='Notionで開く ↗';row.appendChild(link);}
+    row.querySelector('.notion-workspace-edit').disabled=state.busy;
+    row.querySelector('.notion-workspace-edit').onclick=()=>{if(state.editId&&state.editId!==task.id){toast('編集中のタスクを保存またはキャンセルしてください');return;}state.editId=task.id;state.draft=Object.assign({},task,notionTaskDateParts(task));renderNotionWorkspace();};
+    if(state.editId===task.id){
+      const draft=state.draft,schema=state.schema,editor=document.createElement('div');editor.className='notion-task-editor';
+      const options=(field,value)=>'<option value="">未設定</option>'+(value&&!field.options.some(x=>x.name===value)?`<option value="${esc(value)}" selected>${esc(value)}</option>`:'')+field.options.map(x=>`<option value="${esc(x.name)}" ${value===x.name?'selected':''}>${esc(x.name)}</option>`).join('');
+      const complex=!!(task.due&&(task.due.end||task.due.time_zone));
+      editor.innerHTML=`<label>タスク名<input class="notion-edit-title" type="text" maxlength="240" value="${esc(draft.title)}"></label>${schema.status?`<label>ステータス<select class="notion-edit-status">${options(schema.status,draft.status)}</select></label>`:''}${schema.priority?`<label>優先度<select class="notion-edit-priority">${options(schema.priority,draft.priority)}</select></label>`:''}${schema.due?`<label>期限</label><div class="notion-task-date"><input class="notion-edit-date" type="date" aria-label="期限の日付" value="${esc(draft.date)}" ${complex?'disabled':''}><input class="notion-edit-time" type="time" aria-label="期限の時刻（任意）" value="${esc(draft.time)}" ${complex?'disabled':''}></div>${complex?'<p class="muted">期間・タイムゾーン付きの期限はNotionで編集できます。</p>':''}`:''}${schema.memo?`<label>メモ（${esc(schema.memo.name)}）<textarea class="notion-edit-memo" maxlength="4000">${esc(draft.memo)}</textarea></label>`:''}<div class="ai-comment-actions"><button class="btn btn-c btn-sm notion-edit-save" type="button">Notionに保存</button><button class="btn btn-g btn-sm notion-edit-cancel" type="button">キャンセル</button></div>`;
+      for(const key of ['title','status','priority','date','time','memo']){const input=editor.querySelector('.notion-edit-'+key);if(input){input.disabled=input.disabled||state.busy;input.oninput=input.onchange=()=>{draft[key]=input.value;};}}
+      editor.querySelector('.notion-edit-save').disabled=state.busy;editor.querySelector('.notion-edit-cancel').disabled=state.busy;
+      editor.querySelector('.notion-edit-save').onclick=()=>saveNotionWorkspaceTask(task.id,editor);
+      editor.querySelector('.notion-edit-cancel').onclick=()=>{state.editId=null;state.draft=null;renderNotionWorkspace();};row.appendChild(editor);
+    }
+    host.appendChild(row);
+  }
+}
+async function loadNotionWorkspace(more=false){
+  const state=notionWorkspace;if(state.busy)return;if(state.editId){toast('編集中のタスクを保存またはキャンセルしてください');return;}
+  const signature=notionBridgeSignature(),query=document.getElementById('notionWorkspaceSearch').value.trim(),status=document.getElementById('notionWorkspaceFilter').value;
+  if(more&&(state.query!==query||state.filter!==status))more=false;
+  state.busy=true;state.message='';renderNotionWorkspace();
+  try{
+    const result=await notionBridge('rvtNotionTasks',{query,status,cursor:more?state.nextCursor:null});
+    if(signature!==notionBridgeSignature())throw new Error('連携設定が変更されました。再読み込みしてください。');
+    if(!Array.isArray(result.tasks)||!result.schema||!result.schema.title)throw new Error('Notion連携サーバーの応答を確認してください。');
+    const byId=new Map((more?state.tasks:[]).map(t=>[t.id,t]));for(const task of result.tasks)byId.set(task.id,Object.assign({title:'',status:'',priority:'',memo:'',due:null},task));
+    state.tasks=[...byId.values()];state.schema=result.schema;state.nextCursor=result.nextCursor||null;state.loaded=true;state.signature=signature;state.query=query;state.filter=status;
+  }catch(error){state.message='⚠️ '+aiErrorMessage(error);}
+  finally{state.busy=false;renderNotionWorkspace();}
+}
+async function saveNotionWorkspaceTask(id,editor){
+  const state=notionWorkspace;if(state.busy)return;const task=state.tasks.find(t=>t.id===id);if(!task)return;
+  for(const key of ['title','status','priority','date','time','memo']){const input=editor.querySelector('.notion-edit-'+key);if(input&&!input.disabled)state.draft[key]=input.value;}
+  try{
+    const changes=notionTaskChanges(task,state.draft);if(!Object.keys(changes).length){state.editId=null;state.draft=null;renderNotionWorkspace();return;}
+    if('title'in changes&&!changes.title.trim())throw new Error('タスク名を入力してください。');
+    state.busy=true;renderNotionWorkspace();
+    const result=await notionBridge('rvtNotionUpdateTask',{pageId:id,lastEditedAt:task.lastEditedAt,changes});
+    if(!result.task||result.task.id!==id)throw new Error('保存結果を確認できませんでした。Notion側を確認してください。');
+    state.tasks=state.tasks.map(t=>t.id===id?result.task:t);state.editId=null;state.draft=null;state.message='✅ Notionの更新を確認しました。';
+  }catch(error){state.message='⚠️ '+aiErrorMessage(error);toast(state.message);}
+  finally{state.busy=false;renderNotionWorkspace();}
+}
+async function loadNotionAiRecords(force=false){
+  const signature=notionBridgeSignature(),days=D.settings.aiCommentDays;
+  if(!force&&notionAiContext&&notionAiContext.signature===signature&&notionAiContext.days===days&&Date.now()-notionAiContext.loadedAt<300000)return notionAiContext;
+  if(notionAiLoading)return notionAiLoading;
+  notionAiLoading=(async()=>{
+    try{
+      const result=await notionBridge('rvtNotionRecords',{since:days?new Date(Date.now()-days*86400000).toISOString():null});
+      if(signature!==notionBridgeSignature()||days!==D.settings.aiCommentDays)throw new Error('連携設定または対象期間が変更されました。もう一度読み込んでください。');
+      if(!Array.isArray(result.records))throw new Error('Notion記録の応答を確認してください。');
+      notionAiContext={signature,days,loadedAt:Date.now(),records:result.records.slice(0,10).filter(r=>Number.isFinite(Date.parse(r.updatedAt))).map(r=>({title:String(r.title||'無題'),text:String(r.text||'').slice(0,8000),updatedAt:r.updatedAt,url:safeNotionUrl(r.url),truncated:!!r.truncated})),truncated:!!result.truncated||result.records.some(r=>r.truncated)};
+      return notionAiContext;
+    }catch(error){aiCommentMessage='⚠️ '+aiErrorMessage(error);throw error;}
+    finally{notionAiLoading=null;renderAiComment();}
+  })();renderAiComment();return notionAiLoading;
+}
+async function saveAiCommentToNotion(id){
+  if(notionCommentSaving)return;const comment=liveLogs(D.aiComments).find(c=>c.id===id);if(!comment||safeNotionUrl(comment.notionPageUrl))return;
+  notionCommentSaving=id;aiCommentMessage='Notionへコメントを保存しています…';renderAiComment();
+  try{
+    const result=await notionBridge('rvtNotionSaveComment',{commentId:comment.id,text:comment.text,sourceSummary:comment.sourceSummary,generatedAt:new Date(comment.createdAt).toLocaleString('ja-JP')});
+    const url=safeNotionUrl(result.pageUrl);if(!url)throw new Error('Notionの保存先を確認できませんでした。');
+    const current=D.aiComments.find(c=>c.id===id);if(current){current.notionPageUrl=url;current.updatedAt=Date.now();save();}aiCommentMessage='✅ Notionにコメントを保存しました。';
+  }catch(error){aiCommentMessage='⚠️ '+aiErrorMessage(error);}
+  finally{notionCommentSaving=null;renderAiComment();}
+}
+
 /* ============ AI comments on saved records ============ */
 const DEFAULT_AI_COMMENT_PROMPT='過去の記録を読み、できていることや工夫を具体的に拾って、やさしい日本語でコメントしてください。記録に表れている傾向と、まだ推測にすぎないことを分けてください。根拠にした記録の日時を2つほど挙げ、最後に負担の小さい次の一歩を1つ提案してください。記録が少ないときは無理に結論を出さず、責めたり説教したりせず、300〜600字程度にまとめてください。';
 let aiCommentBusy=false,aiCommentMessage='';
@@ -2633,6 +2804,7 @@ function saveAiCommentSettings(){
   const days=Number(document.getElementById('aiCommentDays').value);
   D.settings.aiCommentDays=[0,7,30,90].includes(days)?days:30;
   D.settings.aiCommentMeals=document.getElementById('aiCommentMeals').checked;
+  D.settings.aiCommentNotion=document.getElementById('aiCommentNotion').checked;
   save();renderAiComment();
 }
 function openAiCommentSettings(){
@@ -2641,13 +2813,17 @@ function openAiCommentSettings(){
 }
 function aiRecordText(value,limit){
   let text=String(value==null?'':value);
-  for(const secret of [D.settings.apiKey,D.settings.syncKey])if(secret&&String(secret).length>=4)text=text.split(String(secret)).join('[非表示]');
+  for(const secret of [D.settings.apiKey,D.settings.syncKey,D.settings.notionBridgeKey])if(secret&&String(secret).length>=4)text=text.split(String(secret)).join('[非表示]');
   text=text.replace(/sk-ant-[A-Za-z0-9_-]+/g,'[非表示]');
+  text=text.replace(/\b(?:ntn_|secret_)[A-Za-z0-9_-]{20,}/g,'[非表示]');
   return text.length>limit?text.slice(0,limit)+'…（以下省略）':text;
 }
 function buildAiCommentContext(now=Date.now()){
   const days=[0,7,30,90].includes(Number(D.settings.aiCommentDays))?Number(D.settings.aiCommentDays):30;
   const cutoff=days?now-days*86400000:1,rows=chatgptTimelineRows(false);
+  if(D.settings.aiCommentNotion&&notionAiContext&&notionAiContext.signature===notionBridgeSignature()&&notionAiContext.days===days){
+    for(const record of notionAiContext.records)rows.push({stamp:Date.parse(record.updatedAt),type:'Notionの記録',content:record.title,detail:record.text+(record.truncated?'\n（本文は抜粋です）':''),sourceUrl:record.url,notion:true});
+  }
   if(D.settings.aiCommentMeals)rows.push(...mealTimelineRows({csvIncludeItems:true,csvIncludeNotes:true,csvIncludeUrges:true}));
   for(const note of liveLogs(D.simpleNotes))rows.push({stamp:note.updatedAt||note.createdAt,type:'メモ',content:note.title||'無題',detail:note.body||''});
   for(const page of liveLogs(D.activityPages))if(page.body)rows.push({stamp:page.updatedAt||page.createdAt,type:'活動のメモ',content:page.title||'作業',detail:page.body});
@@ -2659,7 +2835,7 @@ function buildAiCommentContext(now=Date.now()){
   for(const row of eligible){
     if(records.length>=120)break;
     const record={日時:aiRecordText(row.dateTime||timelineDateTime(row.stamp),40),種類:aiRecordText(row.type,40),内容:aiRecordText(row.content,800)};
-    for(const [key,value,limit] of [['詳細',row.detail,800],['ルーチン',row.routine,80],['ステップ',row.step,80],['直前の行動',row.previousActivity,80]])if(value)record[key]=aiRecordText(value,limit);
+    for(const [key,value,limit] of [['詳細',row.detail,row.notion?4000:800],['ルーチン',row.routine,80],['ステップ',row.step,80],['直前の行動',row.previousActivity,80],['参照元',safeNotionUrl(row.sourceUrl),300]])if(value)record[key]=aiRecordText(value,limit);
     const size=JSON.stringify(record).length+1;if(chars+size>32000)break;
     records.push(record);chars+=size;
   }
@@ -2679,6 +2855,9 @@ function renderAiComment(){
   document.getElementById('aiCommentScope').textContent=aiCommentScopeLabel(context)+(context.records.length?' ／ '+Object.entries(context.types).map(([type,n])=>`${type}${n}件`).join('・'):'');
   button.disabled=aiCommentBusy;button.textContent=aiCommentBusy?'🤖 記録を読んでいます…':'🤖 記録を読んでコメント';
   document.getElementById('aiCommentStatus').textContent=aiCommentMessage;
+  document.getElementById('notionAiLoad').hidden=!D.settings.aiCommentNotion;
+  document.getElementById('notionAiLoad').disabled=aiCommentBusy||!!notionAiLoading;
+  document.getElementById('notionAiStatus').textContent=D.settings.aiCommentNotion?(notionAiContext&&notionAiContext.signature===notionBridgeSignature()&&notionAiContext.days===D.settings.aiCommentDays?`Notion ${notionAiContext.records.length}件・${new Date(notionAiContext.loadedAt).toLocaleTimeString('ja-JP')}読み込み${notionAiContext.truncated?'（本文や件数に省略あり）':''}`:'Notionの記録はまだ読み込まれていません。'):'';
   const comments=liveLogs(D.aiComments).slice().sort((a,b)=>b.createdAt-a.createdAt),latest=comments[0];
   host.innerHTML='';
   const appendComment=(parent,comment)=>{
@@ -2686,7 +2865,13 @@ function renderAiComment(){
     const meta=document.createElement('p');meta.className='ai-comment-meta';meta.textContent=`${new Date(comment.createdAt).toLocaleString('ja-JP')} 生成 ／ ${comment.sourceSummary||''}`;
     parent.append(meta,text);
   };
-  if(latest)appendComment(host,latest);
+  if(latest){
+    appendComment(host,latest);
+    const action=document.createElement('div');action.className='ai-comment-actions';
+    if(safeNotionUrl(latest.notionPageUrl)){const link=document.createElement('a');link.href=safeNotionUrl(latest.notionPageUrl);link.target='_blank';link.rel='noopener noreferrer';link.textContent='📓 保存したコメントをNotionで開く';action.appendChild(link);}
+    else{const saveButton=document.createElement('button');saveButton.className='btn btn-c btn-sm';saveButton.type='button';saveButton.textContent=notionCommentSaving?'保存しています…':'📓 このコメントをNotionに保存';saveButton.disabled=!!notionCommentSaving;saveButton.onclick=()=>saveAiCommentToNotion(latest.id);action.appendChild(saveButton);}
+    host.appendChild(action);
+  }
   else{const empty=document.createElement('p');empty.className='muted';empty.textContent='記録を読んだAIのコメントがここに残ります。';host.appendChild(empty);}
   if(comments.length>1){
     const history=document.createElement('details');history.className='ai-comment-history';
@@ -2698,6 +2883,11 @@ function renderAiComment(){
 }
 async function generateAiComment(){
   if(aiCommentBusy)return;
+  if(D.settings.aiCommentNotion){
+    aiCommentBusy=true;aiCommentMessage='Notionの記録を読み込んでいます…';renderAiComment();
+    try{await loadNotionAiRecords(false);}catch(error){aiCommentMessage='⚠️ '+aiErrorMessage(error);return;}
+    finally{aiCommentBusy=false;renderAiComment();}
+  }
   const context=buildAiCommentContext();
   if(!context.records.length){aiCommentMessage='この期間には記録がありません。「方針」から対象期間を変更できます。';renderAiComment();return;}
   if(!(D.settings.apiKey||'').trim()){aiCommentMessage='設定でClaude APIキーを入力してください。';renderAiComment();showScreen('scr-set');document.getElementById('setApiKey').focus();return;}
@@ -2906,6 +3096,7 @@ function renderHome(){
   renderActivityTimeline();
   renderJourneyCard();
   renderAiComment();
+  renderNotionWorkspace();
   if(!D.routines.length)el.innerHTML='<div class="card muted">まだルーチンがありません。「記録」画面から作ってみよう！</div>';
   const sorted=[...D.routines].sort((a,b)=>(b.lastRun||0)-(a.lastRun||0));
   for(const r of sorted){
@@ -6263,6 +6454,8 @@ function syncDataForCloud(){
   delete data.settings.syncUrl;
   delete data.settings.syncKey;
   delete data.settings.autoSync;
+  delete data.settings.notionBridgeUrl;
+  delete data.settings.notionBridgeKey;
   return data;
 }
 async function syncPull(auto){
@@ -6274,7 +6467,7 @@ async function syncPull(auto){
     if(!j.ok){if(!auto)toast('⚠️ 取得エラー：'+(j.error||'不明'));return;}
     if(!j.data){if(!auto)toast('☁️ クラウド側にまだデータがありません');return;}
     const remote=j.data,remoteNewer=(remote.updatedAt||0)>(D.updatedAt||0);
-    const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey},localActiveStopwatch=D.activeStopwatch;
+    const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey,notionBridgeUrl:D.settings.notionBridgeUrl,notionBridgeKey:D.settings.notionBridgeKey},localActiveStopwatch=D.activeStopwatch;
     const base=auto&&!remoteNewer?D:remote,incoming=base===remote?D:remote;
     mergeMealCollections(incoming,base); // 更新日時が古い側でも、ID単位の新着記録は必ず取り込む
     D=normalizeData(base);
@@ -6497,6 +6690,9 @@ function renderSet(){
   document.getElementById('aiCommentPrompt').value=D.settings.aiCommentPrompt||DEFAULT_AI_COMMENT_PROMPT;
   document.getElementById('aiCommentDays').value=String(D.settings.aiCommentDays);
   document.getElementById('aiCommentMeals').checked=D.settings.aiCommentMeals;
+  document.getElementById('aiCommentNotion').checked=D.settings.aiCommentNotion;
+  document.getElementById('setNotionBridgeUrl').value=D.settings.notionBridgeUrl||'';
+  document.getElementById('setNotionBridgeKey').value=D.settings.notionBridgeKey||'';
   document.getElementById('setMealWait').value=String(D.mealPrefs.defaultWaitSec||300);
   document.getElementById('setMealSpeak').checked=!!D.mealPrefs.speakOnWaitEnd;
   document.getElementById('setMealCsv').checked=!!D.mealPrefs.includeInChatGptCsv;
