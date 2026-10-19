@@ -4,6 +4,7 @@
 var RVT_NOTION_LAST_CALL_ = 0;
 // Run from the GAS editor to check access without editing tasks or creating pages.
 function rvtNotionCheckSetup() {
+  console.log('Notion integration: '+String(rvtNotionApi_('users/me').name || '(unnamed)'));
   var source = rvtNotionSource_('RVT_NOTION_TASK_SOURCE');
   if (!rvtNotionSchema_(source).title) throw new Error('invalid_input');
   var p = PropertiesService.getScriptProperties(), target = p.getProperty('RVT_NOTION_COMMENT_SOURCE');
