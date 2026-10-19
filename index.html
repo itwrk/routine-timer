@@ -1681,7 +1681,10 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
     <div class="card">
       <h2>🤖 AI設定（Claude API）</h2>
       <div class="field"><label for="setApiKey">APIキー（この端末のブラウザ内にのみ保存）</label><input type="password" id="setApiKey" placeholder="sk-ant-..." autocomplete="off" autocapitalize="none" spellcheck="false" onchange="saveSettings()" onblur="saveSettings()"></div>
-      <button class="btn btn-c btn-sm" onclick="testAiConnection(this)">🤖 保存して接続テスト</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-c btn-sm" style="white-space:nowrap" onclick="testAiConnection(this)">🤖 保存して接続テスト</button>
+        <button class="btn btn-c btn-sm" style="white-space:nowrap" onclick="copyAiKey()">📋 キーをコピー</button>
+      </div>
       <p class="muted" id="aiConnectionStatus" role="status" aria-live="polite" style="margin-top:8px">短いテスト文だけを送信します。少額のAPIクレジットを使用します。</p>
       <p class="muted">「🤖 AI生成」ボタンで、ステップ用モチベテキストや今日のひとことをClaudeが自動作成します。platform.claude.com で発行したキーを入力してください。キーは端末ごとの設定です。共有端末では入れないでね。</p>
     </div>
@@ -2530,6 +2533,24 @@ async function aiRequest(prompt,maxTokens=600){
   const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
   if(!text.trim())throw new Error('Claudeからテキストが返りませんでした。もう一度試してください。');
   return text;
+}
+async function copyAiKey(){
+  const input=document.getElementById('setApiKey'),key=input.value.trim();
+  const status=document.getElementById('aiConnectionStatus');
+  if(!key){status.textContent='⚠️ コピーするAPIキーがありません。';return;}
+  let copied=false;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    try{await navigator.clipboard.writeText(key);copied=true;}catch(_){}
+  }
+  if(!copied){
+    const previousType=input.type;
+    try{
+      input.type='text';input.focus();input.select();input.setSelectionRange(0,input.value.length);
+      copied=document.execCommand('copy');
+    }catch(_){}
+    finally{input.type=previousType;input.blur();}
+  }
+  status.textContent=copied?'📋 APIキーをコピーしました。別ブラウザのAPIキー欄に貼り付けてください。':'⚠️ このブラウザではコピーできません。';
 }
 async function testAiConnection(btn){
   if(btn.disabled)return;
