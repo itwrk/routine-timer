@@ -2,6 +2,20 @@
  * Credentials and target IDs belong in Script Properties, never in this file.
  */
 var RVT_NOTION_LAST_CALL_ = 0;
+// Run from the GAS editor to check access without editing tasks or creating pages.
+function rvtNotionCheckSetup() {
+  var source = rvtNotionSource_('RVT_NOTION_TASK_SOURCE');
+  if (!rvtNotionSchema_(source).title) throw new Error('invalid_input');
+  var p = PropertiesService.getScriptProperties(), target = p.getProperty('RVT_NOTION_COMMENT_SOURCE');
+  if (!target) throw new Error('missing_target');
+  try { rvtNotionSource_('RVT_NOTION_COMMENT_SOURCE'); }
+  catch (error) {
+    if (error.message !== 'notion_http_404') throw error;
+    var page = rvtNotionApi_('pages/'+rvtNotionId_(target));
+    if (page.archived || page.in_trash) throw new Error('invalid_input');
+  }
+  console.log('Notion setup: task source readable; comment destination readable; records '+(p.getProperty('RVT_NOTION_RECORD_SOURCE')?'configured':'not configured')+'. No writes performed.');
+}
 function rvtNotionGet(e) {
   if (!e || !e.parameter || e.parameter.action !== 'rvtNotionStatus') return null;
   return rvtNotionReply_(function () {
