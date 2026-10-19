@@ -1680,8 +1680,10 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
     </div>
     <div class="card">
       <h2>🤖 AI設定（Claude API）</h2>
-      <div class="field"><label>APIキー（この端末のブラウザ内にのみ保存）</label><input type="text" id="setApiKey" placeholder="sk-ant-..." onchange="saveSettings()"></div>
-      <p class="muted">「🤖 AI生成」ボタンで、ステップ用モチベテキストや今日のひとことをClaudeが自動作成します。console.anthropic.com で発行したキーを入力してください。共有端末では入れないでね。</p>
+      <div class="field"><label for="setApiKey">APIキー（この端末のブラウザ内にのみ保存）</label><input type="password" id="setApiKey" placeholder="sk-ant-..." autocomplete="off" autocapitalize="none" spellcheck="false" onchange="saveSettings()" onblur="saveSettings()"></div>
+      <button class="btn btn-c btn-sm" onclick="testAiConnection(this)">🤖 保存して接続テスト</button>
+      <p class="muted" id="aiConnectionStatus" role="status" aria-live="polite" style="margin-top:8px">短いテスト文だけを送信します。少額のAPIクレジットを使用します。</p>
+      <p class="muted">「🤖 AI生成」ボタンで、ステップ用モチベテキストや今日のひとことをClaudeが自動作成します。platform.claude.com で発行したキーを入力してください。キーは端末ごとの設定です。共有端末では入れないでね。</p>
     </div>
     <div class="card">
       <h2>📅 Googleカレンダー</h2>
@@ -2504,17 +2506,44 @@ function enableDrag(container,rowSel,commit){
 }
 
 /* ============ AI (Claude API) ============ */
-async function aiCall(prompt){
+function aiErrorMessage(error){
+  return String(error&&error.message||'不明なエラー').replace(/sk-ant-[A-Za-z0-9_-]+/g,'[非表示]').slice(0,220);
+}
+async function aiRequest(prompt,maxTokens=600){
   const key=(D.settings.apiKey||'').trim();
   if(!key){toast('⚠️ 設定画面でClaude APIキーを入力してね');showScreen('scr-set');throw new Error('nokey');}
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,messages:[{role:'user',content:prompt}]})
-  });
-  if(!res.ok)throw new Error('api '+res.status);
+  let res;
+  try{
+    res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})
+    });
+  }catch(_){throw new Error('Claude APIに通信できません。ネット接続を確認し、アプリ内ブラウザの場合はSafariやChromeでも試してください。');}
+  if(!res.ok){
+    let detail='';
+    try{const body=await res.json();detail=String(body.error&&body.error.message||'').split(key).join('[非表示]');}catch(_){}
+    const hint=({401:'APIキーが無効です。',403:'このキーではAPIを利用できません。',429:'利用上限に達しました。少し待ってから再試行してください。',529:'Claudeが混み合っています。少し待ってから再試行してください。'})[res.status]||'Claude APIがリクエストを受け付けませんでした。';
+    throw new Error(`HTTP ${res.status}: ${hint}${detail?' '+detail:''}`);
+  }
   const data=await res.json();
   const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+  if(!text.trim())throw new Error('Claudeからテキストが返りませんでした。もう一度試してください。');
+  return text;
+}
+async function testAiConnection(btn){
+  if(btn.disabled)return;
+  saveSettings();
+  const status=document.getElementById('aiConnectionStatus');
+  btn.disabled=true;status.textContent='Claudeに接続しています…';
+  try{
+    await aiRequest('接続テストです。OKとだけ返してください。',32);
+    status.textContent='✅ 接続成功。APIキーをこのブラウザに保存しました。AI生成を使えます。';
+  }catch(e){status.textContent=e.message==='nokey'?'⚠️ APIキーを入力してください。':'⚠️ '+aiErrorMessage(e);}
+  finally{btn.disabled=false;}
+}
+async function aiCall(prompt){
+  const text=await aiRequest(prompt);
   const clean=text.replace(/```json|```/g,'').trim();
   return JSON.parse(clean);
 }
@@ -2529,7 +2558,7 @@ async function aiStepTexts(btn,routineName,step){
 出力はJSON配列のみ（例: ["...","...","..."]）。他の文字は一切出力しない。`);
     let n=0;for(const t of arr)if(typeof t==='string'&&!step.texts.includes(t)){step.texts.push(t);n++;}
     syncShared(step);save();renderSteps();toast(`🤖 ${n}件追加しました`);sfxDone();burst();
-  }catch(e){if(e.message!=='nokey')toast('⚠️ AI生成に失敗しました（APIキー/通信を確認）');}
+  }catch(e){if(e.message!=='nokey')toast('⚠️ '+aiErrorMessage(e));}
   btn.classList.remove('busy');btn.textContent='🤖 AI生成';
 }
 async function aiHitokoto(btn){
@@ -2542,7 +2571,7 @@ async function aiHitokoto(btn){
 出力はJSON配列のみ。他の文字は一切出力しない。`);
     let n=0;for(const t of arr)if(typeof t==='string'&&!D.hitokoto.includes(t)){D.hitokoto.push(t);n++;}
     save();renderHome();toast(`🤖 ${n}件追加しました`);sfxDone();burst();
-  }catch(e){if(e.message!=='nokey')toast('⚠️ AI生成に失敗しました（APIキー/通信を確認）');}
+  }catch(e){if(e.message!=='nokey')toast('⚠️ '+aiErrorMessage(e));}
   btn.classList.remove('busy');btn.textContent='🤖 AIで追加';
 }
 
