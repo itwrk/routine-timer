@@ -295,15 +295,13 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .habit-condition{border:1px solid var(--line2);border-radius:999px;padding:1px 5px;font-size:calc(9px * var(--text-scale));line-height:1.35;white-space:nowrap;flex-shrink:0;background:var(--card2)}
 .habit-condition.day{color:var(--cyan-text)}
 .habit-condition.time{color:var(--gold-text)}
-.habit-guide{display:none;margin:0 2px 6px 32px;padding:8px 10px;background:rgba(237,234,249,.8);border-left:3px solid var(--cyan);border-radius:8px;color:var(--text);font-size:calc(12px * var(--text-scale));line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
-.habit-guide.show{display:block}
-.habit-guide-preview{display:block;width:calc(100% - 32px);margin:0 0 5px 32px;padding:5px 7px;background:rgba(14,156,199,.055);border:0;border-left:2px solid rgba(14,156,199,.35);border-radius:0 7px 7px 0;color:var(--dim);font:inherit;font-size:calc(11px * var(--text-scale));line-height:1.45;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
-.habit-guide-preview.expanded{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
-.habit-day-note{display:flex;align-items:flex-start;gap:5px;margin:0 2px 5px 32px;padding:5px 7px;background:rgba(255,201,60,.08);border:1px solid rgba(217,154,6,.22);border-radius:8px;font-size:calc(11px * var(--text-scale));line-height:1.45}
-.habit-day-note-text{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.habit-memo-open{min-width:44px;min-height:36px;background:none;border:none;color:var(--gold-text);font:inherit;font-size:calc(11px * var(--text-scale));font-weight:700;padding:5px 3px;cursor:pointer;white-space:nowrap}
-.habit-memo-editor{margin:0 2px 6px 32px;padding:7px;background:rgba(255,201,60,.08);border:1px solid rgba(217,154,6,.25);border-radius:9px}
-.habit-memo-editor textarea{min-height:58px;font-size:calc(14px * var(--text-scale));line-height:1.45;padding:6px 8px}
+.habit-item-memo{margin:0 2px 6px 32px;border-radius:8px;font-size:calc(12px * var(--text-scale));line-height:1.55}
+.habit-item-memo[open]{background:rgba(14,156,199,.055);border:1px solid var(--line2)}
+.habit-item-memo summary{min-height:36px;padding:7px 8px;color:var(--cyan-text);font-weight:700;cursor:pointer;white-space:nowrap}
+.habit-memo-content{padding:0 8px 8px}
+.habit-memo-text{white-space:pre-wrap;overflow-wrap:anywhere}
+.habit-memo-edit{min-height:36px;margin-top:4px;background:none;border:none;color:var(--cyan-text);font:inherit;font-weight:700;padding:5px 0;cursor:pointer;white-space:nowrap}
+.habit-memo-editor textarea{min-height:100px;font-size:calc(14px * var(--text-scale));line-height:1.5;padding:6px 8px}
 .habit-memo-actions{display:flex;gap:5px;margin-top:5px}
 .habit-memo-actions button{flex:1;min-height:36px;padding:6px 5px!important;font-size:calc(11px * var(--text-scale))!important;white-space:nowrap}
 .habit-add{display:flex;gap:6px;margin-top:5px}
@@ -337,7 +335,7 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .habit-time-row input[type=time]{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;color:var(--text);font-family:inherit;font-size:calc(14px * var(--text-scale));padding:8px 10px}
 .habit-time-remove{width:38px;min-height:38px;padding:4px!important;flex-shrink:0}
 .habit-time-add{margin-top:6px;white-space:nowrap}
-@media(max-width:390px){.habit-editor-grid{grid-template-columns:1fr}.habit-row,.habit-toggle-area{gap:5px}.habit-main{align-items:flex-start;flex-direction:column;gap:2px}.habit-condition,.manage-habit-row .manage-condition{font-size:calc(8px * var(--text-scale));padding:1px 4px}.manage-habit-row{gap:5px}.manage-habit-row .manage-primary{gap:4px}.habit-guide-preview,.habit-day-note,.habit-memo-editor{margin-left:28px;width:calc(100% - 28px)}}
+@media(max-width:390px){.habit-editor-grid{grid-template-columns:1fr}.habit-row,.habit-toggle-area{gap:5px}.habit-main{align-items:flex-start;flex-direction:column;gap:2px}.habit-condition,.manage-habit-row .manage-condition{font-size:calc(8px * var(--text-scale));padding:1px 4px}.manage-habit-row{gap:5px}.manage-habit-row .manage-primary{gap:4px}.habit-item-memo{margin-left:28px;width:calc(100% - 28px)}}
 
 /* recent activity timeline */
 .activity-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -1552,7 +1550,7 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
     <button class="btn btn-p btn-full btn-sm" type="button" onclick="newRoutine()" style="padding:11px;margin-bottom:6px">＋ 新しいルーチンを作る</button>
     <div class="card" id="habitManageCard">
       <h2>🌱 チェックリスト項目を管理</h2>
-      <p class="muted">追加後の「✏️ 編集」から、いつもの手順メモ・リンク・日付/曜日/時間帯を設定できます。薬などは1日に複数の実施時刻を登録し、時刻ごとにチェックできます。</p>
+      <p class="muted">追加後の「✏️ 編集」から、項目のメモ・リンク・日付/曜日/時間帯を設定できます。薬などは1日に複数の実施時刻を登録し、時刻ごとにチェックできます。</p>
       <div id="habitManageList" style="margin-top:6px"></div>
       <div class="habit-add">
         <input type="text" id="habitInput" maxlength="60" placeholder="チェック項目を追加（初期値は毎日）" onkeydown="submitShortcut(event,addHabit)">
@@ -2204,7 +2202,7 @@ function normalizeData(raw){
   d.moodLogs=(Array.isArray(d.moodLogs)?d.moodLogs:[]).filter(log=>log&&typeof log==='object'&&!Array.isArray(log)&&Object.keys(log).length).map(normalizeMoodLog);
   d.habits=(Array.isArray(d.habits)?d.habits:[]).map(normalizeHabit);
   d.habitLogs=(Array.isArray(d.habitLogs)?d.habitLogs:[]).map(normalizeHabitLog);
-  d.todayTasks=Array.isArray(d.todayTasks)?d.todayTasks:[];
+  d.todayTasks=(Array.isArray(d.todayTasks)?d.todayTasks:[]).map(task=>Object.assign({guide:''},task));
   d.todayTaskLogs=(Array.isArray(d.todayTaskLogs)?d.todayTaskLogs:[]).map(normalizeTodayTaskLog);
   d.rewards=(Array.isArray(d.rewards)?d.rewards:[]).map(normalizeReward);
   d.rewardRedemptions=(Array.isArray(d.rewardRedemptions)?d.rewardRedemptions:[]).map(normalizeRewardRedemption);
@@ -3369,26 +3367,33 @@ function safeHabitUrl(value){
   }catch(e){return '';}
 }
 const CHECK_POINTS=5;
-let checkMemoEditorKey='';
-function checkMemoMarkup(log,key,prefix=''){
-  if(!log)return'';
-  if(checkMemoEditorKey===key)return`<div class="habit-memo-editor"><textarea maxlength="500" aria-label="今日の記録" placeholder="何が助けになった？ 次も使いたい工夫は？">${esc(log.memo||'')}</textarea><div class="habit-memo-actions"><button class="btn btn-c btn-sm habit-memo-save" type="button">💾 保存</button><button class="btn btn-g btn-sm habit-memo-cancel" type="button">キャンセル</button></div></div>`;
-  return`<div class="habit-day-note"><span class="habit-day-note-text">${prefix?`<b>${esc(prefix)}</b> `:''}${log.memo?`📝 ${esc(log.memo)}`:'📝 今日の記録は任意です'}</span><button class="habit-memo-open" type="button" aria-label="${log.memo?'今日の記録を編集':'今日の記録を書く'}">${log.memo?'編集':'＋ 書く'}</button></div>`;
-}
-function bindCheckMemo(item,log,key){
-  if(!log)return;
-  const open=item.querySelector('.habit-memo-open');
-  if(open)open.onclick=()=>{checkMemoEditorKey=key;renderHabits();requestAnimationFrame(()=>document.querySelector('.habit-memo-editor textarea')?.focus());};
-  const cancel=item.querySelector('.habit-memo-cancel');
-  if(cancel)cancel.onclick=()=>{checkMemoEditorKey='';renderHabits();};
-  const saveBtn=item.querySelector('.habit-memo-save');
-  if(saveBtn)saveBtn.onclick=()=>{
-    const text=item.querySelector('.habit-memo-editor textarea').value.trim().slice(0,500);
-    const current=(key.startsWith('habit:')?D.habitLogs:D.todayTaskLogs).find(entry=>entry.id===log.id&&!entry.deletedAt);
-    if(!current){checkMemoEditorKey='';renderHabits();toast('⚠️ 同期で記録が更新されました。もう一度開いてください');return;}
-    current.memo=text;current.updatedAt=Date.now();checkMemoEditorKey='';save();renderHabits();renderActivityTimeline();
-    toast(text?'📝 今日の記録を保存しました':'📝 今日の記録を空にしました');
-  };
+// 項目のメモは完了ログと分け、既存の guide をそのまま使う。
+const checkItemMemoOpen=new Set(),checkItemMemoDrafts=new Map();
+function appendCheckItemMemo(item,entry,isTask=false){
+  const key=`${isTask?'task':'habit'}:${entry.id}`,details=document.createElement('details');
+  details.className='habit-item-memo';details.open=checkItemMemoOpen.has(key);
+  details.innerHTML=`<summary></summary><div class="habit-memo-content"></div>`;
+  const summary=details.querySelector('summary'),content=details.querySelector('.habit-memo-content');
+  summary.setAttribute('aria-label',`${entry.name}のメモ表示`);
+  const updateSummary=()=>{summary.textContent=details.open?'📖 メモを閉じる':'📖 メモ表示';};
+  details.ontoggle=()=>{if(details.open)checkItemMemoOpen.add(key);else checkItemMemoOpen.delete(key);updateSummary();};
+  function renderContent(){
+    if(checkItemMemoDrafts.has(key)){
+      content.innerHTML=`<div class="habit-memo-editor"><textarea maxlength="2000" aria-label="${esc(entry.name)}のメモ" placeholder="この項目について覚えておきたいこと">${esc(checkItemMemoDrafts.get(key))}</textarea><div class="habit-memo-actions"><button class="btn btn-c btn-sm habit-memo-save" type="button">💾 保存</button><button class="btn btn-g btn-sm habit-memo-cancel" type="button">キャンセル</button></div></div>`;
+      const input=content.querySelector('textarea');input.oninput=()=>checkItemMemoDrafts.set(key,input.value);
+      content.querySelector('.habit-memo-cancel').onclick=()=>{checkItemMemoDrafts.delete(key);renderContent();};
+      content.querySelector('.habit-memo-save').onclick=()=>{
+        const current=(isTask?D.todayTasks:D.habits).find(value=>value.id===entry.id);
+        if(!current){checkItemMemoDrafts.delete(key);renderHabits();renderRunHabits();toast('⚠️ 項目が更新されました。もう一度開いてください');return;}
+        current.guide=input.value.trim().slice(0,2000);checkItemMemoDrafts.delete(key);save();renderHabits();renderRunHabits();toast('💾 項目のメモを保存しました');
+      };
+    }else{
+      const guide=String(entry.guide||'');
+      content.innerHTML=`<div class="habit-memo-text${guide?'':' muted'}">${guide?esc(guide):'メモはまだありません。'}</div><button class="habit-memo-edit" type="button">${guide?'✏️ 編集':'＋ メモを書く'}</button>`;
+      content.querySelector('.habit-memo-edit').onclick=()=>{checkItemMemoDrafts.set(key,guide);renderContent();content.querySelector('textarea').focus();};
+    }
+  }
+  updateSummary();renderContent();item.appendChild(details);
 }
 function renderHabits(){
   const list=document.getElementById('habitList');
@@ -3405,34 +3410,30 @@ function renderHabits(){
       const logs=slots.map(slot=>habitLogForToday(habit,new Date(),slot)),completed=logs.filter(Boolean).length;
       const item=document.createElement('div');item.className='habit-item habit-multi';
       const link=safeHabitUrl(habit.link);
-      item.innerHTML=`<div class="habit-multi-head"><span>☑️</span><span class="habit-name">${esc(habit.name)}</span><span class="habit-condition day">📅 ${esc(habitDayLabel(habit))}</span><span class="habit-multi-progress">${completed}/${slots.length}</span>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}</div><div class="habit-slot-list"></div>${habit.guide?`<button class="habit-guide-preview" type="button" aria-expanded="false" aria-label="${esc(habit.name)}のいつもの手順メモを展開">📖 ${esc(habit.guide)}</button>`:''}`;
+      item.innerHTML=`<div class="habit-multi-head"><span>☑️</span><span class="habit-name">${esc(habit.name)}</span><span class="habit-condition day">📅 ${esc(habitDayLabel(habit))}</span><span class="habit-multi-progress">${completed}/${slots.length}</span>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}</div><div class="habit-slot-list"></div>`;
       const slotList=item.querySelector('.habit-slot-list');
       slots.forEach((slot,index)=>{
-        const log=logs[index],key=`habit:${habit.id}:${slot}`,btn=document.createElement('button');btn.type='button';btn.className='habit-slot-toggle'+(log?' done':'');btn.setAttribute('aria-pressed',log?'true':'false');btn.setAttribute('aria-label',`${habit.name} ${slot}を${log?'未完了に戻す':'完了にする'}`);btn.innerHTML=`<span class="habit-slot-check">✓</span><span class="habit-slot-label">${esc(slot)}</span>${log?`<span class="habit-slot-done-time">${esc(log.time)}</span>`:''}`;btn.onclick=()=>toggleHabit(habit,slot);slotList.appendChild(btn);
-        if(log){const notes=document.createElement('div');notes.innerHTML=checkMemoMarkup(log,key,slot);item.appendChild(notes);bindCheckMemo(notes,log,key);}
+        const log=logs[index],btn=document.createElement('button');btn.type='button';btn.className='habit-slot-toggle'+(log?' done':'');btn.setAttribute('aria-pressed',log?'true':'false');btn.setAttribute('aria-label',`${habit.name} ${slot}を${log?'未完了に戻す':'完了にする'}`);btn.innerHTML=`<span class="habit-slot-check">✓</span><span class="habit-slot-label">${esc(slot)}</span>${log?`<span class="habit-slot-done-time">${esc(log.time)}</span>`:''}`;btn.onclick=()=>toggleHabit(habit,slot);slotList.appendChild(btn);
       });
-      const guide=item.querySelector('.habit-guide-preview');
-      if(guide)guide.onclick=()=>{const expanded=guide.classList.toggle('expanded');guide.setAttribute('aria-expanded',String(expanded));guide.setAttribute('aria-label',`${habit.name}のいつもの手順メモを${expanded?'折りたたむ':'展開'}`);};
+      appendCheckItemMemo(item,habit);
       list.appendChild(item);continue;
     }
-    const log=habitLogForToday(habit),key=`habit:${habit.id}`;
+    const log=habitLogForToday(habit);
     const item=document.createElement('div');item.className='habit-item';
     const link=safeHabitUrl(habit.link),windowLabel=habitWindowLabel(habit)||'終日';
-    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(habit.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-main"><span class="habit-name">${esc(habit.name)}</span><span class="habit-schedule"><span class="habit-condition day">📅 ${esc(habitDayLabel(habit))}</span><span class="habit-condition time">🕒 ${esc(windowLabel)}</span></span></span></button>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>${habit.guide?`<button class="habit-guide-preview" type="button" aria-expanded="false" aria-label="${esc(habit.name)}のいつもの手順メモを展開">📖 ${esc(habit.guide)}</button>`:''}${checkMemoMarkup(log,key)}`;
+    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(habit.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-main"><span class="habit-name">${esc(habit.name)}</span><span class="habit-schedule"><span class="habit-condition day">📅 ${esc(habitDayLabel(habit))}</span><span class="habit-condition time">🕒 ${esc(windowLabel)}</span></span></span></button>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>`;
     item.querySelector('.habit-toggle-area').onclick=()=>toggleHabit(habit);
-    const guide=item.querySelector('.habit-guide-preview');
-    if(guide)guide.onclick=()=>{const expanded=guide.classList.toggle('expanded');guide.setAttribute('aria-expanded',String(expanded));guide.setAttribute('aria-label',`${habit.name}のいつもの手順メモを${expanded?'折りたたむ':'展開'}`);};
-    bindCheckMemo(item,log,key);list.appendChild(item);
+    appendCheckItemMemo(item,habit);list.appendChild(item);
   }
   for(const task of todays){
     const log=todayTaskLog(task.id),key=`task:${task.id}`;
     const item=document.createElement('div');item.className='habit-item';
-    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(task.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-name">${esc(task.name)}</span></button><span class="today-badge">今日だけ</span>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}<button class="habit-del" type="button" title="今日の項目を削除" aria-label="${esc(task.name)}を削除">✕</button></div>${checkMemoMarkup(log,key)}`;
+    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(task.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-name">${esc(task.name)}</span></button><span class="today-badge">今日だけ</span>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}<button class="habit-del" type="button" title="今日の項目を削除" aria-label="${esc(task.name)}を削除">✕</button></div>`;
     item.querySelector('.habit-toggle-area').onclick=()=>toggleTodayTask(task);
     item.querySelector('.habit-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
-      D.todayTasks=D.todayTasks.filter(t=>t.id!==task.id);if(checkMemoEditorKey===key)checkMemoEditorKey='';save();renderHabits();toast('🗑 今日の項目を削除しました');
+      D.todayTasks=D.todayTasks.filter(t=>t.id!==task.id);checkItemMemoOpen.delete(key);checkItemMemoDrafts.delete(key);save();renderHabits();toast('🗑 今日の項目を削除しました');
     });
-    bindCheckMemo(item,log,key);taskList.appendChild(item);
+    appendCheckItemMemo(item,task,true);taskList.appendChild(item);
   }
 }
 function todayChecklistState(now=new Date()){
@@ -3459,16 +3460,16 @@ function renderRunHabits(){
       slots.forEach((slot,index)=>{
         const log=logs[index],btn=document.createElement('button');btn.type='button';btn.className='habit-slot-toggle'+(log?' done':'');btn.setAttribute('aria-pressed',log?'true':'false');btn.setAttribute('aria-label',`${habit.name} ${slot}を${log?'未完了に戻す':'完了にする'}`);btn.innerHTML=`<span class="habit-slot-check">✓</span><span class="habit-slot-label">${esc(slot)}</span>${log?`<span class="habit-slot-done-time">${esc(log.time)}</span>`:''}`;btn.onclick=()=>toggleHabit(habit,slot);slotList.appendChild(btn);
       });
-      list.appendChild(item);continue;
+      appendCheckItemMemo(item,habit);list.appendChild(item);continue;
     }
     const log=habitLogForToday(habit),item=document.createElement('div');item.className='habit-item';
     item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(habit.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-name">${esc(habit.name)}</span></button>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>`;
-    item.querySelector('.habit-toggle-area').onclick=()=>toggleHabit(habit);list.appendChild(item);
+    item.querySelector('.habit-toggle-area').onclick=()=>toggleHabit(habit);appendCheckItemMemo(item,habit);list.appendChild(item);
   }
   for(const task of todays){
     const log=todayTaskLog(task.id),item=document.createElement('div');item.className='habit-item';
     item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(task.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-name">${esc(task.name)}</span></button><span class="today-badge">今日だけ</span>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>`;
-    item.querySelector('.habit-toggle-area').onclick=()=>toggleTodayTask(task);list.appendChild(item);
+    item.querySelector('.habit-toggle-area').onclick=()=>toggleTodayTask(task);appendCheckItemMemo(item,task,true);list.appendChild(item);
   }
 }
 function addHabit(){
@@ -3478,10 +3479,9 @@ function addHabit(){
   const habit=normalizeHabit({id:uid(),name,createdAt:Date.now()});D.habits.push(habit);input.value='';habitEditId=habit.id;save();renderHabitManager();toast('🌱 項目を追加しました');
 }
 function toggleHabit(habit,slot=''){
-  const now=new Date(),date=habitTargetDate(habit,now),old=habitLogForToday(habit,now,slot),key=`habit:${habit.id}${slot?`:${slot}`:''}`,first=(habit.times||[])[0]||'';
+  const now=new Date(),date=habitTargetDate(habit,now),old=habitLogForToday(habit,now,slot),first=(habit.times||[])[0]||'';
   if(old){
     for(const log of D.habitLogs)if(!log.deletedAt&&log.habitId===habit.id&&log.date===date&&(slot?log.slot===slot||(!log.slot&&slot===first):!log.slot))tombstoneLog(D.habitLogs,log.id);
-    if(checkMemoEditorKey===key)checkMemoEditorKey='';
     save();renderHabits();renderRunHabits();renderActivityTimeline();toast('↩️ チェックを戻しました（獲得済みポイントはそのまま）');return;
   }
   const history=D.habitLogs.filter(g=>g&&g.habitId===habit.id&&g.date===date&&(slot?g.slot===slot||(!g.slot&&slot===first):!g.slot)).sort((a,b)=>(Number(!!b.memo)-Number(!!a.memo))||((b.completedAt||0)-(a.completedAt||0))||((b.updatedAt||0)-(a.updatedAt||0)));
@@ -3495,14 +3495,13 @@ function addTodayTask(){
   const input=document.getElementById('todayTaskInput');
   const name=input.value.trim();
   if(!name){toast('✅ 今日やることを入力してください');return;}
-  D.todayTasks.push({id:uid(),name,date:today(),createdAt:Date.now()});
+  D.todayTasks.push({id:uid(),name,guide:'',date:today(),createdAt:Date.now()});
   input.value='';save();renderHabits();toast('☀️ 今日の項目を追加しました');
 }
 function toggleTodayTask(task){
-  const old=todayTaskLog(task.id,task.date),key=`task:${task.id}`;
+  const old=todayTaskLog(task.id,task.date);
   if(old){
     for(const log of D.todayTaskLogs)if(!log.deletedAt&&log.taskId===task.id&&log.date===task.date)tombstoneLog(D.todayTaskLogs,log.id);
-    if(checkMemoEditorKey===key)checkMemoEditorKey='';
     save();renderHabits();renderRunHabits();renderActivityTimeline();toast('↩️ チェックを戻しました（獲得済みポイントはそのまま）');return;
   }
   const history=D.todayTaskLogs.filter(g=>g&&g.taskId===task.id&&g.date===task.date).sort((a,b)=>(Number(!!b.memo)-Number(!!a.memo))||((b.completedAt||0)-(a.completedAt||0))||((b.updatedAt||0)-(a.updatedAt||0)));
@@ -3646,7 +3645,7 @@ function renderHabitManager(){
   for(const habit of D.habits){
     const row=document.createElement('div');row.className='manage-habit-row';
     const windowLabel=(habit.times||[]).length?(habit.times||[]).join('・'):(habitWindowLabel(habit)||'終日');
-    row.innerHTML=`<span>☑️</span><div class="manage-main"><div class="manage-primary"><div class="manage-name">${esc(habit.name)}</div><div class="manage-schedule"><span class="manage-condition day">📅 ${esc(habitDayLabel(habit))}</span><span class="manage-condition time">🕒 ${esc(windowLabel)}</span></div></div>${habit.guide||habit.link?`<div class="manage-extras">${habit.guide?'<span class="manage-condition">📖 手順メモあり</span>':''}${habit.link?'<span class="manage-condition">🔗 リンクあり</span>':''}</div>`:''}</div><button class="habit-edit-btn" type="button" aria-label="${esc(habit.name)}を編集">✏️ 編集</button><button class="habit-del" type="button" aria-label="${esc(habit.name)}を削除">✕</button>`;
+    row.innerHTML=`<span>☑️</span><div class="manage-main"><div class="manage-primary"><div class="manage-name">${esc(habit.name)}</div><div class="manage-schedule"><span class="manage-condition day">📅 ${esc(habitDayLabel(habit))}</span><span class="manage-condition time">🕒 ${esc(windowLabel)}</span></div></div>${habit.guide||habit.link?`<div class="manage-extras">${habit.guide?'<span class="manage-condition">📖 メモあり</span>':''}${habit.link?'<span class="manage-condition">🔗 リンクあり</span>':''}</div>`:''}</div><button class="habit-edit-btn" type="button" aria-label="${esc(habit.name)}を編集">✏️ 編集</button><button class="habit-del" type="button" aria-label="${esc(habit.name)}を削除">✕</button>`;
     row.querySelector('.habit-edit-btn').onclick=()=>{habitEditId=habitEditId===habit.id?null:habit.id;renderHabitManager();};
     row.querySelector('.habit-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
       D.habits=D.habits.filter(h=>h.id!==habit.id);if(habitEditId===habit.id)habitEditId=null;save();renderHabitManager();renderHabits();toast('🗑 項目を削除しました（過去ログは残ります）');
@@ -3655,7 +3654,7 @@ function renderHabitManager(){
     if(habitEditId===habit.id){
       const editor=document.createElement('div');editor.className='habit-editor';
       const days=WEEKDAY_LABELS.map((label,i)=>`<label><input type="checkbox" value="${i}" ${(habit.weekdays||[]).includes(i)?'checked':''}>${label}</label>`).join('');
-      editor.innerHTML=`<div class="field"><label>項目名</label><input class="habit-edit-name" type="text" maxlength="60" value="${esc(habit.name)}" aria-label="チェック項目名"></div><div class="field"><label>📖 いつもの手順メモ</label><textarea class="habit-edit-guide" maxlength="2000" rows="4" placeholder="手順、持ち物、自分へのコツなど" aria-label="いつもの手順メモ">${esc(habit.guide)}</textarea></div><div class="field"><label>🔗 関連リンク</label><input class="habit-edit-link" type="url" maxlength="500" value="${esc(habit.link)}" placeholder="https://..." aria-label="関連リンク"></div><div class="field"><label>⏰ 1日の実施時刻（複数可）</label><div class="habit-times-editor"></div><button class="btn btn-g btn-sm habit-time-add" type="button">＋ 時刻を追加</button><p class="muted">薬など1日に複数回行う項目は、時刻ごとに別々にチェックできます。未設定なら従来どおり1日1回です。</p></div><div class="field"><label>ホームに表示する日</label><select class="habit-mode" aria-label="ホームに表示する日"><option value="daily" ${habit.scheduleMode==='daily'?'selected':''}>毎日</option><option value="weekdays" ${habit.scheduleMode==='weekdays'?'selected':''}>曜日指定</option><option value="date" ${habit.scheduleMode==='date'?'selected':''}>日付指定</option></select></div><div class="field habit-weekday-field"><label>表示する曜日</label><div class="habit-weekdays">${days}</div></div><div class="field habit-date-field"><label>表示する日付</label><input class="habit-edit-date" type="date" value="${esc(habit.showDate)}" aria-label="表示する日付"></div><div class="field"><label>ホームに表示する時間帯（実施時刻が未設定のとき）</label><select class="habit-time-preset" aria-label="ホームに表示する時間帯">${habitTimePresetOptions(habit.timePreset)}</select></div><div class="habit-editor-grid habit-custom-time-fields"><div class="field"><label>表示開始時（任意）</label><select class="habit-start-time" aria-label="表示開始時">${hourOptions(habit.startTime)}</select></div><div class="field"><label>表示終了時（任意）</label><select class="habit-end-time" aria-label="表示終了時">${hourOptions(habit.endTime)}</select></div></div><p class="muted">実施時刻を設定した項目は、その日の全時刻をホームに表示します。未設定なら、この表示時間帯を使います。</p><div class="habit-editor-actions"><button class="btn btn-c btn-sm habit-save" type="button">💾 保存</button><button class="btn btn-g btn-sm habit-cancel" type="button">キャンセル</button></div>`;
+      editor.innerHTML=`<div class="field"><label>項目名</label><input class="habit-edit-name" type="text" maxlength="60" value="${esc(habit.name)}" aria-label="チェック項目名"></div><div class="field"><label>📖 項目のメモ</label><textarea class="habit-edit-guide" maxlength="2000" rows="4" placeholder="項目の説明、覚えておきたいことなど" aria-label="項目のメモ">${esc(habit.guide)}</textarea></div><div class="field"><label>🔗 関連リンク</label><input class="habit-edit-link" type="url" maxlength="500" value="${esc(habit.link)}" placeholder="https://..." aria-label="関連リンク"></div><div class="field"><label>⏰ 1日の実施時刻（複数可）</label><div class="habit-times-editor"></div><button class="btn btn-g btn-sm habit-time-add" type="button">＋ 時刻を追加</button><p class="muted">薬など1日に複数回行う項目は、時刻ごとに別々にチェックできます。未設定なら従来どおり1日1回です。</p></div><div class="field"><label>ホームに表示する日</label><select class="habit-mode" aria-label="ホームに表示する日"><option value="daily" ${habit.scheduleMode==='daily'?'selected':''}>毎日</option><option value="weekdays" ${habit.scheduleMode==='weekdays'?'selected':''}>曜日指定</option><option value="date" ${habit.scheduleMode==='date'?'selected':''}>日付指定</option></select></div><div class="field habit-weekday-field"><label>表示する曜日</label><div class="habit-weekdays">${days}</div></div><div class="field habit-date-field"><label>表示する日付</label><input class="habit-edit-date" type="date" value="${esc(habit.showDate)}" aria-label="表示する日付"></div><div class="field"><label>ホームに表示する時間帯（実施時刻が未設定のとき）</label><select class="habit-time-preset" aria-label="ホームに表示する時間帯">${habitTimePresetOptions(habit.timePreset)}</select></div><div class="habit-editor-grid habit-custom-time-fields"><div class="field"><label>表示開始時（任意）</label><select class="habit-start-time" aria-label="表示開始時">${hourOptions(habit.startTime)}</select></div><div class="field"><label>表示終了時（任意）</label><select class="habit-end-time" aria-label="表示終了時">${hourOptions(habit.endTime)}</select></div></div><p class="muted">実施時刻を設定した項目は、その日の全時刻をホームに表示します。未設定なら、この表示時間帯を使います。</p><div class="habit-editor-actions"><button class="btn btn-c btn-sm habit-save" type="button">💾 保存</button><button class="btn btn-g btn-sm habit-cancel" type="button">キャンセル</button></div>`;
       list.appendChild(editor);updateHabitScheduleFields(editor);updateHabitTimeFields(editor);
       for(const value of habit.times||[])addHabitTimeRow(editor,value);
       editor.querySelector('.habit-time-add').onclick=()=>{addHabitTimeRow(editor);editor.querySelector('.habit-time-row:last-child input')?.focus();};
@@ -6531,7 +6530,7 @@ window.addEventListener('focus',autoPullOnFocus);
 window.addEventListener('pageshow',autoPullOnFocus);
 setInterval(()=>{
   const home=document.getElementById('scr-home');
-  if(home&&home.classList.contains('active')){if(!checkMemoEditorKey)renderHabits();renderJourneyCard();}
+  if(home&&home.classList.contains('active')){if(!checkItemMemoDrafts.size)renderHabits();renderJourneyCard();}
 },30000);
 if(D.settings.autoSync&&(D.settings.syncUrl||'').trim())syncPull(true);
 </script>
