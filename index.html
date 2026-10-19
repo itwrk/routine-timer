@@ -296,9 +296,10 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .habit-condition.day{color:var(--cyan-text)}
 .habit-condition.time{color:var(--gold-text)}
 .habit-item-memo{margin:0 2px 6px 32px;border-radius:8px;font-size:calc(12px * var(--text-scale));line-height:1.55}
-.habit-item-memo[open]{background:rgba(14,156,199,.055);border:1px solid var(--line2)}
-.habit-item-memo summary{min-height:36px;padding:7px 8px;color:var(--cyan-text);font-weight:700;cursor:pointer;white-space:nowrap}
-.habit-memo-content{padding:0 8px 8px}
+.habit-item-memo{background:rgba(14,156,199,.055);border:1px solid var(--line2)}
+.habit-item-memo[hidden]{display:none}
+.habit-memo-toggle{flex-shrink:0;min-height:36px;padding:4px 2px;background:none;border:0;color:var(--cyan-text);font:inherit;font-size:calc(11px * var(--text-scale));font-weight:700;cursor:pointer;white-space:nowrap}
+.habit-memo-content{padding:8px}
 .habit-memo-text{white-space:pre-wrap;overflow-wrap:anywhere}
 .habit-memo-edit{min-height:36px;margin-top:4px;background:none;border:none;color:var(--cyan-text);font:inherit;font-weight:700;padding:5px 0;cursor:pointer;white-space:nowrap}
 .habit-memo-editor textarea{min-height:100px;font-size:calc(14px * var(--text-scale));line-height:1.5;padding:6px 8px}
@@ -955,6 +956,7 @@ h2{font-size:calc(16px * var(--text-scale));margin-bottom:10px;color:var(--cyan)
   #scr-home .habit-condition{padding:1px 4px;font-size:calc(8px * var(--text-scale))}
   #scr-home .habit-row .habit-detail-btn,#scr-home .habit-row .habit-link{font-size:calc(9px * var(--text-scale))}
   #scr-home .habit-row .habit-del{min-width:28px;min-height:28px;padding:3px}
+  #scr-home .habit-memo-toggle{min-height:28px;font-size:calc(9px * var(--text-scale))}
   #scr-home .habit-add{gap:4px;margin-top:3px}
   #scr-home .habit-add input{padding:4px 6px;font-size:calc(10px * var(--text-scale))}
   #scr-home .rcard{gap:6px;padding:5px 6px;margin:0}
@@ -3420,13 +3422,14 @@ const CHECK_POINTS=5;
 // 項目のメモは完了ログと分け、既存の guide をそのまま使う。
 const checkItemMemoOpen=new Set(),checkItemMemoDrafts=new Map();
 function appendCheckItemMemo(item,entry,isTask=false){
-  const key=`${isTask?'task':'habit'}:${entry.id}`,details=document.createElement('details');
-  details.className='habit-item-memo';details.open=checkItemMemoOpen.has(key);
-  details.innerHTML=`<summary></summary><div class="habit-memo-content"></div>`;
-  const summary=details.querySelector('summary'),content=details.querySelector('.habit-memo-content');
+  const key=`${isTask?'task':'habit'}:${entry.id}`,details=document.createElement('div'),summary=document.createElement('button');
+  details.className='habit-item-memo';details.id=`check-memo-${uid()}`;
+  details.innerHTML=`<div class="habit-memo-content"></div>`;
+  const content=details.querySelector('.habit-memo-content');
+  summary.type='button';summary.className='habit-memo-toggle';summary.setAttribute('aria-controls',details.id);
   summary.setAttribute('aria-label',`${entry.name}のメモ表示`);
-  const updateSummary=()=>{summary.textContent=details.open?'📖 メモを閉じる':'📖 メモ表示';};
-  details.ontoggle=()=>{if(details.open)checkItemMemoOpen.add(key);else checkItemMemoOpen.delete(key);updateSummary();};
+  const updateSummary=()=>{const open=checkItemMemoOpen.has(key);details.hidden=!open;summary.setAttribute('aria-expanded',String(open));summary.textContent=open?'📖 メモを閉じる':'📖 メモ表示';};
+  summary.onclick=()=>{if(checkItemMemoOpen.has(key))checkItemMemoOpen.delete(key);else checkItemMemoOpen.add(key);updateSummary();};
   function renderContent(){
     if(checkItemMemoDrafts.has(key)){
       content.innerHTML=`<div class="habit-memo-editor"><textarea maxlength="2000" aria-label="${esc(entry.name)}のメモ" placeholder="この項目について覚えておきたいこと">${esc(checkItemMemoDrafts.get(key))}</textarea><div class="habit-memo-actions"><button class="btn btn-c btn-sm habit-memo-save" type="button">💾 保存</button><button class="btn btn-g btn-sm habit-memo-cancel" type="button">キャンセル</button></div></div>`;
@@ -3443,7 +3446,7 @@ function appendCheckItemMemo(item,entry,isTask=false){
       content.querySelector('.habit-memo-edit').onclick=()=>{checkItemMemoDrafts.set(key,guide);renderContent();content.querySelector('textarea').focus();};
     }
   }
-  updateSummary();renderContent();item.appendChild(details);
+  updateSummary();renderContent();item.querySelector('.habit-row,.habit-multi-head').appendChild(summary);item.appendChild(details);
 }
 function renderHabits(){
   const list=document.getElementById('habitList');
