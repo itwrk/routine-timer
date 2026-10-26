@@ -289,6 +289,8 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .habit-slot-toggle.done .habit-slot-check{border-color:var(--mint);background:linear-gradient(135deg,var(--mint),var(--cyan));color:#102b25}
 .habit-slot-toggle.done .habit-slot-label{text-decoration:line-through}
 .habit-slot-done-time{color:var(--dim);font-size:calc(8px * var(--text-scale))}
+/* チェック操作中に縮めると、左端を押したマウスがボタンから外れてクリックが不成立になる。 */
+.habit-toggle-area:active,.habit-toggle-area.tap-pop,.habit-slot-toggle:active,.habit-slot-toggle.tap-pop{transform:none;animation:none}
 .habit-main{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
 .habit-main .habit-name{flex:1;min-width:0}
 .habit-schedule{display:flex;gap:4px;min-width:0;flex-shrink:0}
