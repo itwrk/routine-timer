@@ -2408,9 +2408,22 @@ function streak(){
   return s;
 }
 
+/* ============ audio session ============ */
+function useMixedAudioSession(){
+  // ambient は他アプリの音声と混在できる。auto のままだと iOS が排他再生を選ぶ場合がある。
+  // https://www.w3.org/TR/audio-session/#audio-session-types
+  // 非対応ブラウザ・設定を拒否するアプリ内ビューアでも、既存の再生処理は続ける。
+  try{
+    const session=navigator.audioSession;
+    if(session&&session.type!=='ambient')session.type='ambient';
+  }catch(e){}
+}
+useMixedAudioSession();
+
 /* ============ speech ============ */
 let voiceReady=false;
 function speak(text,cb){
+  useMixedAudioSession();
   try{
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
@@ -2427,6 +2440,7 @@ if('speechSynthesis' in window)speechSynthesis.getVoices();
 let AC;
 function beep(freq,dur,type='square',vol=.15,when=0){
   if(!D.settings.sound)return;
+  useMixedAudioSession();
   try{
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();
     const o=AC.createOscillator(),g=AC.createGain();
@@ -2442,6 +2456,7 @@ function beep(freq,dur,type='square',vol=.15,when=0){
 }
 function poan(freq=660,dur=.32,vol=.13,when=0){
   if(!D.settings.sound)return;
+  useMixedAudioSession();
   try{
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();
     if(AC.state==='suspended')AC.resume();
