@@ -898,24 +898,28 @@ textarea{resize:vertical;min-height:36px}
 .habit-tracker-head h2{margin:0}
 .habit-tracker-range{color:var(--dim);font-size:calc(11px * var(--text-scale));white-space:nowrap}
 .habit-tracker-help{font-size:calc(11px * var(--text-scale));line-height:1.55}
-.habit-tracker-scroll{overflow-x:auto;margin-top:7px;padding:2px 1px 8px;overscroll-behavior-x:contain;scroll-snap-type:x proximity}
-.habit-tracker-row{display:flex;flex-wrap:nowrap;gap:8px;width:max-content;min-width:100%}
-.habit-mini{width:342px;flex:0 0 342px;padding:9px;border:1px solid var(--line2);border-radius:12px;background:linear-gradient(145deg,#fff,rgba(130,87,230,.045));scroll-snap-align:start}
-.habit-mini-head{display:flex;align-items:center;gap:7px;margin-bottom:7px}.habit-mini-name{flex:1;min-width:0;font-size:calc(12px * var(--text-scale));font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.habit-mini-name.deleted{color:var(--dim)}.habit-mini-score{color:var(--cyan-text);font-size:calc(9px * var(--text-scale));font-weight:800;white-space:nowrap}
-.habit-mini-days{display:grid;grid-template-columns:repeat(14,20px);gap:3px;width:max-content}
-.habit-mini-day{min-width:0;text-align:center;color:var(--dim);font-size:calc(7px * var(--text-scale));line-height:1.15}
-.habit-mini-day.today{color:var(--pink);font-weight:800}
-.habit-track-head{height:36px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:calc(10px * var(--text-scale));line-height:1.15;text-align:center}
-.habit-track-head.today{color:var(--pink);font-weight:800}
-.habit-track-cell{width:20px;height:24px;display:flex;align-items:center;justify-content:center;background:#ebe7f6;border:1px solid transparent;border-radius:6px;color:#77708f;font:inherit;font-size:calc(8px * var(--text-scale));cursor:pointer;padding:0}
-.habit-track-cell.done{background:linear-gradient(135deg,var(--mint),var(--cyan));border-color:var(--mint);color:#153a32;font-weight:800;box-shadow:0 0 7px rgba(14,171,114,.24)}
-.habit-track-cell.partial{background:rgba(14,156,199,.12);border-color:rgba(14,156,199,.42);color:var(--cyan-text);font-weight:800}
-.habit-track-cell.note{background:linear-gradient(135deg,var(--gold),var(--pink));border-color:var(--gold);font-size:calc(11px * var(--text-scale))}
-.habit-track-cell.off{background:transparent;color:#c5bfd8}
-.habit-track-cell.today{outline:2px solid rgba(255,77,141,.48);outline-offset:1px}
+.habit-tracker-scroll{max-width:100%;overflow-x:auto;margin-top:9px;padding:2px 0 8px;overscroll-behavior-x:contain}
+.habit-tracker-table{width:100%;min-width:620px;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:11px}
+.habit-tracker-table .habit-name-col{width:140px}
+.habit-tracker-table th,.habit-tracker-table td{padding:5px 2px;text-align:center;border-bottom:1px solid var(--line)}
+.habit-tracker-table thead th{background:var(--card2);color:var(--dim);font-size:10px;font-weight:700;line-height:1.5}
+.habit-tracker-table thead th span{display:block;font-size:9px;font-weight:400}
+.habit-tracker-table th:first-child{position:sticky;left:0;z-index:2;padding:8px;text-align:left;background:var(--card);box-shadow:1px 0 0 var(--line)}
+.habit-tracker-table thead th:first-child{background:var(--card2);z-index:3}
+.habit-tracker-table .habit-track-name{font-size:11px;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
+.habit-tracker-table .habit-track-name.deleted{color:var(--dim)}
+.habit-track-score{display:block;margin-top:3px;color:var(--dim);font-size:9px;font-weight:400}
+.habit-tracker-table thead th.today{color:var(--cyan-text);box-shadow:inset 0 -2px var(--cyan)}
+.habit-track-cell{width:28px;height:28px;margin:auto;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid transparent;border-radius:5px;color:var(--dim);font:inherit;font-size:9px;cursor:pointer;padding:0}
+.habit-track-cell.done{background:var(--mint);border-color:var(--mint);color:#fff;font-weight:700}
+.habit-track-cell.partial{background:#edf0fc;border-color:var(--line2);color:var(--cyan-text);font-weight:700}
+.habit-track-cell.note{background:#fff4d9;border-color:#d5b36b;color:var(--gold-text);font-size:12px}
+.habit-track-cell.off{background:transparent;color:#8491a4}
+.habit-track-cell.today{outline:1px solid var(--cyan);outline-offset:1px}
+@media(max-width:430px){.habit-tracker-table .habit-name-col{width:112px}.habit-tracker-table{min-width:588px}}
 .habit-tracker-detail{margin:7px 0;padding:7px 8px;background:var(--card2);border:1px solid var(--line);border-radius:9px;font-size:calc(11px * var(--text-scale));line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 .habit-tracker-detail strong{color:var(--cyan-text)}
-@media(max-width:390px){.reward-shop-row{gap:5px}.reward-icon{width:28px;height:28px}.reward-exchange{padding:6px 7px!important}.reward-editor-grid{grid-template-columns:48px minmax(0,1fr) 76px}.reward-manage-row{gap:5px}.reward-manage-action{font-size:calc(11px * var(--text-scale))}.habit-mini{width:320px;flex-basis:320px}.habit-mini-days{grid-template-columns:repeat(14,19px);gap:3px}.habit-track-cell{width:19px}.habit-add input,.habit-memo-editor textarea,.reward-editor input,.reward-editor textarea,.habit-editor input,.habit-editor textarea,.habit-editor select{font-size:calc(16px * var(--text-scale))}}
+@media(max-width:390px){.reward-shop-row{gap:5px}.reward-icon{width:28px;height:28px}.reward-exchange{padding:6px 7px!important}.reward-editor-grid{grid-template-columns:48px minmax(0,1fr) 76px}.reward-manage-row{gap:5px}.reward-manage-action{font-size:calc(11px * var(--text-scale))}.habit-add input,.habit-memo-editor textarea,.reward-editor input,.reward-editor textarea,.habit-editor input,.habit-editor textarea,.habit-editor select{font-size:calc(16px * var(--text-scale))}}
 
 /* celebration overlay */
 #fx{position:fixed;inset:0;pointer-events:none;z-index:300}
@@ -1635,7 +1639,7 @@ input[type=checkbox]{accent-color:var(--cyan)}
     </div>
     <div class="card" id="habitTrackerCard">
       <div class="habit-tracker-head"><h2>🗓️ チェックの足あと</h2><span class="habit-tracker-range">直近14日</span></div>
-      <p class="muted habit-tracker-help">各チェック項目を1枚のトラッカーで表示。横にスワイプできます。✓ 完了 ／ 数字＝完了回数/予定回数 ／ 📝 記録あり ／ ・記録なし ／ — 対象外。マスを押すと詳細を表示します。</p>
+      <p class="muted habit-tracker-help">日付は横、チェック項目は縦に表示。横にスワイプしても項目名は固定されます。✓ 完了 ／ 数字＝完了回数/予定回数 ／ 📝 記録あり ／ ・記録なし ／ — 対象外。マスを押すと詳細を表示します。</p>
       <div id="habitTrackerDetail" role="status" aria-live="polite"></div>
       <div id="habitTracker"></div>
     </div>
@@ -5125,25 +5129,30 @@ function renderHabitTracker(){
   for(const[key,items]of byHabit)if(!currentIds.has(key))rows.push({id:key,name:(items[0].habitName||'削除済みの項目')+'（削除済み）',habit:null,logs:items,deleted:true});
   if(!rows.length){host.innerHTML='<p class="muted">毎日のチェック項目を追加すると、ここに足あとが育ちます。</p>';return;}
   const scroll=document.createElement('div');scroll.className='habit-tracker-scroll';
-  const rowHost=document.createElement('div');rowHost.className='habit-tracker-row';
+  scroll.tabIndex=0;scroll.setAttribute('role','region');scroll.setAttribute('aria-label','チェック履歴・横にスクロールできます');
+  const table=document.createElement('table');table.className='habit-tracker-table';table.setAttribute('aria-label','項目ごとのチェック履歴（直近14日）');
+  table.innerHTML=`<colgroup><col class="habit-name-col">${dates.map(()=>'<col>').join('')}</colgroup><thead><tr><th scope="col">チェック項目</th>${dates.map(date=>`<th scope="col" class="${localDateKey(date)===today()?'today':''}">${date.getMonth()+1}/${date.getDate()}<span>${WEEKDAY_LABELS[date.getDay()]}</span></th>`).join('')}</tr></thead>`;
+  const body=document.createElement('tbody');
   for(const row of rows){
     const logsByDate=new Map();for(const log of row.logs){if(!logsByDate.has(log.date))logsByDate.set(log.date,[]);logsByDate.get(log.date).push(log);}
     const startKey=habitTrackerStartKey(row.habit,row.logs);
     const required=Math.max(1,(row.habit&&row.habit.times||[]).length);
-    const mini=document.createElement('section');mini.className='habit-mini';
+    const tr=document.createElement('tr');
     const scheduledDays=dates.filter(date=>row.deleted?false:habitScheduledOnDate(row.habit,date,startKey)).length,completed=dates.reduce((sum,date)=>sum+Math.min(required,(logsByDate.get(localDateKey(date))||[]).length),0),expected=row.deleted?Math.max(1,completed):Math.max(required,scheduledDays*required);
-    mini.innerHTML=`<div class="habit-mini-head"><span class="habit-mini-name${row.deleted?' deleted':''}" title="${esc(row.name)}">${esc(row.name)}</span><span class="habit-mini-score">${completed} / ${expected}</span></div><div class="habit-mini-days">${dates.map(date=>{const key=localDateKey(date);return `<div class="habit-mini-day${key===today()?' today':''}">${date.getDate()}<br>${WEEKDAY_LABELS[date.getDay()]}</div>`;}).join('')}</div>`;
-    const cells=document.createElement('div');cells.className='habit-mini-days';
+    const heading=document.createElement('th');heading.scope='row';
+    heading.innerHTML=`<span class="habit-track-name${row.deleted?' deleted':''}">${esc(row.name)}</span><span class="habit-track-score">${completed} / ${expected}</span>`;
+    tr.appendChild(heading);
     for(const date of dates){
       const key=localDateKey(date),logs=logsByDate.get(key)||[],scheduled=row.deleted?false:habitScheduledOnDate(row.habit,date,startKey),complete=logs.length>=required,hasMemo=logs.some(log=>log.memo),cell=document.createElement('button');
       cell.type='button';cell.className='habit-track-cell'+(logs.length?(complete?' done':' partial')+(hasMemo?' note':''):(scheduled?'':' off'))+(key===today()?' today':'');
       cell.textContent=logs.length?(hasMemo?'📝':required>1?`${Math.min(required,logs.length)}/${required}`:'✓'):(scheduled?'·':'—');
       cell.setAttribute('aria-label',`${key} ${row.name} ${logs.length?`${Math.min(required,logs.length)}/${required}回完了${hasMemo?'、メモあり':''}`:(scheduled?'記録なし':'対象外')}`);
-      cell.title=cell.getAttribute('aria-label');cell.onclick=()=>showHabitTrackerDetail(row.name,key,logs,scheduled,required);cells.appendChild(cell);
+      cell.title=cell.getAttribute('aria-label');cell.onclick=()=>showHabitTrackerDetail(row.name,key,logs,scheduled,required);
+      const td=document.createElement('td');td.appendChild(cell);tr.appendChild(td);
     }
-    mini.appendChild(cells);rowHost.appendChild(mini);
+    body.appendChild(tr);
   }
-  scroll.appendChild(rowHost);host.appendChild(scroll);
+  table.appendChild(body);scroll.appendChild(table);host.appendChild(scroll);
 }
 function renderProg(){
   const li=levelInfo();
