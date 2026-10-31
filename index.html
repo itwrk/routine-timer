@@ -2226,14 +2226,16 @@ const CURRENT_SCHEMA=17;
 /* ============ LIFE PLAN ============ */
 function normalizeLifePlan(raw){
   const year=new Date().getFullYear();
-  const p=Object.assign({startYear:year,years:30,assets:0,entries:null},raw&&typeof raw==='object'?raw:{});
+  const p=Object.assign({startYear:year,endYear:2035,years:30,assets:0,entries:null},raw&&typeof raw==='object'?raw:{});
   const num=(v,f,min,max)=>Number.isFinite(Number(v))&&v!==''?Math.min(max,Math.max(min,Number(v))):f;
-  p.startYear=Math.round(num(p.startYear,year,1900,2200));p.years=Math.round(num(p.years,30,1,100));p.assets=num(p.assets,0,-1e9,1e9);
+  p.startYear=Math.round(num(p.startYear,year,1900,2200));
+  const previousEnd=p.startYear+Math.round(num(p.years,30,1,100))-1;
+  p.endYear=Math.round(num(p.endYear,2035,p.startYear,p.startYear+99));p.years=p.endYear-p.startYear+1;p.assets=num(p.assets,0,-1e9,1e9);
   if(!Array.isArray(p.entries))p.entries=[{kind:'income',name:'給与（手取り）'},{kind:'expense',name:'生活費'}];
   p.entries=p.entries.filter(e=>e&&typeof e==='object').map(e=>({
     kind:e.kind==='income'?'income':'expense',name:String(e.name||'').slice(0,60),
     amount:num(e.amount,0,0,1e8),unit:e.unit==='year'?'year':'month',
-    start:Math.round(num(e.start,p.startYear,1900,2299)),end:Math.round(num(e.end,p.startYear+p.years-1,1900,2299)),growth:num(e.growth,0,-100,100)
+    start:Math.round(num(e.start,p.startYear,1900,2299)),end:Math.round(num(e.end,raw?previousEnd:p.endYear,1900,2299)),growth:num(e.growth,0,-100,100)
   }));
   return p;
 }
@@ -2252,13 +2254,14 @@ function calculateLifePlan(p){
   return rows;
 }
 function lifeNumber(value){return value.toLocaleString('ja-JP',{maximumFractionDigits:1});}
+function lifeYearAge(year){return year<1990?'—':`${year-1990}歳`;}
 function lifeInput(label,key,value,min,max,step='1',index=null){
   const target=index===null?'null':index;
   return `<label>${label}<input type="number" required inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${value}" data-life-key="${key}" data-life-index="${target}" oninput="updateLifeField(this,${target},'${key}')"></label>`;
 }
 function renderLifePlan(){
   D.lifePlan=normalizeLifePlan(D.lifePlan);const p=D.lifePlan;
-  document.getElementById('lifeBasics').innerHTML=lifeInput('開始年','startYear',p.startYear,1900,2200)+lifeInput('表示年数（1〜100年）','years',p.years,1,100)+lifeInput('現在の資産（万円）','assets',p.assets,-1e9,1e9,'any');
+  document.getElementById('lifeBasics').innerHTML=lifeInput('開始年','startYear',p.startYear,1900,2200)+lifeInput('表示終了年','endYear',p.endYear,1900,2299)+lifeInput('現在の資産（万円）','assets',p.assets,-1e9,1e9,'any');
   for(const kind of ['income','expense']){
     document.getElementById(kind==='income'?'lifeIncome':'lifeExpense').innerHTML=p.entries.map((e,i)=>e.kind!==kind?'':`<div class="life-entry">
       <div class="life-head"><input type="text" aria-label="${kind==='income'?'収入':'支出'}の項目名" maxlength="60" value="${esc(e.name)}" onchange="updateLifeField(this,${i},'name')"><button class="btn btn-g btn-sm" onclick="twoTap(this,'削除する？',()=>removeLifeEntry(${i}))">削除</button></div>
@@ -2271,6 +2274,7 @@ function renderLifePlan(){
 function lifeValidation(){
   const invalid=[...document.querySelectorAll('#scr-life input')].find(el=>!el.checkValidity());
   if(invalid)return '入力値を確認してください。年は整数、金額は範囲内の数値で入力してください。';
+  if(D.lifePlan.endYear<D.lifePlan.startYear||D.lifePlan.endYear-D.lifePlan.startYear>=100)return '表示終了年は開始年以降、100年以内にしてください。';
   const e=D.lifePlan.entries.find(e=>e.start>e.end);
   return e?`「${e.name||'項目'}」の終了年は開始年以降にしてください。`:'';
 }
@@ -2278,11 +2282,12 @@ function updateLifeField(input,index,key){
   if(!input.checkValidity()){renderLifeResults();return;}
   const target=index===null?D.lifePlan:D.lifePlan.entries[index];if(!target)return;
   target[key]=key==='name'||key==='unit'?input.value:Number(input.value);
+  if(index===null&&(key==='startYear'||key==='endYear'))target.years=target.endYear-target.startYear+1;
   save();renderLifeResults();
 }
 function addLifeEntry(kind){
   if(lifeValidation()){renderLifeResults();return;}
-  const p=D.lifePlan;p.entries.push({kind,name:kind==='income'?'その他の収入':'その他の支出',amount:0,unit:'year',start:p.startYear,end:p.startYear+p.years-1,growth:0});save();renderLifePlan();
+  const p=D.lifePlan;p.entries.push({kind,name:kind==='income'?'その他の収入':'その他の支出',amount:0,unit:'year',start:p.startYear,end:p.endYear,growth:0});save();renderLifePlan();
 }
 function removeLifeEntry(index){D.lifePlan.entries.splice(index,1);save();renderLifePlan();}
 function renderLifeResults(){
@@ -2303,12 +2308,12 @@ function renderLifeResults(){
       <line x1="72" x2="616" y1="${y(0)}" y2="${y(0)}" stroke="var(--pink)" stroke-dasharray="4 4"/>
       <polyline points="${line}" fill="none" stroke="var(--cyan-text)" stroke-width="3" stroke-linejoin="round"/>
       <text x="72" y="217" font-size="12" fill="var(--dim)">${p.startYear-1}年末</text><text x="616" y="217" text-anchor="end" font-size="12" fill="var(--dim)">${last.year}年末</text>
-    </svg><div class="life-scroll" tabindex="0" role="region" aria-label="年次収支表・横にスクロールできます"><table class="life-table"><caption>単位：万円 ／ スマホでは横にスクロールできます</caption><thead><tr><th scope="col">年</th><th scope="col">収入</th><th scope="col">支出</th><th scope="col">年間収支</th><th scope="col">年末資産</th></tr></thead><tbody>${rows.map(r=>`<tr><th scope="row">${r.year}</th>${['income','expense','net','assets'].map(k=>`<td class="${r[k]<0?'life-negative':''}">${lifeNumber(r[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    </svg><div class="life-scroll" tabindex="0" role="region" aria-label="年次収支表・横にスクロールできます"><table class="life-table"><caption>単位：万円 ／ 年齢は1990年11月生まれ・その年の11月に迎える年齢 ／ スマホでは横にスクロールできます</caption><thead><tr><th scope="col">年</th><th scope="col">年齢</th><th scope="col">収入</th><th scope="col">支出</th><th scope="col">年間収支</th><th scope="col">年末資産</th></tr></thead><tbody>${rows.map(r=>`<tr><th scope="row">${r.year}</th><td>${lifeYearAge(r.year)}</td>${['income','expense','net','assets'].map(k=>`<td class="${r[k]<0?'life-negative':''}">${lifeNumber(r[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 function exportLifeCsv(){
   if(lifeValidation()||document.getElementById('lifeError').textContent){toast('入力内容を確認してください');return;}
   const rows=calculateLifePlan(D.lifePlan);
-  download(`life-plan-${D.lifePlan.startYear}.csv`,[['年','収入（万円）','支出（万円）','年間収支（万円）','年末資産（万円）'],...rows.map(r=>[r.year,...['income','expense','net','assets'].map(k=>Math.round(r[k]*100)/100)])].map(r=>r.join(',')).join('\r\n'));
+  download(`life-plan-${D.lifePlan.startYear}.csv`,[['年','年齢（11月に迎える年齢）','収入（万円）','支出（万円）','年間収支（万円）','年末資産（万円）'],...rows.map(r=>[r.year,lifeYearAge(r.year),...['income','expense','net','assets'].map(k=>Math.round(r[k]*100)/100)])].map(r=>r.join(',')).join('\r\n'));
 }
 /* ============ LIFE PLAN END ============ */
 function normalizeData(raw){
