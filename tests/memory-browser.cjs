@@ -147,7 +147,8 @@ const nodePath = require('node:path');
     memoryMark('green');
   });
   assert.equal(await page.locator('.mem-mark .mem-mark').count(), 0);
-  assert((await page.evaluate(() => memoryToNotation(memoryEditorHTML()))).includes('《定✓》【着す】'));
+  const recolored = await page.evaluate(() => memoryToNotation(memoryEditorHTML()));
+  assert(recolored.includes('《定✓》【着す】'), recolored);
   // Plain text paste cannot run HTML; Enter splits the block and keeps a checked span on the tail.
   await page.evaluate(() => {
     memoryState.selection = null;
@@ -157,7 +158,7 @@ const nodePath = require('node:path');
     r.collapse(true);
     getSelection().removeAllRanges();
     getSelection().addRange(r);
-    b.focus();
+    document.getElementById('memEditor').focus();
   });
   await page.keyboard.press('Enter');
   assert.equal(await page.locator('.mem-block').count(), 4);
@@ -167,7 +168,11 @@ const nodePath = require('node:path');
   await page.keyboard.press('Enter');
   assert.equal(await page.locator('.mem-block').count(), 4);
   // Reorder keeps the actual span and check state.
-  await page.evaluate(() => memoryMoveBlock(document.querySelectorAll('.mem-row')[2], -1));
+  await page.evaluate(() => {
+    memoryToggleBlocks(true);
+    memoryMoveBlock(document.querySelectorAll('.mem-row')[2], -1);
+    memoryToggleBlocks(false);
+  });
   assert((await page.locator('.mem-block').nth(1).innerText()).includes('定着'));
   await page.evaluate(() => memoryToggleMode());
   await page.locator('.mem-mark[data-checked="true"]').click();
