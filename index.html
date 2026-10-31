@@ -676,6 +676,28 @@ body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-botto
 .timer-mode-switch button{border:1px solid transparent;border-radius:9px;background:none;color:var(--dim);font-family:inherit;font-size:calc(11px * var(--text-scale));font-weight:800;padding:7px 5px;white-space:nowrap;cursor:pointer}
 .timer-mode-switch button.on{color:var(--cyan);background:var(--card2);border-color:#4b45a0;box-shadow:0 0 10px rgba(53,224,255,.15)}
 .timer-mode-switch button.up.on{color:var(--gold);box-shadow:0 0 10px rgba(255,201,60,.18)}
+.checklist-minutes{display:none;align-items:center;gap:7px;margin:4px 0;font-size:calc(12px * var(--text-scale));color:var(--dim)}
+.checklist-minutes input{width:84px;padding:6px 8px}
+.checklist-help{display:none;width:100%;max-width:460px;margin:4px 0;color:var(--dim);font-size:calc(11px * var(--text-scale));line-height:1.5}
+.routine-checklist{display:none;width:100%;max-width:460px;margin-top:10px}
+.routine-checklist-item{padding:10px;margin-bottom:7px;border:1px solid var(--line2);border-radius:12px;background:var(--card2)}
+.routine-checklist-item.checked{border-color:var(--cyan);background:rgba(53,224,255,.08)}
+.routine-checklist label{display:flex;align-items:center;gap:10px;min-height:36px;cursor:pointer;font-weight:800;overflow-wrap:anywhere}
+.routine-checklist input{flex:0 0 auto;width:23px;height:23px;accent-color:var(--pink)}
+.routine-checklist input:disabled{cursor:default}
+.routine-checklist-item.checked>.checklist-step-label span{text-decoration:line-through;color:var(--dim)}
+.routine-checklist .checklist-subitem{margin-left:22px;font-size:calc(12px * var(--text-scale));font-weight:500}
+.checklist-step-memo{margin:4px 0 4px 33px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:calc(12px * var(--text-scale));color:var(--dim)}
+.checklist-finish{display:none;width:100%;max-width:460px;position:sticky;bottom:0;z-index:4;flex-shrink:0;padding:8px 0 max(8px,env(safe-area-inset-bottom));background:var(--bg)}
+.checklist-finish .btn{width:100%;white-space:nowrap}
+#run.checklist-mode .routine-checklist{display:block}
+#run.checklist-mode .checklist-finish{display:block}
+#run.checklist-mode .checklist-help{display:block}
+#run.checklist-mode #runNext,#run.checklist-mode #btnVoiceRepeat,#run.checklist-mode #btnSkipStep,#run.checklist-mode #btnDoneStep,#run.checklist-mode .run-save-end,#run.checklist-mode #runMoti,#run.checklist-mode .run-note-composer,#run.checklist-mode #runMemo,#run.checklist-mode #runCk,#run.checklist-mode #upcomingWrap{display:none!important}
+#run.checklist-mode .ringwrap{width:170px;height:170px;flex-shrink:0}
+#run.checklist-mode .ringcenter{padding:18px}
+#run.checklist-mode .bigem{font-size:24px}
+#run.checklist-mode .stepname{font-size:12px}
 .voice-repeat-btn{width:100%;max-width:360px;margin:0 0 4px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--dim);font-family:inherit;font-size:calc(11px * var(--text-scale));font-weight:800;white-space:nowrap;cursor:pointer}
 .voice-repeat-btn.on{color:var(--pink);background:rgba(255,77,141,.09);border-color:rgba(255,77,141,.55);box-shadow:0 0 10px rgba(255,77,141,.13)}
 .ringwrap.countup .ring-fg{stroke:var(--gold);filter:drop-shadow(0 0 8px rgba(255,201,60,.8)) drop-shadow(0 0 18px rgba(255,77,141,.4))}
@@ -1744,15 +1766,21 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
 <div id="run">
   <div class="rhead">
     <div class="rtitle" id="runTitle"></div>
-    <button class="close" onclick="twoTap(this,'もう一度で中断',endRun)">✕ 中断</button>
+    <button class="close" id="runClose" onclick="if(run&&run.checklistMode)finishChecklistRun();else twoTap(this,'もう一度で中断',endRun)">✕ 中断</button>
   </div>
   <div class="stepprog" id="runProg"></div>
   <div class="nextstep" id="runNext" aria-live="polite"></div>
   <div class="combo" id="combo"></div>
+  <div class="timer-mode-switch" aria-label="ルーチンの実行モード">
+    <button id="btnRunTimer" class="on" type="button" onclick="setRunMode(false)">⏲ タイマー</button>
+    <button id="btnRunChecklist" type="button" onclick="setRunMode(true)">☑ チェックリスト</button>
+  </div>
   <div class="timer-mode-switch" aria-label="タイマーモード">
     <button id="btnModeDown" class="on" type="button" onclick="setTimerMode('down')">⌛ カウントダウン</button>
     <button id="btnModeUp" class="up" type="button" onclick="setTimerMode('up')">⏱ 実時間計測</button>
   </div>
+  <label class="checklist-minutes" id="checklistMinutesField">制限時間 <input id="checklistMinutes" type="number" min="1" max="1440" step="1" inputmode="numeric" value="5" onchange="setChecklistMinutes(this.value)"> 分</label>
+  <p class="checklist-help">▶ 再生で開始。好きな順にチェックできます。全体の時間を計測し、0秒になっても自動終了しません。</p>
   <button id="btnVoiceRepeat" class="voice-repeat-btn" type="button" onclick="toggleVoiceRepeat()" aria-pressed="false">🔁 読み上げリピート OFF</button>
   <div class="ringwrap">
     <svg viewBox="0 0 100 100">
@@ -1777,6 +1805,8 @@ body.meal-waiting #app{padding-bottom:calc(236px + env(safe-area-inset-bottom))}
     <button class="btn btn-g" id="btnSkipStep" onclick="skipStep()">⏭ スキップ</button>
     <button class="btn btn-p" id="btnDoneStep" onclick="doneStep()">✅ できた！</button>
   </div>
+  <section class="routine-checklist" id="routineChecklist" aria-label="ルーチンのステップ一覧"></section>
+  <div class="checklist-finish"><button class="btn btn-p" type="button" onclick="finishChecklistRun()">🏁 終了</button></div>
   <button class="btn btn-c run-save-end" type="button" onclick="twoTap(this,'もう一度で途中保存',saveAndEndRun)">💾 途中保存して終わります</button>
   <div class="moti" id="runMoti">…</div>
   <div class="run-note-composer">
@@ -4437,6 +4467,73 @@ const CIRC=2*Math.PI*43;
 document.getElementById('ringFg').style.strokeDasharray=CIRC;
 let run=null,timer=null;
 
+function setRunMode(checklist){
+  if(!run||!run.ready||run.microEntry||run.source!=='normal'||run.checklistMode===checklist)return;
+  run.checklistMode=checklist;
+  speechSynthesis.cancel();
+  if(checklist){
+    run.checklistDone=new Set();run.checklistSubDone=new Set();
+    run.checklistMinutes=Math.min(1440,Math.max(1,Math.ceil(run.r.steps.reduce((n,s)=>n+(Number(s.sec)||0),0)/60)));
+    document.getElementById('checklistMinutes').value=run.checklistMinutes;
+    run.targetSec=run.checklistMinutes*60;run.left=run.targetSec;run.leftMs=run.targetSec*1000;
+    run.stepElapsedMs=0;run.lastTickAt=Date.now();run.checklistTimeUp=false;
+    document.getElementById('runEmoji').textContent='☑';
+    document.getElementById('runStep').textContent='チェックリスト';
+    renderRoutineChecklist();updateTimerModeUi();updateRing();updateRemain();
+  }else loadStep(false);
+}
+function setChecklistMinutes(value){
+  if(!run||!run.checklistMode||!run.ready)return;
+  const minutes=Number(value);
+  if(!Number.isInteger(minutes)||minutes<1||minutes>1440){
+    document.getElementById('checklistMinutes').value=run.checklistMinutes;
+    toast('1〜1440分で入力してね');return;
+  }
+  run.checklistMinutes=minutes;run.targetSec=minutes*60;run.left=run.targetSec;run.leftMs=run.targetSec*1000;
+  updateRing();updateRemain();
+}
+function renderRoutineChecklist(){
+  if(!run||!run.checklistMode)return;
+  const el=document.getElementById('routineChecklist');el.innerHTML='';
+  document.getElementById('runProg').textContent=`☑ ${run.checklistDone.size} / ${run.r.steps.length} ステップ`;
+  for(const s of run.r.steps){
+    const item=document.createElement('div');item.className='routine-checklist-item'+(run.checklistDone.has(s.id)?' checked':'');
+    const label=document.createElement('label');label.className='checklist-step-label';
+    const input=document.createElement('input');input.type='checkbox';input.checked=run.checklistDone.has(s.id);input.disabled=run.ready;
+    const text=document.createElement('span');text.textContent=`${s.emoji||'✅'} ${s.name||'名前なしステップ'}`;
+    label.append(input,text);item.appendChild(label);
+    input.onchange=()=>{
+      if(!run||run.ready)return;
+      if(input.checked){run.checklistDone.add(s.id);sfxDone();}else run.checklistDone.delete(s.id);
+      item.classList.toggle('checked',input.checked);
+      document.getElementById('runProg').textContent=`☑ ${run.checklistDone.size} / ${run.r.steps.length} ステップ`;
+      updateRemain();
+      if(input.checked&&run.checklistDone.size===run.r.steps.length){burst();toast('☑ 全部チェック！好きな時に終了できます');}
+    };
+    if(s.memo){const memo=document.createElement('div');memo.className='checklist-step-memo';memo.textContent=s.memo;item.appendChild(memo);}
+    (s.checklist||[]).forEach((c,k)=>{
+      const sub=document.createElement('label');sub.className='checklist-subitem';
+      const box=document.createElement('input'),key=`${s.id}:${k}`;box.type='checkbox';box.checked=run.checklistSubDone.has(key);box.disabled=run.ready;
+      const caption=document.createElement('span');caption.textContent=c.t;
+      box.onchange=()=>{if(box.checked)run.checklistSubDone.add(key);else run.checklistSubDone.delete(key);};
+      sub.append(box,caption);item.appendChild(sub);
+    });
+    el.appendChild(item);
+  }
+}
+function finishChecklistRun(){
+  if(!run||!run.checklistMode)return;
+  if(run.ready){stopRun();return;}
+  advanceRunClock();speechSynthesis.cancel();
+  run.stepRecords=run.r.steps.map(s=>({stepId:s.id,name:s.name,actualSec:0,plannedSec:s.sec,mode:run.timerMode==='up'?'checklist-countup':'checklist-countdown',outcome:run.checklistDone.has(s.id)?'done':'skipped',checklist:(s.checklist||[]).map((c,k)=>({t:c.t,done:run.checklistSubDone.has(`${s.id}:${k}`)}))}));
+  run.skips=run.r.steps.length-run.checklistDone.size;
+  run.source='checklist';
+  for(const s of run.r.steps.filter(s=>run.checklistDone.has(s.id))){
+    D.xp+=10;run.xp=(run.xp||0)+10;
+    awardRewardPoints(10,`step:${run.startedAt}:${s.id}`,`ルーチンステップ：${s.name}`);
+  }
+  finishRun(false);
+}
 function startRun(id,options={}){
   const r=D.routines.find(x=>x.id===id);
   if(!r||!r.steps.length){toast('ステップを追加してから開始してね');return;}
@@ -4445,7 +4542,7 @@ function startRun(id,options={}){
   const priorSkips=Number.isFinite(Number(options.skips))?Number(options.skips):stepRecords.filter(x=>x.outcome==='skipped').length;
   const ready=!!options.paused,journeyId=ready?'':claimJourneyForStart(r.id,options.journeyId||'');
   showScreen('scr-home');
-  run={r,idx:startIndex,left:0,leftMs:0,paused:ready,ready,skips:priorSkips,startedAt:ready?0:Date.now(),timerMode:'down',repeatSpeech:!!D.settings.repeatSpeech,repeatText:'',repeatLastAt:0,stepRecords,microEntry:!!options.micro,microEntryDone:false,source:options.source||'normal',journeyId,pendingJourneyId:options.journeyId||''};
+  run={r,idx:startIndex,left:0,leftMs:0,paused:ready,ready,skips:priorSkips,startedAt:ready?0:Date.now(),timerMode:'down',checklistMode:false,repeatSpeech:!!D.settings.repeatSpeech,repeatText:'',repeatLastAt:0,stepRecords,microEntry:!!options.micro,microEntryDone:false,source:options.source||'normal',journeyId,pendingJourneyId:options.journeyId||''};
   D.combo=D.combo||0;
   document.getElementById('run').classList.add('active');
   document.getElementById('runTitle').textContent=`${r.emoji} ${r.name}`;
@@ -4628,6 +4725,13 @@ function renderRunNext(){
 }
 function updateRemain(){
   if(!run)return;
+  if(run.checklistMode){
+    document.getElementById('runRemainLabel').textContent='☑ チェック';
+    document.getElementById('runRemain').textContent=`${run.checklistDone.size} / ${run.r.steps.length}`;
+    document.getElementById('runFinishLabel').textContent='🏁 終了';
+    document.getElementById('runFinish').textContent=run.timerMode==='down'&&run.left===0?'時間です・いつでもOK':'いつでもOK';
+    return;
+  }
   if(run.microEntry){
     document.getElementById('runRemainLabel').textContent='⚡ 助走';
     document.getElementById('runRemain').textContent=`あと${run.left}秒`;
@@ -4674,6 +4778,12 @@ function tick(){
   if(!run||run.paused)return;
   const previousLeft=run.left;
   advanceRunClock();
+  if(run.checklistMode){
+    if(run.timerMode==='down'&&run.leftMs<=0&&!run.checklistTimeUp){
+      run.checklistTimeUp=true;beep(880,.25);speak('時間です。チェックを続けるか、終了を押してください。');toast('⏰ 時間です。終了はいつでも押せます');
+    }
+    updateRing();updateRemain();return;
+  }
   const s=run.r.steps[run.idx];
   const elapsed=Math.floor((run.stepElapsedMs||0)/1000);
   // 半分経過アナウンス（短いステップも含め、1回だけ）
@@ -4729,7 +4839,16 @@ function toggleVoiceRepeat(){
 function updateTimerModeUi(){
   if(!run)return;
   const countUp=run.timerMode==='up';
+  const checklist=!!run.checklistMode;
+  document.getElementById('run').classList.toggle('checklist-mode',checklist);
+  for(const [id,on] of [['btnRunTimer',!checklist],['btnRunChecklist',checklist]]){
+    const btn=document.getElementById(id);btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',String(on));btn.disabled=!run.ready||run.microEntry||run.source!=='normal';
+  }
+  const close=document.getElementById('runClose');resetTwoTap(close);close.textContent=checklist?'🏁 終了':'✕ 中断';
+  document.getElementById('checklistMinutesField').style.display=checklist&&!countUp?'flex':'none';
+  document.getElementById('checklistMinutes').disabled=!run.ready;
   const down=document.getElementById('btnModeDown'),up=document.getElementById('btnModeUp');
+  up.textContent=checklist?'⏱ カウントアップ':'⏱ 実時間計測';
   down.disabled=!!run.microEntry;up.disabled=!!run.microEntry;
   document.getElementById('btnSkipStep').disabled=!!run.microEntry||run.ready;
   document.getElementById('btnDoneStep').disabled=run.ready;
@@ -4744,7 +4863,7 @@ function setTimerMode(mode){
   run.timerMode=mode;run.lastTickAt=Date.now();
   if(mode==='up')run.usedCountUp=true;
   updateTimerModeUi();updateRing();updateRemain();
-  toast(mode==='up'?'⏱ 実時間計測：自動では次に進みません':'⌛ カウントダウンに戻しました');
+  toast(run.checklistMode?(mode==='up'?'⏱ カウントアップで計測します':'⌛ 指定した時間でカウントダウンします'):mode==='up'?'⏱ 実時間計測：自動では次に進みません':'⌛ カウントダウンに戻しました');
 }
 function togglePause(){
   if(!run)return;
@@ -4752,6 +4871,7 @@ function togglePause(){
     run.ready=false;run.paused=false;run.startedAt=Date.now();run.lastTickAt=run.startedAt;run.repeatLastAt=run.startedAt;
     run.journeyId=claimJourneyForStart(run.r.id,run.pendingJourneyId);
     document.getElementById('btnPause').textContent='⏸ 一時停止';
+    if(run.checklistMode){updateTimerModeUi();renderRoutineChecklist();beep(660,.1);speak(`${run.r.name}。チェックリストを始めます。`);return;}
     updateTimerModeUi();beep(660,.1);slamIn();speakCurrentRunStep();return;
   }
   if(!run.paused){advanceRunClock();run.paused=true;}
