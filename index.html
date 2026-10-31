@@ -2263,6 +2263,7 @@ body.memory-active #memoFab {
         <button class="btn btn-c btn-sm" onclick="syncPush()">☁️ 今すぐアップロード</button>
         <button class="btn btn-c btn-sm" onclick="syncPullSafe(this)">⬇️ 今すぐ取得</button>
       </div>
+      <p class="muted" id="syncStatus" role="status" aria-live="polite" style="margin-top:8px"></p>
       <p class="muted" style="margin-top:8px">アップロード時に、ChatGPT用の <b>routine_timeline.csv</b> もGoogle Drive更新用データとして送信します。</p>
       <p class="muted" style="margin-top:8px">食事の記録（内容・数値・タグ・メモ）も同期対象に含まれます。</p>
       <p class="muted" style="margin-top:8px">付属の <b>rvt-sync.gs</b> を自分のGoogleアカウントのApps Scriptにデプロイして、URLと合言葉を両端末に入れるだけ。データはあなたのGoogle Drive内に保存されます。AIのAPIキーは同期されません（端末ごとに保持）。</p>
@@ -4805,13 +4806,13 @@ function resetTwoTap(btn){
   btn.style.background=btn.dataset.twoTapBackground||'';btn.style.color=btn.dataset.twoTapColor||'';
   for(const key of ['armed','tm','twoTapHtml','twoTapAria','twoTapBackground','twoTapColor'])delete btn.dataset[key];
 }
-function twoTap(btn,confirmLabel,fn){
+function twoTap(btn,confirmLabel,fn,timeoutMs=2500){
   if(btn.dataset.armed){resetTwoTap(btn);fn();return;}
   btn.dataset.armed='1';btn.dataset.twoTapHtml=btn.innerHTML;btn.dataset.twoTapAria=btn.hasAttribute('aria-label')?(btn.getAttribute('aria-label')||''):'__none__';
   btn.dataset.twoTapBackground=btn.style.background||'';btn.dataset.twoTapColor=btn.style.color||'';
   const context=btn.dataset.twoTapAria&&btn.dataset.twoTapAria!=='__none__'?btn.dataset.twoTapAria+'。':'';
   btn.innerHTML=confirmLabel;btn.setAttribute('aria-label',context+confirmLabel);btn.style.background='var(--pink)';btn.style.color='#fff';
-  btn.dataset.tm=setTimeout(()=>resetTwoTap(btn),2500);
+  btn.dataset.tm=setTimeout(()=>resetTwoTap(btn),timeoutMs);
 }
 /* 🔗共有ステップ：同じsharedIdを持つ全ステップに編集を伝播 */
 function syncShared(s){
@@ -7060,11 +7061,18 @@ window.addEventListener('pageshow',()=>{resumeMealWait();resumeMealSafetyTimer()
 
 /* ============ ☁️ 端末間同期 (GAS) ============ */
 let pushTm=null;
+const syncPullConfirmations=new WeakMap();
+function setSyncStatus(message,error=false){
+  const el=document.getElementById('syncStatus');if(!el)return;
+  el.textContent=message;el.style.color=error?'var(--pink)':'';
+}
 function scheduleAutoPush(){
+  clearTimeout(pushTm);pushTm=null;
   if(!D.settings||!D.settings.autoSync||!(D.settings.syncUrl||'').trim())return;
-  clearTimeout(pushTm);pushTm=setTimeout(()=>syncPush(true),4000);
+  pushTm=setTimeout(()=>syncPush(true),4000);
 }
 async function syncPush(silent){
+  if(silent&&!D.settings.autoSync)return;
   const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
   if(!url){toast('⚠️ 設定で同期URLを入力してね');return;}
   try{
@@ -7081,6 +7089,7 @@ async function syncPush(silent){
       timelineCsv:buildChatGPTTimelineCsv()
     });
     if(payload.length>2*1024*1024&&!silent)toast('⚠️ データが大きくなっています（'+Math.round(payload.length/1048576)+'MB）');
+    if(silent&&(!D.settings.autoSync||url!==(D.settings.syncUrl||'').trim()||key!==(D.settings.syncKey||'').trim()))return;
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
     const j=await res.json();
     if(j.ok){if(!silent)toast(j.timelineSaved?'☁️ データとCSVを更新しました':'☁️ アップロード完了');}
@@ -7099,37 +7108,66 @@ function syncDataForCloud(){
   delete data.settings.notionBridgeKey;
   return data;
 }
+function applySyncPullData(remote,auto){
+  if(!remote||typeof remote!=='object'||Array.isArray(remote)||!Array.isArray(remote.routines))throw Error('同期データの形式を確認してください');
+  const remoteNewer=(remote.updatedAt||0)>(D.updatedAt||0);
+  const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey,notionBridgeUrl:D.settings.notionBridgeUrl,notionBridgeKey:D.settings.notionBridgeKey},localActiveStopwatch=D.activeStopwatch;
+  // Prepare a copy; a failed browser-storage write must leave the current data intact.
+  const local=JSON.parse(JSON.stringify(D)),incomingRemote=JSON.parse(JSON.stringify(remote));
+  const base=auto&&!remoteNewer?local:incomingRemote,incoming=base===incomingRemote?local:incomingRemote;
+  mergeMealCollections(incoming,base);
+  const next=normalizeData(base);
+  next.settings=Object.assign(next.settings,localSync);
+  next.activeStopwatch=localActiveStopwatch;
+  localStorage.setItem(KEY,JSON.stringify(next));
+  D=next;
+  stopMealWaitTimer();restoreMealState();renderActiveDataScreen();
+  const message=`⬇️ 取得しました：ルーチン${D.routines.length}件・習慣${D.habits.length}件。ホームで確認できます。`;
+  if(!auto)setSyncStatus(message);
+  if(!auto||remoteNewer)toast(message);
+}
 async function syncPull(auto){
+  if(auto&&!D.settings.autoSync)return;
   const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
   if(!url){if(!auto)toast('⚠️ 設定で同期URLを入力してね');return;}
   try{
     const res=await fetch(url+'?key='+encodeURIComponent(key));
     const j=await res.json();
-    if(!j.ok){if(!auto)toast('⚠️ 取得エラー：'+(j.error||'不明'));return;}
-    if(!j.data){if(!auto)toast('☁️ クラウド側にまだデータがありません');return;}
-    const remote=j.data,remoteNewer=(remote.updatedAt||0)>(D.updatedAt||0);
-    const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey,notionBridgeUrl:D.settings.notionBridgeUrl,notionBridgeKey:D.settings.notionBridgeKey},localActiveStopwatch=D.activeStopwatch;
-    const base=auto&&!remoteNewer?D:remote,incoming=base===remote?D:remote;
-    mergeMealCollections(incoming,base); // 更新日時が古い側でも、ID単位の新着記録は必ず取り込む
-    D=normalizeData(base);
-    D.settings=Object.assign(D.settings,localSync); // 同期設定とAPIキーは端末側を維持
-    D.activeStopwatch=localActiveStopwatch; // 実行中の計測は開始した端末だけで維持
-    localStorage.setItem(KEY,JSON.stringify(D));
-    stopMealWaitTimer();restoreMealState();renderActiveDataScreen();if(!auto||remoteNewer)toast('⬇️ クラウドから取得しました');
-  }catch(e){if(!auto)toast('⚠️ 取得失敗（URL/通信を確認）');}
+    if(auto&&(!D.settings.autoSync||url!==(D.settings.syncUrl||'').trim()||key!==(D.settings.syncKey||'').trim()))return;
+    if(!j||!j.ok){if(!auto){const message='⚠️ 取得エラー：'+(j?.error||'不明');setSyncStatus(message,true);toast(message);}return;}
+    if(!j.data){if(!auto){setSyncStatus('☁️ クラウド側にまだデータがありません');toast('☁️ クラウド側にまだデータがありません');}return;}
+    applySyncPullData(j.data,auto);
+  }catch(e){if(!auto){setSyncStatus('⚠️ 取得失敗（URL・通信・端末の保存容量を確認）',true);toast('⚠️ 取得失敗（URL/通信を確認）');}}
 }
 async function syncPullSafe(btn){
-  const url=(D.settings.syncUrl||'').trim();
+  if(btn.dataset.syncPullBusy)return;
+  const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
   if(!url){toast('⚠️ 設定で同期URLを入力してね');return;}
+  const pending=syncPullConfirmations.get(btn);
+  const restore=()=>{
+    syncPullConfirmations.delete(btn);
+    try{applySyncPullData(pending.data,false);}catch(e){setSyncStatus('⚠️ 取得失敗（端末の保存容量を確認）',true);toast('⚠️ 取得失敗');}
+  };
+  // Confirm before any network wait, using the exact cloud snapshot the user was shown.
+  if(btn.dataset.armed&&pending&&pending.url===url&&pending.key===key&&pending.localUpdatedAt===(D.updatedAt||0)){
+    twoTap(btn,'もう一度で取得',restore,30000);return;
+  }
+  resetTwoTap(btn);syncPullConfirmations.delete(btn);
+  const original=btn.innerHTML;btn.dataset.syncPullBusy='1';btn.disabled=true;btn.textContent='☁️ 確認中…';
+  setSyncStatus('クラウドのデータを確認しています…');
+  let j;
   try{
-    const res=await fetch(url+'?key='+encodeURIComponent((D.settings.syncKey||'').trim()));
-    const j=await res.json();
-    if(!j.ok||!j.data){syncPull();return;}
-    if((j.data.updatedAt||0)<(D.updatedAt||0)){
-      twoTap(btn,'⚠️ 古いです。もう一度で上書き',()=>syncPull());return;
-    }
-  }catch(e){}
-  syncPull();
+    const res=await fetch(url+'?key='+encodeURIComponent(key));j=await res.json();
+  }catch(e){setSyncStatus('⚠️ 取得失敗（URL/通信を確認）。端末のデータは変更していません。',true);return;}
+  finally{btn.innerHTML=original;btn.disabled=false;delete btn.dataset.syncPullBusy;}
+  if(url!==(D.settings.syncUrl||'').trim()||key!==(D.settings.syncKey||'').trim()){setSyncStatus('同期設定が変わりました。もう一度取得してください。',true);return;}
+  if(!j||!j.ok||!j.data){setSyncStatus(j?.ok?'☁️ クラウド側にまだデータがありません':'⚠️ 取得エラー：'+(j?.error||'不明'),true);return;}
+  if((j.data.updatedAt||0)<(D.updatedAt||0)){
+    syncPullConfirmations.set(btn,{url,key,data:j.data,localUpdatedAt:D.updatedAt||0});
+    setSyncStatus(`クラウドにはルーチン${(j.data.routines||[]).length}件・習慣${(j.data.habits||[]).length}件があります。この内容を取り込む場合は30秒以内にもう一度押してください。`);
+    twoTap(btn,'⚠️ 古いです。もう一度で上書き',()=>{},30000);return;
+  }
+  try{applySyncPullData(j.data,false);}catch(e){setSyncStatus('⚠️ 取得失敗（端末の保存容量を確認）',true);toast('⚠️ 取得失敗');}
 }
 
 /* ============ 📓 Notionタスク表示 (同期GAS経由) ============ */
