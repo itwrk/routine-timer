@@ -83,6 +83,11 @@ vm.runInContext(source, ctx);
   assert.equal(ctx.memoryPrefsNormalize({ model: 'gpt-4o-mini-tts', voice: 'nova' }).voice, 'nova');
   assert.equal(ctx.memoryPrefsNormalize({ model: 'gpt-4o-mini-tts', voice: 'cedar' }).voice, 'cedar');
   assert.equal(ctx.memoryPrefsNormalize({ model: 'gpt-realtime-2.1-mini', voice: 'coral' }).voice, 'coral');
+  for (const model of [...realtimeModels, 'gpt-4o-mini-tts']) assert.equal(ctx.memoryModelSupportsTone(model), true);
+  for (const model of ['tts-1', 'tts-1-hd', 'unknown']) assert.equal(ctx.memoryModelSupportsTone(model), false);
+  assert.equal(ctx.memoryPrefsNormalize({ tone: '  明るく\r\n親しみやすく  ' }).tone, '明るく\n親しみやすく');
+  assert.equal(ctx.memoryPrefsNormalize({ tone: '声'.repeat(2000) }).tone.length, 1000);
+  assert.equal(ctx.memoryPrefsNormalize({ model: 'tts-1', tone: '保存した話し方' }).tone, '保存した話し方');
   // Cache identity excludes speed, gap, title, check state and loop mode.
   const segment = { text: 'テスト' };
   const id = await ctx.memoryClipId(segment, prefs);
@@ -90,6 +95,23 @@ vm.runInContext(source, ctx);
   assert.notEqual(id, await ctx.memoryClipId({ text: '変更' }, prefs));
   assert.notEqual(id, await ctx.memoryClipId(segment, { ...prefs, voice: 'cedar' }));
   assert.notEqual(id, await ctx.memoryClipId(segment, { ...prefs, model: 'gpt-4o-mini-tts' }));
+  const oldIdentity = JSON.stringify(['memory-pcm-v1', prefs.model, prefs.voice, segment.text]);
+  const oldDigest = await webcrypto.subtle.digest('SHA-256', new TextEncoder().encode(oldIdentity));
+  assert.equal(id, Buffer.from(oldDigest).toString('hex'), 'empty tone reuses audio saved by previous releases');
+  assert.notEqual(id, await ctx.memoryClipId(segment, { ...prefs, tone: '明るく' }));
+  assert.notEqual(
+    await ctx.memoryClipId(segment, { ...prefs, tone: '明るく' }),
+    await ctx.memoryClipId(segment, { ...prefs, tone: '落ち着いて' })
+  );
+  assert.equal(
+    await ctx.memoryClipId(segment, { ...prefs, tone: ' 明るく ' }),
+    await ctx.memoryClipId(segment, { ...prefs, tone: '明るく' })
+  );
+  const classicPrefs = { ...prefs, model: 'tts-1', voice: 'alloy' };
+  assert.equal(
+    await ctx.memoryClipId(segment, classicPrefs),
+    await ctx.memoryClipId(segment, { ...classicPrefs, tone: '無視される指定' })
+  );
   // A .5x player needs .5 seconds of encoded silence for one second of wall-clock gap.
   const clips = [{ pcm: new Blob([new Uint8Array([1, 2, 3, 4])]) }, { pcm: new Blob([new Uint8Array([5, 6])]) }];
   const plan = { prefs: { ...prefs, fixed: true, fixedRate: 0.5, loop: '30' }, segments: [{ line: 0 }, { line: 2 }] };
@@ -142,6 +164,19 @@ vm.runInContext(source, ctx);
       );
     }
   }
+  const requestedTone = 'ささやくように、穏やかで親しみやすく。';
+  await ctx.memoryGenerateClip(
+    '本文',
+    { ...prefs, model: 'gpt-4o-mini-tts', voice: 'nova', tone: requestedTone },
+    'synthetic-key',
+    signal
+  );
+  const tonedRequest = JSON.parse(requests.at(-1).options.body);
+  assert(tonedRequest.instructions.includes(requestedTone));
+  assert(tonedRequest.instructions.includes('Do not add, omit, or summarize'));
+  assert.equal(tonedRequest.input, '本文', 'tone is delivery guidance, never added to the spoken text');
+  await ctx.memoryGenerateClip('本文', { ...classicPrefs, tone: requestedTone }, 'synthetic-key', signal);
+  assert(!('instructions' in JSON.parse(requests.at(-1).options.body)));
   const validRequestCount = requests.length;
   await assert.rejects(
     ctx.memoryGenerateClip('本文', { ...prefs, model: 'tts-1', voice: 'marin' }, 'synthetic-key', signal),
@@ -221,6 +256,11 @@ vm.runInContext(source, ctx);
     }
   }
   expectedRealtimeModel = prefs.model;
+  sent = [];
+  await ctx.memoryGenerateClip('本文', { ...prefs, tone: requestedTone }, 'synthetic-key', signal);
+  assert(sent[0].session.instructions.includes(requestedTone));
+  assert(sent[0].session.instructions.includes('Read the entire user text verbatim'));
+  assert.equal(sent[1].item.content[0].text, '本文');
   // An incomplete response is rejected instead of caching a truncated memorization passage.
   ctx.WebSocket.prototype.send = function (data) {
     const event = JSON.parse(data);
