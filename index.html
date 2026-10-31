@@ -1012,7 +1012,6 @@ h2,#scr-home h2{font-size:14px;font-weight:750;color:var(--text);letter-spacing:
 h3{color:var(--text)}
 .muted{color:var(--dim);line-height:1.65}
 .section-heading{display:flex;justify-content:space-between;align-items:center;margin:0 2px 12px}
-.section-kicker{font-size:10px;color:var(--dim);margin-bottom:3px}
 #scr-home .section-heading h2{font-size:18px;margin:0;letter-spacing:-.04em}
 .section-symbol{color:var(--cyan);font-size:22px}
 #routineList{display:flex;flex-direction:column;gap:8px}
@@ -1134,7 +1133,6 @@ input[type=checkbox]{accent-color:var(--cyan)}
   #app h3{font-size:calc(14px * var(--text-scale))}
   #app #scr-home h2{font-size:calc(12px * var(--text-scale));margin-bottom:4px}
   #app .section-heading{margin:0 2px 6px}
-  #app .section-kicker{font-size:calc(10px * var(--text-scale));margin-bottom:2px}
   #app .section-symbol{font-size:14px}
   #app #routineSection{margin-bottom:0}
   #app #routineList{gap:6px}
@@ -1239,7 +1237,7 @@ input[type=checkbox]{accent-color:var(--cyan)}
     <div class="home-column home-main">
       <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
       <section id="routineSection" aria-labelledby="routineSectionTitle">
-        <div class="section-heading"><div><p class="section-kicker">いつもの流れを、ここから</p><h2 id="routineSectionTitle">今日のルーチン</h2></div><span class="section-symbol" aria-hidden="true">↗</span></div>
+        <div class="section-heading"><div><h2 id="routineSectionTitle">今日のルーチン</h2></div><span class="section-symbol" aria-hidden="true">↗</span></div>
         <div id="routineList"></div>
       </section>
       <section class="card" id="aiCommentCard" aria-label="記録へのAIコメント">
