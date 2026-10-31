@@ -8,7 +8,7 @@
 
 - ノートと挿入画像：IndexedDB `rvt_memory_v1` の `notes`。
 - 生成音声：同データベースの `clips`。24000 Hz / mono / PCM16。
-- 速度、行間、声、モデル、ループ：localStorage `rvt_memory_prefs_v1`。
+- 速度、行間、OpenAIの声・モデル、端末TTSの声、ループ：localStorage `rvt_memory_prefs_v1`。
 - OpenAIキー：localStorage `rvt_memory_openai_key_v1`。ノート、書出、既存のルーチン同期には含めない。
 - 件数の上限は設けない。利用できる保存容量はブラウザ・端末による。
 - ノートは既存のルーチン同期・ルーチンのJSONバックアップとは独立している。「全件書出」で全ノートと画像を保存し、別端末で読み込む。音声は「音声を書出」で別途保存する。
@@ -19,13 +19,25 @@
 
 OpenAIキーは利用者が自分の端末で入力する。Realtime miniを標準とし、旧Speech APIも選択できる。APIキーをサーバーに埋め込む構成ではない。Realtimeは一時キーを取得してWebSocket接続し、生成後に接続を閉じる。UIにAI生成音声であることを表示する。
 
+2026年10月31日に公式ドキュメントを確認し、読み上げ用モデルを9種類に拡張した。設定のモデル・声の選択肢とAPIの分岐は、`MEMORY_MODELS` / `MEMORY_VOICE_SETS` から生成する。
+
+| モデル | 選べるOpenAIの声 |
+| --- | --- |
+| GPT-Realtime 2.1 mini / 2.1 / 2 / 1.5 / Realtime / Realtime mini | 10種類 |
+| GPT-4o mini TTS | 13種類 |
+| TTS-1 / TTS-1 HD | 9種類 |
+
+声は全13種類のMarin、Cedar、Alloy、Ash、Ballad、Coral、Echo、Fable、Nova、Onyx、Sage、Shimmer、Verseをモデルに応じて表示する。RealtimeではFable・Nova・Onyxを表示せず、TTS-1系ではMarin・Cedar・Ballad・Verseを表示しない。モデル変更時、選択中の声が対応していれば維持し、未対応ならそのモデルの既定の声へ切り替えて表示で知らせる。API呼び出し前にも組み合わせを検証し、TTS-1系には未対応のinstructionsを送らない。
+
+端末TTSの声はWeb Speech APIでその端末の一覧を取得し、日本語を先頭に表示する。`voiceschanged` で遅れて読み込まれた声も更新し、選択はvoiceURIで端末に保存する。保存した声が一時的に見つからない場合も設定を失わず、再生は日本語の声へ自動で戻す。OpenAIのモデル・声の変更では自動生成を行わず、「音声生成・保存」を押したときだけAPIを使う。
+
 音声は行ごとに生成し、長い行は上限内で分割する。本文・モデル・声のSHA-256をキャッシュキーにして、生成済みの部分を再利用する。速度・行間・マーカー・チェックの変更では音声生成APIを再度呼び出さない。中止や通信失敗の前に保存できた部分も再利用する。
 
 iPhoneでの画面オフ再生は、保存音声を通常のHTML audioで再生する。行間の無音と30回分の繰り返しはWAVに組み込み、バックグラウンドのJavaScriptタイマーで進めない。無限はaudio.loopを使う。再生速度を変更しても行間の実時間を保つため、WAVの無音区間を調整する。速度はaudio.playbackRateで設定するので、書き出したファイルでは再生アプリ側で速度を選ぶ。
 
 Safariで画面を表示して再生を開始してからロックする。Media Sessionの再生・一時停止・停止・シークにも対応する。iOSやアプリ内ブラウザによる停止を完全には制御できず、実機の画面ロック試験は別途必要。端末TTSは未生成時の代替で、画面オフ中の継続は保証しない。
 
-参考：[OpenAI Docs：Text to speech](https://developers.openai.com/api/docs/guides/text-to-speech)、[Realtime conversations](https://developers.openai.com/api/docs/guides/realtime-conversations)、[Media Session](https://developer.mozilla.org/en-US/docs/Web/API/MediaSession)。旧Speech APIのTTSモデルは2027年1月6日の終了予定が案内されているため、標準はRealtimeにしている。
+参考：[OpenAI Docs：モデル一覧](https://developers.openai.com/api/docs/models)、[Text to speech](https://developers.openai.com/api/docs/guides/text-to-speech)、[Realtime conversations](https://developers.openai.com/api/docs/guides/realtime-conversations)、[Media Session](https://developer.mozilla.org/en-US/docs/Web/API/MediaSession)。旧Speech APIのTTSモデルは2027年1月6日の終了予定が案内されているため、標準はRealtimeにしている。
 
 ## 検証
 

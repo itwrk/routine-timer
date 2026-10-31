@@ -35,6 +35,48 @@ const nodePath = require('node:path');
   await page.goto(origin);
   await page.locator('[data-scr="scr-memory"]').click();
   await page.waitForFunction(() => memoryState.ready && !document.getElementById('memShell').inert);
+  // The official catalogs drive options, compatibility, persistence and native device voices.
+  await page.locator('#memSettings').evaluate((el) => (el.open = true));
+  assert.equal(await page.locator('#memModel option').count(), 9);
+  assert.equal(await page.locator('#memVoice option').count(), 10);
+  await page.locator('#memModel').selectOption('gpt-4o-mini-tts');
+  assert.equal(await page.locator('#memVoice option').count(), 13);
+  await page.locator('#memVoice').selectOption('nova');
+  await page.locator('#memModel').selectOption('gpt-realtime-2.1');
+  assert.equal(await page.locator('#memVoice option').count(), 10);
+  assert.equal(await page.locator('#memVoice').inputValue(), 'marin');
+  assert((await page.locator('#memModelInfo').innerText()).includes('変更しました'));
+  await page.locator('#memModel').selectOption('tts-1-hd');
+  assert.equal(await page.locator('#memVoice option').count(), 9);
+  assert.equal(await page.locator('#memVoice').inputValue(), 'alloy');
+  assert.equal(await page.locator('#memVoice option[value="marin"]').count(), 0);
+  await page.locator('#memVoice').selectOption('onyx');
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem(MEMORY_PREF_KEY)).voice), 'onyx');
+  await page.locator('#memModel').selectOption('gpt-realtime-2.1-mini');
+  await page.evaluate(() => {
+    window.qaDeviceVoices = [
+      { voiceURI: 'synthetic-en-voice', name: 'English Test', lang: 'en-US' },
+      { voiceURI: 'synthetic-ja-voice', name: 'Japanese Test', lang: 'ja-JP' }
+    ];
+    Object.defineProperty(speechSynthesis, 'getVoices', { configurable: true, value: () => qaDeviceVoices });
+    speechSynthesis.dispatchEvent(new Event('voiceschanged'));
+  });
+  assert.equal(await page.locator('#memTtsVoice option').count(), 3);
+  assert.equal(await page.locator('#memTtsVoice option').nth(1).getAttribute('value'), 'synthetic-ja-voice');
+  await page.locator('#memTtsVoice').selectOption('synthetic-en-voice');
+  await page.evaluate(() => {
+    qaDeviceVoices = [];
+    speechSynthesis.dispatchEvent(new Event('voiceschanged'));
+  });
+  assert.equal(await page.locator('#memTtsVoice').inputValue(), 'synthetic-en-voice');
+  assert((await page.locator('#memTtsVoice option:checked').innerText()).includes('利用できません'));
+  await page.evaluate(() => {
+    qaDeviceVoices = [{ voiceURI: 'synthetic-en-voice', name: 'English Test', lang: 'en-US' }];
+    speechSynthesis.dispatchEvent(new Event('voiceschanged'));
+  });
+  assert.equal(await page.locator('#memTtsVoice option').count(), 2);
+  assert.equal(await page.locator('#memTtsVoice').inputValue(), 'synthetic-en-voice');
+  await page.locator('#memSettings').evaluate((el) => (el.open = false));
   await page.locator('#memTitle').fill('日本史の暗記');
   await page.locator('#memNotationPanel').evaluate((el) => (el.open = true));
   await page
@@ -301,6 +343,14 @@ const nodePath = require('node:path');
   await page.evaluate(() => {
     window.qaSpoken = [];
     window.qaCancelled = 0;
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+      configurable: true,
+      value: class {
+        constructor(text) {
+          this.text = text;
+        }
+      }
+    });
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
       value: {
@@ -308,7 +358,10 @@ const nodePath = require('node:path');
           qaCancelled++;
         },
         getVoices() {
-          return [];
+          return [
+            { voiceURI: 'synthetic-ja-voice', name: 'Japanese Test', lang: 'ja-JP' },
+            { voiceURI: 'synthetic-en-voice', name: 'English Test', lang: 'en-US' }
+          ];
         },
         speak(u) {
           qaSpoken.push(u.text);
@@ -321,6 +374,8 @@ const nodePath = require('node:path');
     memoryPlayTTS();
   });
   assert.deepEqual(await page.evaluate(() => qaSpoken), ['未生成']);
+  assert.equal(await page.evaluate(() => qaUtterance.voice.voiceURI), 'synthetic-en-voice');
+  assert.equal(await page.evaluate(() => qaUtterance.lang), 'en-US');
   await page.evaluate(() => {
     memoryStop();
     qaUtterance.onend();
@@ -336,6 +391,7 @@ const nodePath = require('node:path');
   await page.locator('[data-scr="scr-memory"]').click();
   await page.waitForFunction(() => memoryState.ready);
   assert.equal(await page.locator('#memFixedRate').inputValue(), '2.3');
+  assert.equal(await page.locator('#memTtsVoice').inputValue(), 'synthetic-en-voice');
   assert.equal(await page.locator('#memApiKey').inputValue(), 'synthetic-memory-test-key');
   assert((await page.evaluate(() => memoryStore('clips', 'getAll'))).length >= 2);
   await page.locator('#memNotationPanel').evaluate((e) => (e.open = false));

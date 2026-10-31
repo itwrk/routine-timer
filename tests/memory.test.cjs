@@ -59,6 +59,30 @@ vm.runInContext(source, ctx);
   assert.equal(normalized.loop, 'off');
   assert.equal(normalized.voice, 'marin');
   assert.equal(normalized.model, 'gpt-realtime-2.1-mini');
+  const realtimeModels = [
+    'gpt-realtime-2.1-mini',
+    'gpt-realtime-2.1',
+    'gpt-realtime-2',
+    'gpt-realtime-1.5',
+    'gpt-realtime',
+    'gpt-realtime-mini'
+  ];
+  const speechModels = ['gpt-4o-mini-tts', 'tts-1', 'tts-1-hd'];
+  for (const model of [...realtimeModels, ...speechModels]) {
+    const voices = ctx.memoryVoicesForModel(model);
+    assert.equal(voices.length, model === 'gpt-4o-mini-tts' ? 13 : realtimeModels.includes(model) ? 10 : 9);
+    for (const voice of voices) {
+      const selected = ctx.memoryPrefsNormalize({ model, voice, ttsVoiceURI: 'synthetic-installed-voice' });
+      assert.equal(selected.model, model);
+      assert.equal(selected.voice, voice);
+      assert.equal(selected.ttsVoiceURI, 'synthetic-installed-voice');
+    }
+  }
+  assert.equal(ctx.memoryPrefsNormalize({ model: 'gpt-realtime-2.1', voice: 'nova' }).voice, 'marin');
+  assert.equal(ctx.memoryPrefsNormalize({ model: 'tts-1', voice: 'cedar' }).voice, 'alloy');
+  assert.equal(ctx.memoryPrefsNormalize({ model: 'gpt-4o-mini-tts', voice: 'nova' }).voice, 'nova');
+  assert.equal(ctx.memoryPrefsNormalize({ model: 'gpt-4o-mini-tts', voice: 'cedar' }).voice, 'cedar');
+  assert.equal(ctx.memoryPrefsNormalize({ model: 'gpt-realtime-2.1-mini', voice: 'coral' }).voice, 'coral');
   // Cache identity excludes speed, gap, title, check state and loop mode.
   const segment = { text: 'テスト' };
   const id = await ctx.memoryClipId(segment, prefs);
@@ -102,6 +126,36 @@ vm.runInContext(source, ctx);
   assert.equal(JSON.parse(requests[0].options.body).response_format, 'pcm');
   assert.equal(JSON.parse(requests[0].options.body).input, '本文');
   assert(!JSON.parse(requests[0].options.body).speed, 'speed is applied locally without another generation');
+  for (const model of speechModels) {
+    for (const voice of ctx.memoryVoicesForModel(model)) {
+      const generated = await ctx.memoryGenerateClip('本文', { ...prefs, model, voice }, 'synthetic-key', signal);
+      assert.equal(generated.size, 2);
+      const request = requests.at(-1),
+        body = JSON.parse(request.options.body);
+      assert.equal(request.url, 'https://api.openai.com/v1/audio/speech');
+      assert.equal(body.model, model);
+      assert.equal(body.voice, voice);
+      assert.equal(
+        'instructions' in body,
+        model === 'gpt-4o-mini-tts',
+        'classic TTS must not receive unsupported instructions'
+      );
+    }
+  }
+  const validRequestCount = requests.length;
+  await assert.rejects(
+    ctx.memoryGenerateClip('本文', { ...prefs, model: 'tts-1', voice: 'marin' }, 'synthetic-key', signal),
+    /組み合わせ/
+  );
+  await assert.rejects(
+    ctx.memoryGenerateClip('本文', { ...prefs, model: 'gpt-realtime-2.1', voice: 'nova' }, 'synthetic-key', signal),
+    /組み合わせ/
+  );
+  await assert.rejects(
+    ctx.memoryGenerateClip('本文', { ...prefs, model: 'unknown-model' }, 'synthetic-key', signal),
+    /組み合わせ/
+  );
+  assert.equal(requests.length, validRequestCount, 'unsupported choices never spend an API request');
   ctx.fetch = async () => ({ ok: false, status: 401, json: async () => ({}) });
   await assert.rejects(
     ctx.memoryGenerateClip('本文', { ...prefs, model: 'gpt-4o-mini-tts' }, 'synthetic-key', signal),
@@ -114,16 +168,17 @@ vm.runInContext(source, ctx);
   );
   // Realtime uses a short-lived credential, waits for configuration, and saves only audio bytes.
   let socket,
-    sent = [];
+    sent = [],
+    expectedRealtimeModel = prefs.model;
   ctx.fetch = async (url, options) => {
     assert.equal(url, 'https://api.openai.com/v1/realtime/client_secrets');
-    assert.equal(JSON.parse(options.body).session.model, prefs.model);
+    assert.equal(JSON.parse(options.body).session.model, expectedRealtimeModel);
     return { ok: true, json: async () => ({ value: 'synthetic-short-lived' }) };
   };
   ctx.WebSocket = class {
     constructor(url, protocols) {
       socket = this;
-      assert.equal(url, 'wss://api.openai.com/v1/realtime?model=gpt-realtime-2.1-mini');
+      assert.equal(url, 'wss://api.openai.com/v1/realtime?model=' + expectedRealtimeModel);
       assert.equal(protocols[1], 'openai-insecure-api-key.synthetic-short-lived');
       queueMicrotask(() => this.emit({ type: 'session.created' }));
     }
@@ -155,6 +210,17 @@ vm.runInContext(source, ctx);
   assert.equal(sent[0].session.audio.output.format.rate, 24000);
   assert.equal(sent[0].session.audio.input.turn_detection, null);
   assert.equal(sent[1].item.content[0].text, '一語ずつ読む');
+  for (const model of realtimeModels) {
+    for (const voice of ctx.memoryVoicesForModel(model)) {
+      expectedRealtimeModel = model;
+      sent = [];
+      const clip = await ctx.memoryGenerateClip('本文', { ...prefs, model, voice }, 'synthetic-key', signal);
+      assert.equal(clip.size, 4);
+      assert.equal(sent[0].session.audio.output.voice, voice);
+      assert.equal(socket.closed, true);
+    }
+  }
+  expectedRealtimeModel = prefs.model;
   // An incomplete response is rejected instead of caching a truncated memorization passage.
   ctx.WebSocket.prototype.send = function (data) {
     const event = JSON.parse(data);

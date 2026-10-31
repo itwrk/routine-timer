@@ -1662,10 +1662,11 @@ body.memory-active #memoFab {
           <label>速度モード<select id="memSpeedMode" onchange="memorySettingsChanged()"><option value="cycle">ボタンで切替</option><option value="fixed">固定（🔒）</option></select></label>
           <label>固定速度（0.3〜3×）<input id="memFixedRate" type="number" min="0.3" max="3" step="0.1" value="1" onchange="memorySettingsChanged()"></label>
           <label>行間（秒・0なら一括）<input id="memGap" type="number" min="0" max="60" step="0.1" value="0" onchange="memorySettingsChanged()"></label>
-          <label>生成モデル<select id="memModel" onchange="memorySettingsChanged()"><option value="gpt-realtime-2.1-mini">Realtime mini</option><option value="gpt-4o-mini-tts">TTS（旧API）</option></select></label>
-          <label>声<select id="memVoice" onchange="memorySettingsChanged()"><option value="marin">Marin</option><option value="cedar">Cedar</option><option value="coral">Coral</option><option value="alloy">Alloy</option></select></label>
+          <label>OpenAIの生成モデル<select id="memModel" onchange="memorySettingsChanged()"><option value="">読み込み中…</option></select></label>
+          <label>OpenAIの声<select id="memVoice" onchange="memorySettingsChanged()"><option value="">読み込み中…</option></select></label>
+          <label>端末TTSの声<select id="memTtsVoice" onchange="memorySettingsChanged()"><option value="">自動（日本語）</option></select></label>
           <label class="mem-wide">OpenAI APIキー（この端末だけに保存）<input id="memApiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="OpenAI APIキーを入力" onchange="memorySaveKey(this.value)"></label>
-        </div><div class="mem-tools"><button class="btn btn-p" id="memGenerate" type="button" onclick="memoryGenerate()">音声生成・保存</button><button class="btn btn-g" type="button" onclick="memoryCancelGeneration()">生成中止</button><button class="btn btn-g" type="button" id="memDownloadAudio" onclick="memoryDownloadAudio()" disabled>音声を書出</button><button class="btn btn-g" type="button" onclick="memoryPlay(true)">端末TTS</button></div><p class="mem-help">AI生成音声です。生成時のみAPIを使用し、保存音声の再生は追加消費なし。本文・声・モデルが同じ部分は再利用します。速度・行間変更にも再生成は不要です。キーは同期・書出に含みません。旧TTS APIは2027年1月6日終了予定です。音声の書出はWAVです。</p><p class="mem-help">画面オフ中は保存音声を連続再生し、ロック画面の操作にも対応します。iOSやアプリ内ブラウザにより停止する場合はSafariで開くか、音声を書き出して再生してください。端末TTSは画面オフ中の継続を保証できません。</p></details>
+        </div><p id="memModelInfo" class="mem-help" role="status" aria-live="polite"></p><p class="mem-help">モデル・声を選んで「音声生成・保存」を押すと、その設定の音声を作成します。同じ設定の保存音声は再利用します。モデルにより生成料金は異なります。端末TTSの声は、この端末に入っているものを選べます。</p><div class="mem-tools"><button class="btn btn-p" id="memGenerate" type="button" onclick="memoryGenerate()">音声生成・保存</button><button class="btn btn-g" type="button" onclick="memoryCancelGeneration()">生成中止</button><button class="btn btn-g" type="button" id="memDownloadAudio" onclick="memoryDownloadAudio()" disabled>音声を書出</button><button class="btn btn-g" type="button" onclick="memoryPlay(true)">端末TTS</button></div><p class="mem-help">AI生成音声です。生成時のみAPIを使用し、保存音声の再生は追加消費なし。本文・声・モデルが同じ部分は再利用します。速度・行間変更にも再生成は不要です。キーは同期・書出に含みません。旧TTS APIは2027年1月6日終了予定です。音声の書出はWAVです。</p><p class="mem-help">画面オフ中は保存音声を連続再生し、ロック画面の操作にも対応します。iOSやアプリ内ブラウザにより停止する場合はSafariで開くか、音声を書き出して再生してください。端末TTSは画面オフ中の継続を保証できません。</p></details>
       </div>
     </div>
   </div>
@@ -7483,6 +7484,109 @@ document.addEventListener('click',e=>{
 // Notes/images and reusable PCM clips live in IndexedDB, outside routine sync and localStorage quotas.
 const MEMORY_PREF_KEY = 'rvt_memory_prefs_v1',
   MEMORY_API_KEY = 'rvt_memory_openai_key_v1';
+// Official model pages + speech/realtime voice guides checked on 2026-10-31.
+// Keep endpoint and voice compatibility together; labels/options derive from this catalog.
+const MEMORY_VOICE_SETS = {
+  realtime: ['marin', 'cedar', 'alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'],
+  tts: [
+    'marin',
+    'cedar',
+    'alloy',
+    'ash',
+    'ballad',
+    'coral',
+    'echo',
+    'fable',
+    'nova',
+    'onyx',
+    'sage',
+    'shimmer',
+    'verse'
+  ],
+  classic: ['alloy', 'ash', 'coral', 'echo', 'fable', 'onyx', 'nova', 'sage', 'shimmer']
+};
+const MEMORY_VOICE_LABELS = {
+  marin: 'Marin（マリン）',
+  cedar: 'Cedar（シダー）',
+  alloy: 'Alloy（アロイ）',
+  ash: 'Ash（アッシュ）',
+  ballad: 'Ballad（バラード）',
+  coral: 'Coral（コーラル）',
+  echo: 'Echo（エコー）',
+  fable: 'Fable（フェイブル）',
+  nova: 'Nova（ノヴァ）',
+  onyx: 'Onyx（オニキス）',
+  sage: 'Sage（セージ）',
+  shimmer: 'Shimmer（シマー）',
+  verse: 'Verse（ヴァース）'
+};
+const MEMORY_MODELS = [
+  {
+    id: 'gpt-realtime-2.1-mini',
+    label: 'GPT-Realtime 2.1 mini（低コスト）',
+    api: 'realtime',
+    voices: 'realtime',
+    note: '新しいRealtime mini。低コスト向け。'
+  },
+  {
+    id: 'gpt-realtime-2.1',
+    label: 'GPT-Realtime 2.1',
+    api: 'realtime',
+    voices: 'realtime',
+    note: '新しいRealtimeモデル。'
+  },
+  {
+    id: 'gpt-realtime-2',
+    label: 'GPT-Realtime 2',
+    api: 'realtime',
+    voices: 'realtime',
+    note: 'Realtime 2世代のモデル。'
+  },
+  {
+    id: 'gpt-realtime-1.5',
+    label: 'GPT-Realtime 1.5',
+    api: 'realtime',
+    voices: 'realtime',
+    note: 'Realtime 1.5世代のモデル。'
+  },
+  { id: 'gpt-realtime', label: 'GPT-Realtime', api: 'realtime', voices: 'realtime', note: '従来のRealtimeモデル。' },
+  {
+    id: 'gpt-realtime-mini',
+    label: 'GPT-Realtime mini',
+    api: 'realtime',
+    voices: 'realtime',
+    note: '従来の低コストRealtimeモデル。'
+  },
+  {
+    id: 'gpt-4o-mini-tts',
+    label: 'GPT-4o mini TTS',
+    api: 'speech',
+    voices: 'tts',
+    instructions: true,
+    note: 'テキスト読み上げ専用。現在の版は2025-12-15。2027年1月6日終了予定。'
+  },
+  {
+    id: 'tts-1',
+    label: 'TTS-1（速度優先）',
+    api: 'speech',
+    voices: 'classic',
+    note: 'テキスト読み上げ専用・速度優先。2027年1月6日終了予定。'
+  },
+  {
+    id: 'tts-1-hd',
+    label: 'TTS-1 HD（品質優先）',
+    api: 'speech',
+    voices: 'classic',
+    note: 'テキスト読み上げ専用・品質優先。2027年1月6日終了予定。'
+  }
+];
+function memoryModelById(id) {
+  return MEMORY_MODELS.find((model) => model.id === id);
+}
+function memoryVoicesForModel(id) {
+  const model = memoryModelById(id);
+  return model ? MEMORY_VOICE_SETS[model.voices] : [];
+}
 const memoryState = {
   db: null,
   opening: null,
@@ -7505,7 +7609,16 @@ const memoryState = {
 };
 function memoryPrefsNormalize(raw) {
   const p = Object.assign(
-    { speed: 1, fixed: false, fixedRate: 1, gap: 0, loop: 'off', voice: 'marin', model: 'gpt-realtime-2.1-mini' },
+    {
+      speed: 1,
+      fixed: false,
+      fixedRate: 1,
+      gap: 0,
+      loop: 'off',
+      voice: 'marin',
+      model: 'gpt-realtime-2.1-mini',
+      ttsVoiceURI: ''
+    },
     raw || {}
   );
   p.speed = Math.min(1.2, Math.max(0.5, Number(p.speed) || 1));
@@ -7513,8 +7626,10 @@ function memoryPrefsNormalize(raw) {
   p.gap = Math.min(60, Math.max(0, Number(p.gap) || 0));
   p.fixed = !!p.fixed;
   p.loop = ['off', 'infinite', '30'].includes(p.loop) ? p.loop : 'off';
-  p.model = ['gpt-realtime-2.1-mini', 'gpt-4o-mini-tts'].includes(p.model) ? p.model : 'gpt-realtime-2.1-mini';
-  p.voice = ['marin', 'cedar', 'coral', 'alloy'].includes(p.voice) ? p.voice : 'marin';
+  p.model = memoryModelById(p.model) ? p.model : 'gpt-realtime-2.1-mini';
+  const voices = memoryVoicesForModel(p.model);
+  p.voice = voices.includes(p.voice) ? p.voice : voices[0];
+  p.ttsVoiceURI = String(p.ttsVoiceURI || '').slice(0, 500);
   return p;
 }
 let memoryPrefs;
@@ -8352,7 +8467,74 @@ function memorySavePrefs() {
     memorySetStatus(memoryError(error));
   }
 }
+function memoryRenderModelOptions() {
+  const select = document.getElementById('memModel');
+  select.replaceChildren();
+  for (const [api, label] of [
+    ['realtime', 'Realtime'],
+    ['speech', 'テキスト読み上げ（旧API）']
+  ]) {
+    const group = document.createElement('optgroup');
+    group.label = label;
+    for (const model of MEMORY_MODELS.filter((model) => model.api === api)) {
+      const option = document.createElement('option');
+      option.value = model.id;
+      option.textContent = model.label;
+      group.appendChild(option);
+    }
+    select.appendChild(group);
+  }
+  select.value = memoryPrefs.model;
+}
+function memoryRenderVoiceOptions() {
+  const select = document.getElementById('memVoice');
+  const voices = memoryVoicesForModel(memoryPrefs.model);
+  select.replaceChildren();
+  for (const voice of voices) {
+    const option = document.createElement('option');
+    option.value = voice;
+    option.textContent = MEMORY_VOICE_LABELS[voice];
+    select.appendChild(option);
+  }
+  select.value = memoryPrefs.voice;
+  const model = memoryModelById(memoryPrefs.model);
+  document.getElementById('memModelInfo').textContent = model.note + ' 選べる声は' + voices.length + '種類です。';
+}
+function memoryTtsVoices() {
+  try {
+    return 'speechSynthesis' in window ? speechSynthesis.getVoices() : [];
+  } catch (e) {
+    return [];
+  }
+}
+function memoryRenderTtsVoices() {
+  const select = document.getElementById('memTtsVoice');
+  if (!select) return;
+  const auto = document.createElement('option');
+  auto.value = '';
+  auto.textContent = '自動（日本語）';
+  select.replaceChildren(auto);
+  const voices = [...memoryTtsVoices()].sort(
+    (a, b) => Number(!a.lang.startsWith('ja')) - Number(!b.lang.startsWith('ja')) || a.name.localeCompare(b.name)
+  );
+  for (const voice of voices) {
+    const option = document.createElement('option');
+    option.value = voice.voiceURI;
+    option.textContent = voice.name + '（' + voice.lang + '）';
+    select.appendChild(option);
+  }
+  if (memoryPrefs.ttsVoiceURI && !voices.some((voice) => voice.voiceURI === memoryPrefs.ttsVoiceURI)) {
+    const unavailable = document.createElement('option');
+    unavailable.value = memoryPrefs.ttsVoiceURI;
+    unavailable.textContent = '保存した声が利用できません（自動で再生）';
+    select.appendChild(unavailable);
+  }
+  select.value = memoryPrefs.ttsVoiceURI;
+}
 function memoryRenderSettings() {
+  memoryRenderModelOptions();
+  memoryRenderVoiceOptions();
+  memoryRenderTtsVoices();
   for (const [id, value] of Object.entries({
     memSpeedMode: memoryPrefs.fixed ? 'fixed' : 'cycle',
     memFixedRate: memoryPrefs.fixedRate,
@@ -8371,16 +8553,23 @@ function memoryRenderControls() {
 }
 function memorySettingsChanged() {
   memoryStop();
+  const previousVoice = document.getElementById('memVoice').value;
   memoryPrefs = memoryPrefsNormalize(
     Object.assign({}, memoryPrefs, {
       fixed: document.getElementById('memSpeedMode').value === 'fixed',
       fixedRate: document.getElementById('memFixedRate').value,
       gap: document.getElementById('memGap').value,
-      voice: document.getElementById('memVoice').value,
-      model: document.getElementById('memModel').value
+      voice: previousVoice,
+      model: document.getElementById('memModel').value,
+      ttsVoiceURI: document.getElementById('memTtsVoice').value
     })
   );
   memorySavePrefs();
+  memoryRenderVoiceOptions();
+  if (previousVoice !== memoryPrefs.voice) {
+    document.getElementById('memModelInfo').textContent +=
+      ' このモデルで使える' + MEMORY_VOICE_LABELS[memoryPrefs.voice] + 'に変更しました。';
+  }
   memoryRenderControls();
   memoryInvalidateAudio();
   memoryPrepareAudio();
@@ -8564,20 +8753,16 @@ async function memoryApiJSON(url, body, key, signal) {
   return res;
 }
 async function memoryGenerateClip(text, prefs, key, signal) {
-  if (prefs.model === 'gpt-4o-mini-tts') {
-    const response = await memoryApiJSON(
-      'https://api.openai.com/v1/audio/speech',
-      {
-        model: prefs.model,
-        voice: prefs.voice,
-        input: text,
-        response_format: 'pcm',
-        instructions:
-          'Read the provided text verbatim in its original language. Do not add, omit, or summarize anything. Speak clearly at a natural, steady pace.'
-      },
-      key,
-      signal
-    );
+  const model = memoryModelById(prefs.model);
+  if (!model || !memoryVoicesForModel(prefs.model).includes(prefs.voice)) {
+    throw Error('選択したモデルと声の組み合わせを設定で確認してください');
+  }
+  if (model.api === 'speech') {
+    const body = { model: prefs.model, voice: prefs.voice, input: text, response_format: 'pcm' };
+    if (model.instructions)
+      body.instructions =
+        'Read the provided text verbatim in its original language. Do not add, omit, or summarize anything. Speak clearly at a natural, steady pace.';
+    const response = await memoryApiJSON('https://api.openai.com/v1/audio/speech', body, key, signal);
     const pcm = await response.blob();
     if (!pcm.size || pcm.size % 2) throw Error('音声データを読み取れませんでした');
     return pcm;
@@ -8851,8 +9036,13 @@ function memoryPlayTTS() {
       u = new SpeechSynthesisUtterance(current.text);
     u.lang = 'ja-JP';
     u.rate = memoryRate();
-    const voice = speechSynthesis.getVoices().find((v) => v.lang.startsWith('ja'));
-    if (voice) u.voice = voice;
+    const voices = memoryTtsVoices();
+    const voice =
+      voices.find((v) => v.voiceURI === memoryPrefs.ttsVoiceURI) || voices.find((v) => v.lang.startsWith('ja'));
+    if (voice) {
+      u.voice = voice;
+      u.lang = voice.lang;
+    }
     u.onend = () => {
       if (token !== memoryState.ttsToken) return;
       const nextSegment = plan.segments[index],
@@ -8900,6 +9090,9 @@ function memoryDownloadAudio() {
   toast('速度は再生アプリで設定してください。行間は現在の再生速度用です。');
 }
 function memoryInitEvents() {
+  if ('speechSynthesis' in window && speechSynthesis.addEventListener) {
+    speechSynthesis.addEventListener('voiceschanged', memoryRenderTtsVoices);
+  }
   const editor = document.getElementById('memEditor');
   document.addEventListener('selectionchange', memoryCaptureSelection);
   editor.addEventListener('pointerdown', () => {
