@@ -1115,15 +1115,79 @@ input[type=checkbox]{accent-color:var(--cyan)}
 #routineSection{margin-bottom:14px}
 #journeyCard{order:0}#routineSection{order:1}#habitCard{order:2}#aiCommentCard{order:3}#notionWorkspaceCard{order:4}#notionTaskCard{order:5}#calCard{order:6}#activityTimelineCard{order:7}
 @media(min-width:960px){
-  #app{max-width:1280px;padding-top:28px;padding-left:32px;padding-right:32px}
-  .top{margin-bottom:24px;padding-bottom:20px}
   .tabbar{box-shadow:none}
   .tabbar button{font-size:12px}
   .tabbar button .ti{font-size:19px;margin-bottom:0}
-  .home-column .card{padding:16px}
-  .home-column #aiCommentCard{padding:0}
-  #routineSection{margin-bottom:0}
-  .screen.active{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* Restore desktop density inside the main pane only; the sidebar keeps its size. */
+  #app{--text-scale:.8;max-width:1440px;padding:10px 14px 84px;font-size:calc(16px * var(--text-scale))}
+  #app .top{padding:5px 8px;margin-bottom:6px;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+  #app h1{font-size:calc(12px * var(--text-scale));gap:6px}
+  #app .app-mark{width:18px;height:18px;font-size:12px;border-radius:6px}
+  #app .pill{padding:2px 6px;font-size:calc(9px * var(--text-scale))}
+  #app .screen.active{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  #app #scr-home.active{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:10px}
+  #app .home-column{gap:8px}
+  #app .card{margin-bottom:0;padding:7px 8px;border-radius:10px}
+  #app #scr-home .card{padding:6px 8px}
+  #app #aiCommentCard{padding:0}
+  #app h2{font-size:calc(13px * var(--text-scale));margin-bottom:6px}
+  #app h3{font-size:calc(14px * var(--text-scale))}
+  #app #scr-home h2{font-size:calc(12px * var(--text-scale));margin-bottom:4px}
+  #app .section-heading{margin:0 2px 6px}
+  #app .section-kicker{font-size:calc(10px * var(--text-scale));margin-bottom:2px}
+  #app .section-symbol{font-size:14px}
+  #app #routineSection{margin-bottom:0}
+  #app #routineList{gap:6px}
+  #app #scr-home .rcard{gap:6px;padding:5px 6px;margin:0}
+  #app .rcard .em{width:28px;height:28px;border-radius:8px;font-size:calc(16px * var(--text-scale))}
+  #app .rcard .name{font-size:calc(11px * var(--text-scale))}
+  #app .rcard .duration{font-size:calc(9px * var(--text-scale));padding:1px 4px}
+  #app .rcard .stepnames{font-size:calc(8px * var(--text-scale));margin-top:2px}
+  #app .rcard .edit-btn{padding:4px;font-size:calc(12px * var(--text-scale))}
+  #app .rcard .rescue-btn{padding:4px 2px;font-size:calc(9px * var(--text-scale))}
+  #app .btn{padding:7px 10px;font-size:calc(11px * var(--text-scale));border-radius:9px}
+  #app .btn-sm{padding:5px 8px;font-size:calc(10px * var(--text-scale));border-radius:8px}
+  #app #scr-home .btn{padding:6px 9px;font-size:calc(10px * var(--text-scale))}
+  #app :is(input[type=text],input[type=search],input[type=number],input[type=url],input[type=date],textarea,select){font-size:calc(11px * var(--text-scale));padding:6px 8px}
+  #app .field{margin-bottom:8px}
+  #app .field label{font-size:calc(11px * var(--text-scale));margin-bottom:3px}
+  #app .muted{font-size:calc(10px * var(--text-scale));line-height:1.5}
+  #app .habit-head{margin-bottom:4px}
+  #app .habit-row,#app .habit-toggle-area{gap:4px}
+  #app .habit-row{padding:3px 1px}
+  #app .habit-row .habit-check{width:19px;height:19px;border-radius:5px}
+  #app .habit-name{font-size:calc(11px * var(--text-scale))}
+  #app .habit-condition{padding:1px 4px;font-size:calc(8px * var(--text-scale))}
+  #app .habit-score{font-size:calc(12px * var(--text-scale))}
+  #app .habit-row .habit-detail-btn,#app .habit-row .habit-link{font-size:calc(9px * var(--text-scale))}
+  #app .habit-del{min-width:28px;min-height:28px;padding:3px}
+  #app .habit-memo-toggle{min-height:28px;font-size:calc(9px * var(--text-scale))}
+  #app .habit-add{gap:4px;margin-top:3px;padding-top:4px}
+  #app .habit-add input{padding:4px 6px;font-size:calc(10px * var(--text-scale))}
+  #app .habit-slot-toggle{min-height:28px;padding:4px 6px}
+  #app .habit-slot-toggle .habit-slot-check{width:14px;height:14px}
+  #app #aiCommentGenerate{font-size:calc(10px * var(--text-scale));padding:6px 9px}
+  #app .ai-comment-text{font-size:calc(12px * var(--text-scale))}
+  #app .ai-comment-meta{font-size:calc(10px * var(--text-scale))}
+  #app #aiCommentResult:not(:empty){padding:9px;margin-top:6px}
+  #app .activity-head h2{font-size:calc(12px * var(--text-scale))!important}
+  #app .activity-range{font-size:calc(8px * var(--text-scale))}
+  #app .activity-item{gap:4px;padding:4px 1px}
+  #app .activity-current{gap:6px}
+  #app .activity-icon{width:24px;height:24px;border-radius:7px;font-size:calc(13px * var(--text-scale))}
+  #app .activity-text{font-size:calc(11px * var(--text-scale))}
+  #app .activity-time{font-size:calc(9px * var(--text-scale))}
+  #app .activity-mood-tag{padding:1px 5px;font-size:calc(8px * var(--text-scale))}
+  #app .notion-task,#app .cal-event,#app .notion-workspace-row{font-size:calc(10px * var(--text-scale))}
+  #app .notion-workspace-tools{margin:5px 0}
+  #app .notion-workspace-tools button{padding:5px 8px;font-size:calc(10px * var(--text-scale))}
+  #app .habit-track-name,#app .habit-tracker-table{font-size:calc(11px * var(--text-scale))}
+  #app .habit-track-score,#app .habit-tracker-table thead th span{font-size:calc(9px * var(--text-scale))}
+  #app .habit-tracker-table thead th{font-size:calc(10px * var(--text-scale))}
+  #app .habit-track-cell{width:24px;height:24px;font-size:calc(9px * var(--text-scale))}
+  #app .habit-track-cell.note{font-size:calc(12px * var(--text-scale))}
+  #app .simple-note-editor-title{font-size:calc(17px * var(--text-scale))!important}
+  #app .simple-note-editor-body{font-size:calc(13px * var(--text-scale))!important}
 }
 @media(max-width:430px){
   #app{padding:16px 12px calc(150px + env(safe-area-inset-bottom))}
