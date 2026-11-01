@@ -14,7 +14,7 @@ function createPlayer(mode='supported'){
   class AudioContext{
     constructor(){output('context');this.currentTime=0;this.state='suspended';this.destination={};}
     resume(){output('resume');this.state='running';return Promise.resolve();}
-    createOscillator(){return {frequency:{...audioParam},connect(){},start(){output('tone')},stop(){}};}
+    createOscillator(){return {frequency:{...audioParam},connect(){},disconnect(){output('disconnect')},start(){output('tone')},stop(){}};}
     createGain(){return {gain:{...audioParam},connect(){}};}
   }
   const speechSynthesis={cancel(){output('cancel')},getVoices(){output('voices');return [{lang:'ja-JP',name:'Kyoko'}]},speak(u){output('speech');assert.equal(u.lang,'ja-JP');assert.equal(u.volume,.7);assert.equal(u.rate,1.2);if(u.onend)u.onend()}};
@@ -41,3 +41,20 @@ for(const mode of ['supported','missing','rejected','getter-rejected']){
   if(mode==='supported')assert.equal(requests,4,'mix at startup and before each audio path');
 }
 console.log('PASS: mixing before speech/effects, mode restoration, unsupported/rejected APIs, speech callback and controls, context reuse, disabled effects');
+
+const muted=createPlayer();
+muted.ctx.run={muted:false};
+muted.ctx.speak('読み上げ中');muted.ctx.beep(660,.2);muted.ctx.poan(880,.3,.1,.2);
+muted.ctx.run.muted=true;muted.ctx.stopTimerAudio();
+assert.equal(muted.events.filter(x=>x==='disconnect').length,3,'stop active and scheduled effects immediately');
+const silentCount=muted.events.length;
+muted.ctx.speak('あと半分です',()=>muted.onend());muted.ctx.beep(880,.1);muted.ctx.poan();
+vm.runInContext('sfxSlam();sfxDone();sfxJackpot();sfxTick();hitNoise();',muted.ctx);
+assert.equal(muted.events.length,silentCount,'mute every speech and effect path');
+assert.equal(muted.ended,1,'muted speech still completes callbacks');
+muted.ctx.run.muted=false;muted.ctx.speak('再開');muted.ctx.poan();
+assert.equal(muted.events.filter(x=>x==='speech').length,2,'unmuting restores speech');
+muted.ctx.run=null;muted.ctx.D.settings.timerMuted=true;
+const outsideRunCount=muted.events.length;muted.ctx.speak('食事の案内');
+assert(muted.events.length>outsideRunCount,'timer mute does not suppress other screens');
+console.log('PASS: immediate speech/effect stop, scheduled tone cancellation, all muted paths, callbacks, unmute, timer-only scope');
