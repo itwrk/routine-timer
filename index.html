@@ -195,6 +195,23 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .quick-timer-actions .btn{min-width:0}
 .quick-timer-btn{padding:11px 8px!important;font-size:calc(14px * var(--text-scale))!important;white-space:nowrap}
 .quick-timer-help{margin:0 0 7px;color:var(--dim);font-size:calc(9px * var(--text-scale));line-height:1.45}
+/* Life log shares the persisted stopwatch and its synced history. */
+.life-log-fields{display:grid;gap:9px;margin:12px 0}
+.life-log-fields label{display:grid;gap:4px;color:var(--dim);font-size:calc(11px * var(--text-scale));font-weight:700}
+.life-log-fields input,.life-log-fields select{width:100%;min-width:0}
+.life-log-entry{padding:12px 0;border-top:1px solid var(--line)}
+.life-log-entry:first-child{border-top:0}
+.life-log-row{display:flex;align-items:center;gap:8px}
+.life-log-name{flex:1;min-width:0;overflow-wrap:anywhere;font-size:calc(13px * var(--text-scale))}
+.life-log-row .btn{flex-shrink:0;white-space:nowrap}
+.life-log-duration{color:var(--cyan-text);font-size:calc(11px * var(--text-scale));font-weight:800;white-space:nowrap}
+.life-log-time{display:block;margin-top:5px;color:var(--dim);font-size:calc(10px * var(--text-scale));line-height:1.6}
+.life-log-editor{margin-top:9px;padding:9px;border:1px solid var(--line2);border-radius:10px;background:var(--card2)}
+.life-log-editor .life-log-fields{margin-top:0}
+.life-log-edit-actions{display:flex;gap:6px}
+#scr-lifelog .btn,#homeLifeLogButton{white-space:nowrap}
+.tabbar button.lifelog-running{color:var(--pink)}
+@media(max-width:600px){.life-log-fields input,.life-log-fields select{font-size:16px}}
 /* boredom tolerance challenge */
 .boredom-card{border-color:rgba(130,87,230,.45);background:linear-gradient(145deg,#fff,rgba(130,87,230,.055),rgba(53,224,255,.045))}
 .boredom-head{display:flex;align-items:center;gap:7px}.boredom-head strong{flex:1;min-width:0;color:var(--purple);font-size:calc(13px * var(--text-scale))}.boredom-pb{font-size:calc(9px * var(--text-scale));font-weight:800;color:var(--gold);white-space:nowrap}
@@ -1564,6 +1581,7 @@ body.memory-active #memoFab {
 @media (max-width: 430px) {
   .tabbar button {
     min-width: 0;
+    flex: 1 0 34px;
     font-size: 8px;
     padding-left: 1px;
     padding-right: 1px;
@@ -1571,6 +1589,8 @@ body.memory-active #memoFab {
   .tabbar button .ti {
     font-size: 18px;
   }
+  .tabbar button[data-scr="scr-lifelog"] { flex-basis: 42px; }
+  .tabbar button[data-scr="scr-life"] { flex-basis: 50px; }
   .mem-shell .btn {
     padding: 9px 8px;
   }
@@ -1619,7 +1639,7 @@ body.memory-active #memoFab {
     <div class="home-column home-main">
       <div class="card journey-card" id="journeyCard" hidden aria-live="polite"></div>
       <section id="routineSection" aria-labelledby="routineSectionTitle">
-        <div class="section-heading"><div><h2 id="routineSectionTitle">今日のルーチン</h2></div><span class="section-symbol" aria-hidden="true">↗</span></div>
+        <div class="section-heading"><div><h2 id="routineSectionTitle">今日のルーチン</h2></div><button class="btn btn-g btn-sm" id="homeLifeLogButton" type="button" onclick="showScreen('scr-lifelog')">⏱️ ライフログ</button></div>
         <div id="routineList"></div>
       </section>
       <section class="card" id="aiCommentCard" aria-label="記録へのAIコメント">
@@ -1666,6 +1686,16 @@ body.memory-active #memoFab {
       <div class="activity-head"><h2>🧭 活動と気持ちのタイムライン</h2><span class="activity-range">過去30件・新しい順</span></div>
       <div id="activityTimeline" class="activity-timeline"></div>
     </div>
+  </div>
+
+  <!-- LIFE LOG -->
+  <div class="screen" id="scr-lifelog">
+    <section class="card quick-timer-card" id="quickTimerCard" aria-label="ライフログの計測"></section>
+    <section class="card" aria-labelledby="lifeLogHistoryTitle">
+      <div class="quick-timer-head"><h2 id="lifeLogHistoryTitle">ライフログの記録</h2><span class="muted" id="lifeLogCount"></span></div>
+      <p class="muted">「編集」から、後で内容を入力・変更できます。</p>
+      <div id="lifeLogHistory"></div>
+    </section>
   </div>
 
   <!-- MEMORY -->
@@ -2470,6 +2500,7 @@ body.memory-active #memoFab {
 <nav class="tabbar" aria-label="メインメニュー">
   <div class="tabbar-brand" aria-hidden="true"><span class="app-mark">✓</span><strong>Routine</strong></div>
   <button class="on" data-scr="scr-home" onclick="tab(this)"><span class="ti">🏠</span>ホーム</button>
+  <button data-scr="scr-lifelog" onclick="tab(this)"><span class="ti">⏱️</span>ライフログ</button>
   <button data-scr="scr-memory" onclick="tab(this)"><span class="ti">📚</span>暗記</button>
   <button data-scr="scr-notes" onclick="tab(this)"><span class="ti">🗒️</span>メモ</button>
   <button data-scr="scr-prog" onclick="tab(this)"><span class="ti">📊</span>進捗</button>
@@ -2694,9 +2725,10 @@ function normalizeActivityPage(page){
   return n;
 }
 function normalizeStopwatchLog(log){
-  const n=Object.assign({id:uid(),label:'作業',pageId:'',startedAt:0,endedAt:0,durationSec:0,updatedAt:0,deletedAt:null},log||{});
-  n.label=String(n.label||'作業').trim().slice(0,80)||'作業';
+  const n=Object.assign({id:uid(),label:'',pageId:'',source:'',stepId:'',emoji:'',startedAt:0,endedAt:0,durationSec:0,updatedAt:0,deletedAt:null},log||{});
+  n.label=String(n.label||'').trim().slice(0,80)||(n.source==='lifelog'?'無題':'作業');
   n.pageId=String(n.pageId||'').slice(0,80);
+  n.stepId=String(n.stepId||'').slice(0,160);n.emoji=String(n.emoji||'').slice(0,16);
   n.startedAt=Math.max(0,Number(n.startedAt)||0);n.endedAt=Math.max(n.startedAt,Number(n.endedAt)||0);
   n.durationSec=Math.max(0,Number(n.durationSec)||Math.round((n.endedAt-n.startedAt)/1000));
   return n;
@@ -2849,8 +2881,8 @@ function normalizeData(raw){
   d.boredomLogs=(Array.isArray(d.boredomLogs)?d.boredomLogs:[]).map(normalizeBoredomLog);
   d.activityPages=(Array.isArray(d.activityPages)?d.activityPages:[]).map(normalizeActivityPage);
   if(d.activeStopwatch&&Number(d.activeStopwatch.startedAt)>0){
-    d.activeStopwatch=Object.assign({id:uid(),label:'作業',pageId:'',startedAt:Date.now(),updatedAt:0},d.activeStopwatch);
-    d.activeStopwatch.label=String(d.activeStopwatch.label||'作業').slice(0,80);
+    d.activeStopwatch=Object.assign({id:uid(),label:'',pageId:'',source:'',stepId:'',emoji:'',startedAt:Date.now(),updatedAt:0},d.activeStopwatch);
+    d.activeStopwatch.label=String(d.activeStopwatch.label||'').slice(0,80);
     d.activeStopwatch.pageId=String(d.activeStopwatch.pageId||'').slice(0,80);
   }else d.activeStopwatch=null;
   if(d.activeBoredom&&Number(d.activeBoredom.startedAt)>0){
@@ -3501,12 +3533,13 @@ function toast(msg){
 }
 function hasVisibleDataEditor(){
   const focused=document.activeElement,focusedInput=focused&&focused.matches('input,textarea,select,[contenteditable="true"]')&&focused.offsetParent!==null;
-  return !!focusedInput||[...document.querySelectorAll('.habit-memo-editor,.habit-editor,.reward-editor,.activity-page-editor,.simple-note-editor')].some(editor=>editor.offsetParent!==null);
+  return !!focusedInput||[...document.querySelectorAll('.habit-memo-editor,.habit-editor,.reward-editor,.activity-page-editor,.simple-note-editor,.life-log-editor')].some(editor=>editor.offsetParent!==null);
 }
 function renderActiveDataScreen(){
   if(hasVisibleDataEditor())return;
   const active=document.querySelector('.screen.active');if(!active)return;
   if(active.id==='scr-home'){if(!run)renderHome();}
+  else if(active.id==='scr-lifelog')renderLifeLog();
   else if(active.id==='scr-activity-page')renderActivityPage();
   else if(active.id==='scr-meal')renderMeal();
   else if(active.id==='scr-prog')renderProg();
@@ -3533,6 +3566,7 @@ function showScreen(id){
   const nav=document.querySelector(`.tabbar button[data-scr="${id}"]`);
   if(nav){document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('on'));nav.classList.add('on');}
   if(id==='scr-home')renderHome();
+  if(id==='scr-lifelog')renderLifeLog();
   if(id==='scr-activity-page')renderActivityPage();
   if(id==='scr-meal')renderMeal();
   if(id==='scr-prog')renderProg();
@@ -3676,6 +3710,7 @@ function renderSimpleNotes(){
 /* ============ HOME ============ */
 function renderHome(){
   renderBoredomCards();
+  renderLifeLogIndicator();
   document.getElementById('hStreak').textContent=streak();
   document.getElementById('hLevel').textContent=levelInfo().level;
   const el=document.getElementById('routineList');el.innerHTML='';
@@ -3773,19 +3808,99 @@ function updateQuickTimerPagePreview(){
   if(!html)return;
   const actions=document.querySelector('#quickTimerCard .quick-timer-actions');if(actions)actions.insertAdjacentHTML('beforebegin',html);
 }
-function renderQuickTimer(){
-  const card=document.getElementById('quickTimerCard');if(!card)return;
-  const active=D.activeStopwatch,choices=quickTimerChoiceItems(),pageChoices=quickTimerPageItems();
-  const chips=pageChoices.slice(0,8).map(choice=>`<button class="quick-timer-preset${active&&choice.pageId&&choice.pageId===active.pageId||active&&choice.label===(active.label||'')?' active':''}" type="button" data-label="${esc(choice.label)}" data-page-id="${esc(choice.pageId)}" onclick="openActivityPage(this.dataset.label,this.dataset.pageId,true)">${esc(choice.label)}</button>`).join('');
-  card.classList.toggle('running',!!active);
-  if(!active){
-    stopQuickTimerTicker();
-    card.innerHTML=`<div class="quick-timer-head"><h2>⏱️ 1ボタン計測</h2><span class="quick-timer-clock">00:00</span></div><p class="quick-timer-help">押した瞬間から計測。もう一度押すと停止して記録します。</p><button class="btn btn-c btn-full quick-timer-btn" type="button" onclick="toggleQuickTimer()">▶ 計測スタート</button>${chips?`<div class="quick-timer-pages-label">📄 活動ページ</div><div class="quick-timer-presets" aria-label="活動ページを開く">${chips}</div>`:''}`;
-    return;
+let lifeLogDraft={label:'',stepId:'',emoji:''},lifeLogEditingId=null,lifeLogEditDraft=null,lifeLogHistoryLimit=50;
+function lifeLogStepItems(){
+  const items=[],seen=new Set();
+  for(const routine of D.routines)for(const step of routine.steps||[]){
+    if(!String(step.name||'').trim())continue;
+    const id=step.sharedId?`shared:${step.sharedId}`:`step:${routine.id}:${step.id}`;
+    if(seen.has(id))continue;seen.add(id);
+    items.push({id,label:String(step.name).trim().slice(0,80),emoji:step.emoji||'✅',from:routine.name||'ルーチン',preset:false});
   }
-  const options=choices.map(choice=>`<option value="${esc(choice.label)}" data-page-id="${esc(choice.pageId)}">${esc(choice.label)}</option>`).join('');
-  card.innerHTML=`<div class="quick-timer-head"><h2>🔴 計測中</h2><span class="quick-timer-clock" id="quickTimerClock">${quickTimerClock(Date.now()-active.startedAt)}</span></div><div class="quick-timer-fields"><input id="quickTimerLabel" type="text" maxlength="80" value="${esc(active.label||'')}" placeholder="いま何をしている？" aria-label="実行内容" oninput="updateQuickTimerLabel(this.value)"><select aria-label="過去の実行内容から選ぶ" onchange="chooseQuickTimerSelect(this)"><option value="">過去から選ぶ</option>${options}</select></div><div class="quick-timer-presets" aria-label="活動ページを開く">${chips}</div>${quickTimerPagePreviewHtml()}<div class="quick-timer-actions"><button class="btn btn-c quick-timer-btn" type="button" onclick="openCurrentActivityPage()">📄 ページ</button><button class="btn btn-p quick-timer-btn" type="button" onclick="toggleQuickTimer()">■ 停止して記録</button></div>`;
-  startQuickTimerTicker();
+  PRESET_STEPS.forEach((step,i)=>items.push({id:`preset:${i}`,label:step.name,emoji:step.emoji,from:'プリセット',preset:true}));
+  return items;
+}
+function lifeLogStepOptions(selected=''){
+  const items=lifeLogStepItems();
+  return '<option value="">選択しない（自由入力・無題）</option>'+[false,true].map(preset=>`<optgroup label="${preset?'プリセット（日常ステップ）':'ルーチンのステップ'}">${items.filter(item=>item.preset===preset).map(item=>`<option value="${esc(item.id)}"${item.id===selected?' selected':''}>${esc(`${item.emoji} ${item.label}${preset?'':`（${item.from}）`}`)}</option>`).join('')}</optgroup>`).join('');
+}
+function renderLifeLogIndicator(){
+  const active=!!D.activeStopwatch,nav=document.querySelector('.tabbar button[data-scr="scr-lifelog"]');
+  if(nav){nav.classList.toggle('lifelog-running',active);nav.setAttribute('aria-label',active?'ライフログ（計測中）':'ライフログ');nav.querySelector('.ti').textContent=active?'🔴':'⏱️';}
+  const shortcut=document.getElementById('homeLifeLogButton');if(shortcut)shortcut.textContent=active?'🔴 ライフログ':'⏱️ ライフログ';
+}
+function renderLifeLog(){renderQuickTimer();renderLifeLogHistory();}
+function renderQuickTimer(){
+  renderLifeLogIndicator();
+  const card=document.getElementById('quickTimerCard');if(!card)return;
+  const active=D.activeStopwatch,draft=active||lifeLogDraft;
+  card.classList.toggle('running',!!active);
+  card.innerHTML=`<div class="quick-timer-head"><h2>${active?'🔴 ライフログ計測中':'⏱️ ライフログ'}</h2><span class="quick-timer-clock" id="quickTimerClock" role="timer" aria-label="経過時間">${active?quickTimerClock(Date.now()-active.startedAt):'00:00'}</span></div>
+    <p class="muted">${active?'内容は計測中にも変更できます。終了すると記録します。':'開始を押すとすぐ計測。内容は後から決めてもOK。'}</p>
+    ${active?`<p class="life-log-time">開始 ${esc(timelineDateTime(active.startedAt))}</p>`:''}
+    <div class="life-log-fields"><label>ステップライブラリから選ぶ<select id="lifeLogStep" onchange="chooseLifeLogStep(this.value)">${lifeLogStepOptions(draft.stepId)}</select></label>
+    <label>内容（空欄なら「無題」）<input id="quickTimerLabel" type="text" maxlength="80" value="${esc(draft.label||'')}" placeholder="何の時間？ 後から入力もできます" oninput="updateLifeLogLabel(this.value)"></label></div>
+    <button class="btn ${active?'btn-p':'btn-c'} btn-full quick-timer-btn" id="${active?'lifeLogEnd':'lifeLogStart'}" type="button" onclick="${active?'finishLifeLog()':'startLifeLog()'}">${active?'■ 終了して記録':'▶ 開始'}</button>`;
+  if(active)startQuickTimerTicker();else stopQuickTimerTicker();
+}
+function updateLifeLogLabel(value){
+  const draft=D.activeStopwatch||lifeLogDraft;draft.label=String(value||'').slice(0,80);draft.stepId='';draft.emoji='';
+  const select=document.getElementById('lifeLogStep');if(select)select.value='';
+  if(D.activeStopwatch){draft.pageId=(activityPageForLabel(draft.label)||{}).id||'';draft.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(D));}
+}
+function chooseLifeLogStep(id){
+  const draft=D.activeStopwatch||lifeLogDraft,item=lifeLogStepItems().find(item=>item.id===id);
+  Object.assign(draft,item?{label:item.label,stepId:item.id,emoji:item.emoji}:{label:'',stepId:'',emoji:''});
+  if(D.activeStopwatch){draft.pageId=(activityPageForLabel(draft.label)||{}).id||'';draft.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(D));}
+  renderQuickTimer();
+}
+function startLifeLog(){
+  if(D.activeStopwatch)return;
+  const now=Date.now();D.activeStopwatch=Object.assign({id:uid(),pageId:'',source:'lifelog',startedAt:now,updatedAt:now},lifeLogDraft);
+  D.activeStopwatch.pageId=(activityPageForLabel(D.activeStopwatch.label)||{}).id||'';
+  save();renderQuickTimer();toast('▶ ライフログの計測を始めました');
+}
+function finishLifeLog(){
+  if(!D.activeStopwatch)return;
+  clearTimeout(quickTimerSaveTm);
+  const active=D.activeStopwatch,now=Math.max(active.startedAt,Date.now()),label=String(active.label||'').trim().slice(0,80)||'無題';
+  const log=normalizeStopwatchLog(Object.assign({},active,{label,endedAt:now,durationSec:Math.max(0,Math.round((now-active.startedAt)/1000)),updatedAt:now}));
+  D.stopwatchLogs.unshift(log);D.activeStopwatch=null;lifeLogDraft={label:'',stepId:'',emoji:''};
+  save();renderLifeLog();renderActivityTimeline();sfxDone();toast(`⏹ ${label}：${quickTimerDurationLabel(log.durationSec)}を記録しました`);
+}
+function renderLifeLogHistory(){
+  const el=document.getElementById('lifeLogHistory');if(!el)return;
+  const logs=[...liveLogs(D.stopwatchLogs)].sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));
+  document.getElementById('lifeLogCount').textContent=`${logs.length}件`;el.innerHTML='';
+  if(!logs.length){el.innerHTML='<p class="muted" style="margin-top:12px">記録はまだありません。「開始」から時間を残せます。</p>';return;}
+  for(const log of logs.slice(0,lifeLogHistoryLimit)){
+    const row=document.createElement('article');row.className='life-log-entry';
+    row.innerHTML=`<div class="life-log-row"><strong class="life-log-name">${esc(`${log.emoji||'⏱️'} ${log.label||'無題'}`)}</strong><span class="life-log-duration">${quickTimerDurationLabel(log.durationSec)}</span><button class="btn btn-g btn-sm life-log-edit" type="button">編集</button></div><span class="life-log-time">${esc(timelineDateTime(log.startedAt))} → ${esc(timelineDateTime(log.endedAt))}</span>`;
+    row.querySelector('.life-log-edit').onclick=()=>editLifeLog(log.id);
+    if(lifeLogEditingId===log.id&&lifeLogEditDraft){
+      const editor=document.createElement('div');editor.className='life-log-editor';
+      editor.innerHTML=`<div class="life-log-fields"><label>ステップライブラリから選ぶ<select class="life-log-edit-step">${lifeLogStepOptions(lifeLogEditDraft.stepId)}</select></label><label>内容（空欄なら「無題」）<input class="life-log-edit-label" type="text" maxlength="80" value="${esc(lifeLogEditDraft.label)}" placeholder="何の時間でしたか？"></label></div><div class="life-log-edit-actions"><button class="btn btn-c btn-sm life-log-save" type="button">保存</button><button class="btn btn-g btn-sm life-log-cancel" type="button">キャンセル</button></div>`;
+      const input=editor.querySelector('.life-log-edit-label'),select=editor.querySelector('.life-log-edit-step');
+      input.oninput=()=>{Object.assign(lifeLogEditDraft,{label:input.value,stepId:'',emoji:''});select.value='';};
+      select.onchange=()=>{const item=lifeLogStepItems().find(item=>item.id===select.value);Object.assign(lifeLogEditDraft,item?{label:item.label,stepId:item.id,emoji:item.emoji}:{label:'',stepId:'',emoji:''});input.value=lifeLogEditDraft.label;};
+      editor.querySelector('.life-log-save').onclick=saveLifeLogEdit;
+      editor.querySelector('.life-log-cancel').onclick=()=>{lifeLogEditingId=null;lifeLogEditDraft=null;renderLifeLogHistory();};
+      row.appendChild(editor);
+    }
+    el.appendChild(row);
+  }
+  if(logs.length>lifeLogHistoryLimit){const more=document.createElement('button');more.className='btn btn-g btn-sm btn-full';more.type='button';more.textContent='以前の記録を表示';more.onclick=()=>{lifeLogHistoryLimit+=50;renderLifeLogHistory();};el.appendChild(more);}
+}
+function editLifeLog(id){
+  const log=liveLogs(D.stopwatchLogs).find(log=>log.id===id);if(!log)return;
+  lifeLogEditingId=id;lifeLogEditDraft={label:log.label==='無題'?'':log.label,stepId:log.stepId||'',emoji:log.emoji||''};
+  renderLifeLogHistory();requestAnimationFrame(()=>document.querySelector('.life-log-edit-label')?.focus({preventScroll:true}));
+}
+function saveLifeLogEdit(){
+  const log=liveLogs(D.stopwatchLogs).find(log=>log.id===lifeLogEditingId);if(!log||!lifeLogEditDraft)return;
+  Object.assign(log,lifeLogEditDraft,{label:String(lifeLogEditDraft.label||'').trim().slice(0,80)||'無題',updatedAt:Date.now()});
+  log.pageId=(activityPageForLabel(log.label)||{}).id||'';
+  save();lifeLogEditingId=null;lifeLogEditDraft=null;renderLifeLogHistory();renderActivityTimeline();toast('💾 ライフログを保存しました');
 }
 function updateQuickTimerLabel(value){
   if(!D.activeStopwatch)return;D.activeStopwatch.label=String(value||'').slice(0,80);D.activeStopwatch.pageId=(activityPageForLabel(D.activeStopwatch.label)||{}).id||'';D.activeStopwatch.updatedAt=Date.now();
@@ -3799,16 +3914,7 @@ function chooseQuickTimerLabel(value,pageId=''){
   updateQuickTimerLabel(value);D.activeStopwatch.pageId=String(pageId||D.activeStopwatch.pageId||'');if(input)input.focus();
 }
 function chooseQuickTimerSelect(select){const option=select&&select.options[select.selectedIndex];if(option&&option.value)chooseQuickTimerLabel(option.value,option.dataset.pageId||'');}
-function toggleQuickTimer(){
-  if(!D.activeStopwatch){
-    const now=Date.now(),choice=quickTimerChoiceItems()[0]||{label:'作業',pageId:''};
-    D.activeStopwatch={id:uid(),label:choice.label,pageId:choice.pageId,startedAt:now,updatedAt:now};save();renderQuickTimer();toast('▶ 計測を始めました');return;
-  }
-  clearTimeout(quickTimerSaveTm);
-  const active=D.activeStopwatch,now=Date.now(),label=String(active.label||'').trim().slice(0,80)||'作業';
-  const log=normalizeStopwatchLog({id:active.id,label,pageId:active.pageId||'',startedAt:active.startedAt,endedAt:now,durationSec:Math.max(1,Math.round((now-active.startedAt)/1000)),updatedAt:now});
-  D.stopwatchLogs.unshift(log);D.activeStopwatch=null;save();renderQuickTimer();renderActivityTimeline();sfxDone();toast(`⏹ ${label}：${quickTimerDurationLabel(log.durationSec)}を記録しました`);
-}
+function toggleQuickTimer(){if(D.activeStopwatch)finishLifeLog();else startLifeLog();}
 function ensureActivityPage(label,pageId=''){
   const title=String(label||'作業').trim().slice(0,80)||'作業',stableId=`activity-${stableHash(title.normalize('NFKC').toLocaleLowerCase('ja-JP'))}`;
   let page=activityPageById(pageId)||activityPageForLabel(title)||activityPageById(stableId),created=false;
@@ -4057,7 +4163,7 @@ function collectActivityTimelineItems(cutoff,now){
   for(const log of liveLogs(D.stopwatchLogs)){
     const stamp=Number(log.endedAt)||0;
     const page=activityPageById(log.pageId);
-    if(stamp>=cutoff&&stamp<=now)items.push({id:`stopwatch-${log.id}`,kind:'stopwatch',icon:'⏱️',label:'1ボタン計測',text:page?page.title:log.label||'作業',pageId:page?page.id:log.pageId||'',tag:quickTimerDurationLabel(log.durationSec),stamp});
+    if(stamp>=cutoff&&stamp<=now)items.push({id:`stopwatch-${log.id}`,kind:'stopwatch',icon:log.emoji||'⏱️',label:log.source==='lifelog'?'ライフログ':'1ボタン計測',text:log.source==='lifelog'?log.label:(page?page.title:log.label||'作業'),logId:log.source==='lifelog'?log.id:'',pageId:page?page.id:log.pageId||'',tag:quickTimerDurationLabel(log.durationSec),stamp});
   }
   for(const item of mealTimelineItems(cutoff,now))items.push(Object.assign({id:`meal-${stableHash(`${item.kind}|${item.stamp}|${item.text}`)}`},item));
   return items.sort((a,b)=>b.stamp-a.stamp);
@@ -4072,8 +4178,8 @@ function renderActivityTimeline(){
     const row=document.createElement('article');row.className=`activity-item ${item.kind}${item.tone?` ${item.tone}`:''}`;
     row.innerHTML=`<div class="activity-current"><span class="activity-icon">${esc(item.icon)}</span><div class="activity-line"><span class="activity-summary"><span class="activity-text">${esc(item.text)}</span>${item.tag?`<span class="activity-mood-tag">${esc(item.tag)}</span>`:''}</span><time class="activity-time">${activityTimeLabel(item.stamp)}</time></div></div>`;
     if(item.kind==='stopwatch'){
-      row.classList.add('activity-page-link');row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label',`${item.text}の活動ページを開く`);
-      row.onclick=()=>openActivityPage(item.text,item.pageId||'',false);
+      row.classList.add('activity-page-link');row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label',item.logId?`${item.text}のライフログを編集`:`${item.text}の活動ページを開く`);
+      row.onclick=()=>{if(item.logId){if(showScreen('scr-lifelog')){lifeLogHistoryLimit=Math.max(lifeLogHistoryLimit,D.stopwatchLogs.length);editLifeLog(item.logId);document.querySelector('.life-log-editor')?.scrollIntoView({block:'center'});}}else openActivityPage(item.text,item.pageId||'',false);};
       row.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();row.click();}};
     }
     el.appendChild(row);
@@ -7579,7 +7685,7 @@ function chatgptTimelineRows(includeMeals=!!(D.mealPrefs&&D.mealPrefs.includeInC
   for(const redemption of liveLogs(D.rewardRedemptions))rows.push({stamp:redemption.redeemedAt||0,dateTime:timelineDateTime(redemption.redeemedAt),type:'ごほうび交換',content:`${redemption.rewardEmoji||'🎁'} ${redemption.rewardName||'ごほうび'}`.trim(),routine:'',step:'',detail:`${Math.max(0,Number(redemption.cost)||0)}ポイント`});
   for(const log of liveLogs(D.stopwatchLogs)){
     const stamp=Number(log.startedAt)||0,end=Number(log.endedAt)||0;
-    rows.push({stamp,dateTime:timelineDateTime(stamp),type:'1ボタン計測',content:log.label||'作業',routine:'',step:'',detail:`終了:${timelineDateTime(end)}・実時間:${Math.max(0,Number(log.durationSec)||0)}秒`});
+    rows.push({stamp,dateTime:timelineDateTime(stamp),type:log.source==='lifelog'?'ライフログ':'1ボタン計測',content:log.label||'作業',routine:'',step:'',detail:`終了:${timelineDateTime(end)}・実時間:${Math.max(0,Number(log.durationSec)||0)}秒`});
   }
   for(const log of liveLogs(D.routineRunLogs)){
     const saved=log.endType==='saved',stamp=Number(log.endedAt)||0,display=routineRunDisplay(log),detail=[display.label,log.total>0?`${Number(log.done)||0}/${Number(log.total)||0}ステップ完了`:'',Number(log.skips)?`${Number(log.skips)}スキップ`:'',`開始:${timelineDateTime(log.startedAt)}`,`実時間${Math.max(0,Number(log.durationSec)||0)}秒`,log.status==='interrupted'&&log.stepName?`${saved?'保存':'中断'}地点:${log.stepName}（${log.currentStepSec}秒）`:log.microEntry?'10秒の入口まで':''].filter(Boolean).join('・');
@@ -9496,6 +9602,7 @@ memoryInitEvents();
 /* ============ MEMORY END ============ */
 
 renderHome();
+renderQuickTimer();
 restoreMealState();
 if(D.activeBoredom)startBoredomTimer();
 expireOldOpenUrges();
