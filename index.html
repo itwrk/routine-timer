@@ -7061,6 +7061,7 @@ window.addEventListener('pageshow',()=>{resumeMealWait();resumeMealSafetyTimer()
 
 /* ============ ☁️ 端末間同期 (GAS) ============ */
 let pushTm=null;
+let lastAutoPushHold='';
 const syncPullConfirmations=new WeakMap();
 function setSyncStatus(message,error=false){
   const el=document.getElementById('syncStatus');if(!el)return;
@@ -7071,17 +7072,42 @@ function scheduleAutoPush(){
   if(!D.settings||!D.settings.autoSync||!(D.settings.syncUrl||'').trim())return;
   pushTm=setTimeout(()=>syncPush(true),4000);
 }
+function syncWouldRemoveDefinitions(local,remote){
+  for(const key of ['routines','habits','todayTasks']){
+    const localItems=new Map((Array.isArray(local[key])?local[key]:[]).filter(x=>x&&x.id).map(x=>[x.id,x]));
+    for(const item of Array.isArray(remote[key])?remote[key]:[]){
+      if(!item||!item.id)continue;
+      const own=localItems.get(item.id);
+      if(!own)return true;
+      if(key==='routines'){
+        const stepIds=new Set((Array.isArray(own.steps)?own.steps:[]).filter(x=>x&&x.id).map(x=>x.id));
+        if((Array.isArray(item.steps)?item.steps:[]).some(x=>x&&x.id&&!stepIds.has(x.id)))return true;
+      }
+    }
+  }
+  return false;
+}
 async function syncPush(silent){
   if(silent&&!D.settings.autoSync)return;
   const url=(D.settings.syncUrl||'').trim(),key=(D.settings.syncKey||'').trim();
   if(!url){toast('⚠️ 設定で同期URLを入力してね');return;}
+  let uploadStarted=false;
   try{
-    // push前にクラウド側の新着をID単位で取り込む（別端末の記録を上書きで消さない）
-    try{
-      const pre=await fetch(url+'?key='+encodeURIComponent(key));
-      const pj=await pre.json();
-      if(pj.ok&&pj.data){mergeMealCollections(pj.data,D);D=normalizeData(D);localStorage.setItem(KEY,JSON.stringify(D));renderActiveDataScreen();}
-    }catch(e){}
+    // Do not overwrite a cloud copy that could not be checked, or remove definitions automatically.
+    const pre=await fetch(url+'?key='+encodeURIComponent(key));
+    const pj=await pre.json();
+    if(!pj||!pj.ok)throw Error('クラウドの確認に失敗しました');
+    if(silent&&(!D.settings.autoSync||url!==(D.settings.syncUrl||'').trim()||key!==(D.settings.syncKey||'').trim()))return;
+    if(pj.data){
+      if(typeof pj.data!=='object'||Array.isArray(pj.data)||!Array.isArray(pj.data.routines))throw Error('同期データの形式を確認してください');
+      if(silent&&syncWouldRemoveDefinitions(D,pj.data)){
+        const message=`⚠️ 自動アップロードを保留しました。クラウドにはルーチン${pj.data.routines.length}件・習慣${(pj.data.habits||[]).length}件あり、この端末にない項目が含まれます。先に「今すぐ取得」で内容を確認してください。意図した削除は「今すぐアップロード」で反映できます。`;
+        setSyncStatus(message,true);
+        if(lastAutoPushHold!==message)toast('⚠️ クラウドの項目を消さないよう、自動アップロードを保留しました。設定で確認してください。');
+        lastAutoPushHold=message;return;
+      }
+      mergeMealCollections(pj.data,D);D=normalizeData(D);localStorage.setItem(KEY,JSON.stringify(D));renderActiveDataScreen();
+    }
     const payload=JSON.stringify({
       key,
       data:syncDataForCloud(),
@@ -7090,11 +7116,12 @@ async function syncPush(silent){
     });
     if(payload.length>2*1024*1024&&!silent)toast('⚠️ データが大きくなっています（'+Math.round(payload.length/1048576)+'MB）');
     if(silent&&(!D.settings.autoSync||url!==(D.settings.syncUrl||'').trim()||key!==(D.settings.syncKey||'').trim()))return;
+    uploadStarted=true;
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:payload});
     const j=await res.json();
-    if(j.ok){if(!silent)toast(j.timelineSaved?'☁️ データとCSVを更新しました':'☁️ アップロード完了');}
-    else toast('⚠️ 同期エラー：'+(j.error||'不明'));
-  }catch(e){if(!silent)toast('⚠️ アップロード失敗（URL/通信を確認）');}
+    if(j.ok){lastAutoPushHold='';if(!silent){setSyncStatus(`☁️ アップロードしました：ルーチン${D.routines.length}件・習慣${D.habits.length}件。`);toast(j.timelineSaved?'☁️ データとCSVを更新しました':'☁️ アップロード完了');}}
+    else{const message='⚠️ 同期エラー：'+(j.error||'不明');setSyncStatus(message,true);toast(message);}
+  }catch(e){setSyncStatus(uploadStarted?'⚠️ アップロード結果を確認できません。通信を確認し、再取得する前に端末の内容を確認してください。':'⚠️ クラウドを確認できなかったため、アップロードしていません（URL・合言葉・通信・端末の保存容量を確認）。',true);if(!silent)toast('⚠️ アップロード失敗（URL/通信を確認）');}
 }
 function syncDataForCloud(){
   const data=JSON.parse(JSON.stringify(D));

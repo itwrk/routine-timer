@@ -250,6 +250,64 @@ function fixture() {
   await pull;
   assert.equal(f.ctx.D, f.local);
   assert.equal(f.storage.size, 0);
+  // A freshly saved seed/settings timestamp must never replace a fuller cloud copy automatically.
+  f = fixture();
+  f.ctx.D.settings.autoSync = true;
+  await f.ctx.syncPush(true);
+  assert.equal(f.requests.length, 1);
+  assert(!f.requests.some((r) => r.options?.method === 'POST'));
+  assert(f.status.textContent.includes('保留'));
+  assert(f.status.textContent.includes('9件'));
+  assert.equal(f.ctx.D.routines.length, 1);
+  // Definition identity matters even when the counts match; steps and checklist definitions are protected too.
+  for (const collection of ['routines', 'habits', 'todayTasks']) {
+    f = fixture();
+    f.ctx.D.settings.autoSync = true;
+    f.ctx.D.routines = structuredClone(f.remote.routines);
+    f.ctx.D.habits = structuredClone(f.remote.habits);
+    f.remote[collection] = [{ id: 'synthetic-cloud-only', steps: [] }];
+    f.ctx.D[collection] = [{ id: 'synthetic-local-only', steps: [] }];
+    await f.ctx.syncPush(true);
+    assert(!f.requests.some((r) => r.options?.method === 'POST'), collection);
+  }
+  f = fixture();
+  f.ctx.D.settings.autoSync = true;
+  f.ctx.D.routines = structuredClone(f.remote.routines);
+  f.ctx.D.habits = structuredClone(f.remote.habits);
+  f.remote.routines[0].steps = [{ id: 'synthetic-cloud-step' }];
+  await f.ctx.syncPush(true);
+  assert(!f.requests.some((r) => r.options?.method === 'POST'));
+  // New local entries and ordinary changes can still upload automatically.
+  f = fixture();
+  f.ctx.D.settings.autoSync = true;
+  f.ctx.D.routines = [...structuredClone(f.remote.routines), { id: 'synthetic-new-routine', steps: [] }];
+  f.ctx.D.habits = structuredClone(f.remote.habits);
+  await f.ctx.syncPush(true);
+  assert.equal(f.requests.filter((r) => r.options?.method === 'POST').length, 1);
+  // Intentional manual uploads remain available while auto-sync is disabled.
+  f = fixture();
+  await f.ctx.syncPush();
+  const manualPost = f.requests.find((r) => r.options?.method === 'POST');
+  assert(manualPost);
+  assert.equal(JSON.parse(manualPost.options.body).data.routines.length, 1);
+  assert(f.status.textContent.includes('アップロードしました'));
+  // Preflight must succeed before any upload; malformed/auth/network responses cannot bypass the check.
+  for (const response of [null, { ok: false }, { ok: true, data: { routines: 'invalid' } }]) {
+    f = fixture();
+    f.ctx.fetch = async (url, options) => {
+      f.requests.push({ url, options });
+      return { json: async () => response };
+    };
+    await f.ctx.syncPush();
+    assert(!f.requests.some((r) => r.options?.method === 'POST'));
+  }
+  f = fixture();
+  f.ctx.fetch = async (url, options) => {
+    f.requests.push({ url, options });
+    throw Error('preflight unavailable');
+  };
+  await f.ctx.syncPush();
+  assert(!f.requests.some((r) => r.options?.method === 'POST'));
   // Normal two-tap controls retain their original timeout.
   f = fixture();
   b = button();
@@ -259,7 +317,7 @@ function fixture() {
   assert(!b.dataset.armed);
   assert.equal(accepted, 0);
   console.log(
-    'PASS: slow sync confirmation, 30s snapshot reuse, duplicate taps, expiry/context changes, one-request restore, device settings/records, safe failures, auto-sync cancellation and unchanged default confirmations'
+    'PASS: slow sync confirmation, 30s snapshot reuse, safe restores, auto-sync cancellation, cloud definition-loss guard, intentional manual uploads, strict preflight and unchanged default confirmations'
   );
 })().catch((e) => {
   console.error(e);
