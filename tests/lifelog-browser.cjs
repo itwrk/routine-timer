@@ -49,6 +49,7 @@ const path = require('node:path');
     const activeId = await page.evaluate(() => {
       startLifeLog(); // Repeated start must leave the original timer intact.
       D.activeStopwatch.startedAt -= 65000;
+      persistActiveStopwatch();
       localStorage.setItem(KEY, JSON.stringify(D));
       return D.activeStopwatch.id;
     });
