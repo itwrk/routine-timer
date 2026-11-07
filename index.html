@@ -14,6 +14,8 @@
   --cyan-text:#3540a1; --gold-text:#805500; --mint-text:#10694f;
   --text:#202838; --dim:#596579;
   --line:#e0e5ec; --line2:#c6cfdb;
+  --mem-red-ink:#c73748; --mem-sheet-color:#d9344a;
+  --mem-sheet-tint:rgba(239,59,35,.55); --mem-sheet-shadow:rgba(153,35,61,.15);
   --ring-size:min(48vw,200px);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1230,6 +1232,14 @@ input[type=checkbox]{accent-color:var(--cyan)}
 body.memory-active #memoFab {
   display: none;
 }
+body.memory-reading {
+  position: fixed;
+  top: var(--mem-page-top, 0px);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+}
+body.memory-reading #scr-memory { animation: none; }
 .mem-shell {
   grid-column: 1/-1;
   min-width: 0;
@@ -1418,7 +1428,7 @@ body.memory-active #memoFab {
 }
 .mem-mark[data-color="red"] {
   background: #ffe5e8;
-  color: #c73748;
+  color: var(--mem-red-ink);
 }
 .mem-mark[data-color="green"] {
   background: #d8f3df;
@@ -1442,49 +1452,134 @@ body.memory-active #memoFab {
   font-weight: 900;
 }
 .mem-sheet {
-  position: absolute;
+  position: fixed;
   z-index: 3;
   left: 0;
   right: 0;
-  top: 24px;
-  height: 112px;
-  background: rgba(255, 0, 0, 0.98);
-  border: 1px solid #d9344a;
+  top: 54vh;
+  top: 54dvh;
+  bottom: 0;
+  background: var(--mem-sheet-tint);
+  border-top: 3px solid var(--mem-sheet-color);
   pointer-events: none;
-  mix-blend-mode: multiply;
-  border-radius: 8px;
 }
 .mem-stage.mem-sheet-active .mem-mark[data-color="red"] {
-  color: #ff0000;
+  color: transparent;
 }
-.mem-sheet-grip {
+.mem-sheet-active .mem-mark[data-color="red"][data-mem-mask="visible"],
+.mem-sheet-active .mem-mark[data-color="red"][data-mem-mask="partial"] {
+  color: var(--mem-red-ink);
+}
+.mem-sheet-active .mem-mark[data-color="red"][data-mem-mask="partial"] .mem-red-ink[data-mem-mask="hidden"] {
+  color: transparent;
+}
+.mem-sheet-label {
   position: absolute;
-  z-index: 7;
   top: 0;
-  right: 9px;
-  pointer-events: auto;
-  touch-action: none;
-  cursor: grab;
-  border: 0;
-  background: #a8233b;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  background: var(--mem-sheet-color);
   color: white;
-  border-radius: 0 0 7px 7px;
-  font-size: 11px;
-  padding: 7px 12px;
-  user-select: none;
+  border-radius: 12px 12px 0 0;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 22px;
+  white-space: nowrap;
 }
-.mem-sheet-size {
-  position: absolute;
-  right: 8px;
-  bottom: 0;
-  pointer-events: auto;
-  touch-action: none;
-  cursor: ns-resize;
+.mem-study-toolbar,
+.mem-study-sheet-toggle {
+  display: none;
+}
+.mem-shell.mem-reading {
+  --text-scale: 1;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  max-width: none;
+  background: var(--bg);
+}
+.mem-reading > .card {
+  display: none;
+}
+.mem-reading > .mem-document {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  margin: 0;
   border: 0;
-  background: #a8233b;
+  border-radius: 0;
+  background: var(--bg);
+}
+.mem-reading .mem-document > :not(.mem-study-toolbar):not(.mem-stage):not(.mem-study-sheet-toggle) {
+  display: none !important;
+}
+.mem-reading .mem-study-toolbar {
+  position: relative;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.mem-study-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--dim);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mem-reading .mem-stage {
+  flex: 1;
+  min-height: 0;
+  isolation: auto;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y pinch-zoom;
+  border: 0;
+  border-radius: 0;
+  background: var(--bg);
+  padding: 18vh 16px 55vh;
+  padding: 18dvh 16px 55dvh;
+}
+.mem-reading .mem-editor {
+  max-width: 960px;
+  min-height: 50vh;
+  min-height: 50dvh;
+  margin: 0 auto;
+  padding: 22px 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  font-size: 18px;
+  line-height: 2;
+  cursor: default;
+}
+.mem-reading .mem-study-sheet-toggle {
+  display: block;
+  position: fixed;
+  z-index: 9;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  right: max(14px, env(safe-area-inset-right));
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mem-sheet-color);
   color: white;
-  border-radius: 7px 7px 0 0;
-  padding: 3px 12px;
+  box-shadow: 0 4px 18px var(--mem-sheet-shadow);
+}
+@media (max-width: 430px) {
+  .mem-study-title { flex-basis: 100%; }
+  .mem-reading .mem-study-toolbar { gap: 5px; }
+  .mem-reading .mem-stage { padding-left: 10px; padding-right: 10px; }
+  .mem-reading .mem-editor { padding: 18px 14px; font-size: 16px; }
 }
 .mem-player {
   position: sticky;
@@ -1705,7 +1800,16 @@ body.memory-active #memoFab {
   <!-- MEMORY -->
   <div class="screen" id="scr-memory">
     <div class="mem-shell" id="memShell" inert>
-      <div class="card">
+      <div class="card mem-document">
+        <div class="mem-study-toolbar" role="toolbar" aria-label="暗記の操作">
+          <span class="mem-study-title" id="memStudyTitle">赤シート暗記ノート</span>
+          <button class="btn btn-g" type="button" onclick="memoryToggleMode()">✎ 編集する</button>
+          <button class="btn btn-g" type="button" onclick="memoryPlay()" aria-label="暗記音声を再生">🔊</button>
+          <button class="btn btn-g" type="button" onclick="memoryStop()" aria-label="暗記音声を停止">■</button>
+          <button class="btn btn-g" id="memStudyLoop" type="button" onclick="memoryCycleLoop()" aria-label="繰り返しを切り替え">🔁 OFF</button>
+          <button class="btn btn-g" id="memStudySpeed" type="button" onclick="memoryCycleSpeed()">1.0×</button>
+          <button class="btn btn-g" type="button" onclick="memoryShowAudioSettings()" aria-label="音声設定を開く">⚙</button>
+        </div>
         <div class="mem-head"><h2>📚 暗記</h2><span id="memSaveState" class="mem-save-state" role="status"></span><button class="btn btn-p" type="button" onclick="memoryNew()">＋ 新規</button></div>
         <div class="mem-library"><select id="memLibrary" aria-label="保存した暗記ノート" onchange="memoryOpen(this.value)"><option value="">読み込み中…</option></select><button class="btn btn-g" type="button" onclick="memorySave(true)">💾 保存</button></div>
         <input class="mem-title" id="memTitle" aria-label="暗記ノートのタイトル" placeholder="タイトル（例：英単語・試験対策）" oninput="memoryChanged()">
@@ -1713,14 +1817,15 @@ body.memory-active #memoFab {
           <button class="btn btn-g mem-red-btn" type="button" onpointerdown="memoryKeepSelection(event)" onclick="memoryMark('red')">赤マーカー</button>
           <button class="btn btn-g mem-green-btn" type="button" onpointerdown="memoryKeepSelection(event)" onclick="memoryMark('green')">緑マーカー</button>
           <button class="btn btn-g" type="button" onpointerdown="memoryKeepSelection(event)" onclick="memoryMark('')">色を消す</button>
-          <button class="btn btn-g" id="memSheetToggle" type="button" onclick="memoryToggleSheet()" aria-pressed="false">赤シート OFF</button>
-          <button class="btn btn-g" id="memMode" type="button" onclick="memoryToggleMode()">編集 → 暗記</button>
+          <button class="btn btn-g" id="memSheetToggle" type="button" onclick="memoryToggleSheet()" aria-pressed="false">赤シートで暗記</button>
+          <button class="btn btn-g" id="memMode" type="button" onclick="memoryToggleMode()">暗記を始める</button>
           <button class="btn btn-g" id="memBlocksToggle" type="button" onclick="memoryToggleBlocks()" aria-pressed="false">並べ替え</button>
           <button class="btn btn-g" type="button" onpointerdown="memoryKeepSelection(event)" onclick="document.getElementById('memImage').click()">🖼 画像</button>
           <input id="memImage" type="file" accept="image/*" hidden onchange="memoryInsertImage(this)">
         </div>
         <p class="mem-help">普通の文章のように入力・改行できます。文字を選んで赤・緑マーカー。行の移動は「並べ替え」から。暗記モードではマーカーをタップして○／✓。</p>
-        <div class="mem-stage" id="memStage"><div class="mem-editor" id="memEditor" contenteditable="true" role="textbox" aria-label="暗記ノートの本文" aria-multiline="true" tabindex="0" data-placeholder="ここに文章を入力・貼り付けできます。Enterで改行。"></div><div class="mem-sheet" id="memSheet" hidden><button class="mem-sheet-grip" type="button" aria-label="赤シートを移動。上下キーでも移動">↕ 赤シート</button><button class="mem-sheet-size" type="button" aria-label="赤シートの高さ。上下キーでも変更">↕</button></div></div>
+        <div class="mem-stage" id="memStage" tabindex="0" role="region" aria-label="暗記する本文。上下にスクロールして答えを確認できます"><div class="mem-editor" id="memEditor" contenteditable="true" role="textbox" aria-label="暗記ノートの本文" aria-multiline="true" tabindex="0" data-placeholder="ここに文章を入力・貼り付けできます。Enterで改行。"></div><div class="mem-sheet" id="memSheet" aria-hidden="true" hidden><div class="mem-sheet-label">━ 赤シート</div></div></div>
+        <button class="btn mem-study-sheet-toggle" id="memStudySheetToggle" type="button" onclick="memoryToggleSheet()" aria-pressed="true">🔴 シートを外す</button>
         <div class="mem-block-panel" id="memBlockPanel" hidden aria-label="行ごとの並べ替え"></div>
         <div class="mem-tools">
           <button class="btn btn-g" type="button" onclick="memoryCopy()">📋 コピー</button>
@@ -3610,7 +3715,10 @@ function tab(btn){
 }
 function showScreen(id){
   const current=document.querySelector('.screen.active');let savedActivityDraft=false;
-  if(id!=='scr-memory'&&current&&current.id==='scr-memory'&&memoryState.note)memorySave();
+  if(id!=='scr-memory'&&current&&current.id==='scr-memory'){
+    if(memoryState.note)memorySave();
+    if(memoryState.readMode)memoryToggleMode();
+  }
   if(id!=='scr-notes'&&current&&current.id==='scr-notes'&&simpleNoteEditingId){commitSimpleNoteDraft(true);simpleNoteEditingId=null;}
   if(id!=='scr-activity-page'&&current&&current.id==='scr-activity-page'&&activityPageEditing){
     if(activityPageById(selectedActivityPageId)){if(!commitActivityPageEditor())return false;savedActivityDraft=true;}
@@ -8042,8 +8150,10 @@ const memoryState = {
   saveTimer: null,
   saveQueue: Promise.resolve(),
   readMode: false,
-  sheetY: 24,
-  sheetH: 112,
+  sheetEnabled: true,
+  readScrollTop: 0,
+  pageScrollY: null,
+  maskFrame: 0,
   version: 0,
   prepared: null,
   prepareSerial: 0,
@@ -8422,7 +8532,8 @@ function memoryRefreshEditor() {
   if (editor.contentEditable !== editable) editor.contentEditable = editable;
   if (editor.classList.contains('mem-read-mode') !== memoryState.readMode)
     editor.classList.toggle('mem-read-mode', memoryState.readMode);
-  document.getElementById('memMode').textContent = memoryState.readMode ? '暗記 → 編集' : '編集 → 暗記';
+  document.getElementById('memMode').textContent = memoryState.readMode ? '編集する' : '暗記を始める';
+  memoryPrepareReadMarks();
   memorySheetLayout();
 }
 function memoryRenderBlockPanel() {
@@ -8674,11 +8785,34 @@ function memoryMark(color) {
   memoryChanged();
 }
 function memoryToggleMode() {
+  const stage = document.getElementById('memStage');
+  if (memoryState.readMode) {
+    memoryState.readScrollTop = stage.scrollTop;
+    document.activeElement?.blur();
+  }
+  else {
+    // Capture the document position before the fixed reader leaves normal flow.
+    memoryState.pageScrollY = window.scrollY;
+    document.body.style.setProperty('--mem-page-top', `${-memoryState.pageScrollY}px`);
+    document.body.classList.add('memory-reading');
+    memoryState.sheetEnabled = true;
+    document.activeElement?.blur();
+    window.getSelection()?.removeAllRanges();
+  }
   memoryState.readMode = !memoryState.readMode;
-  memoryToggleBlocks(false);
   memoryRefreshEditor();
-  document.getElementById('memMode').textContent = memoryState.readMode ? '暗記 → 編集' : '編集 → 暗記';
+  memoryToggleBlocks(false);
+  if (memoryState.readMode) {
+    stage.scrollTop = memoryState.readScrollTop;
+    stage.focus({ preventScroll: true });
+    memoryUpdateReadMask();
+  }
   memoryState.selection = null;
+}
+function memoryShowAudioSettings() {
+  if (memoryState.readMode) memoryToggleMode();
+  document.getElementById('memSettings').open = true;
+  document.querySelector('.mem-audio-options').scrollIntoView({ block: 'start' });
 }
 function memoryMoveBlock(row, direction) {
   const index = typeof row === 'number' ? row : Number(row?.dataset.blockIndex);
@@ -8795,22 +8929,78 @@ async function memoryInsertImage(input) {
     input.value = '';
   }
 }
+function memoryPrepareReadMarks() {
+  const editor = document.getElementById('memEditor');
+  if (!memoryState.readMode) {
+    for (const ink of editor.querySelectorAll('.mem-red-ink')) ink.replaceWith(document.createTextNode(ink.textContent));
+    for (const mark of editor.querySelectorAll('.mem-mark[data-mem-mask]')) {
+      delete mark.dataset.memMask;
+      mark.normalize();
+    }
+    return;
+  }
+  const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter('ja', { granularity: 'grapheme' }) : null;
+  for (const mark of editor.querySelectorAll('.mem-mark[data-color="red"]')) {
+    if (mark.querySelector('.mem-red-ink')) continue;
+    const walker = document.createTreeWalker(mark, NodeFilter.SHOW_TEXT), textNodes = [];
+    while (walker.nextNode()) if (walker.currentNode.parentElement.closest('.mem-mark') === mark) textNodes.push(walker.currentNode);
+    for (const node of textNodes) {
+      const text = node.nodeValue, fragment = document.createDocumentFragment();
+      for (const item of segmenter ? segmenter.segment(text) : Array.from(text)) {
+        const ink = document.createElement('span');
+        ink.className = 'mem-red-ink';
+        ink.textContent = typeof item === 'string' ? item : item.segment;
+        fragment.appendChild(ink);
+      }
+      node.replaceWith(fragment);
+    }
+  }
+}
+function memoryUpdateReadMask() {
+  const sheet = document.getElementById('memSheet');
+  if (!memoryState.readMode || sheet.hidden) return;
+  const edge = sheet.getBoundingClientRect().top, updates = [];
+  // Measure first, then paint. Graphemes let a multi-line marked phrase reveal line by line.
+  for (const mark of document.querySelectorAll('#memEditor .mem-mark[data-color="red"]')) {
+    const rect = mark.getBoundingClientRect();
+    const state = rect.bottom <= edge ? 'visible' : rect.top >= edge ? 'hidden' : 'partial';
+    updates.push([mark, state]);
+    if (state === 'partial') for (const ink of mark.querySelectorAll('.mem-red-ink'))
+      updates.push([ink, ink.getBoundingClientRect().bottom <= edge ? 'visible' : 'hidden']);
+  }
+  for (const [element, state] of updates) if (element.dataset.memMask !== state) element.dataset.memMask = state;
+}
 function memorySheetLayout() {
   const stage = document.getElementById('memStage'),
     sheet = document.getElementById('memSheet');
-  if (!stage || !sheet || !stage.clientHeight) return;
-  memoryState.sheetH = Math.max(48, Math.min(memoryState.sheetH, Math.max(48, stage.clientHeight)));
-  memoryState.sheetY = Math.max(0, Math.min(memoryState.sheetY, Math.max(0, stage.clientHeight - memoryState.sheetH)));
-  sheet.style.top = memoryState.sheetY + 'px';
-  sheet.style.height = memoryState.sheetH + 'px';
+  if (!stage || !sheet) return;
+  const reading = memoryState.readMode && document.getElementById('scr-memory').classList.contains('active');
+  if (reading && memoryState.pageScrollY === null) {
+    memoryState.pageScrollY = window.scrollY;
+    document.body.style.setProperty('--mem-page-top', `${-memoryState.pageScrollY}px`);
+    document.body.classList.add('memory-reading');
+  } else if (!reading && memoryState.pageScrollY !== null) {
+    const top = memoryState.pageScrollY;
+    memoryState.pageScrollY = null;
+    document.body.classList.remove('memory-reading');
+    document.body.style.removeProperty('--mem-page-top');
+    window.scrollTo(0, top);
+  }
+  const enabled = reading && memoryState.sheetEnabled;
+  sheet.hidden = !enabled;
+  stage.classList.toggle('mem-sheet-active', enabled);
+  const button = document.getElementById('memSheetToggle');
+  button.textContent = '赤シートで暗記';
+  button.setAttribute('aria-pressed', String(enabled));
+  const studyButton = document.getElementById('memStudySheetToggle');
+  studyButton.textContent = enabled ? '🔴 シートを外す' : '🔴 シートをかける';
+  studyButton.setAttribute('aria-pressed', String(enabled));
+  document.getElementById('memStudyTitle').textContent = memoryState.note?.title || '赤シート暗記ノート';
+  memoryUpdateReadMask();
 }
 function memoryToggleSheet() {
-  const sheet = document.getElementById('memSheet');
-  sheet.hidden = !sheet.hidden;
-  document.getElementById('memStage').classList.toggle('mem-sheet-active', !sheet.hidden);
-  const btn = document.getElementById('memSheetToggle');
-  btn.textContent = '赤シート ' + (sheet.hidden ? 'OFF' : 'ON');
-  btn.setAttribute('aria-pressed', String(!sheet.hidden));
+  if (!memoryState.readMode) { memoryToggleMode(); return; }
+  memoryState.sheetEnabled = !memoryState.sheetEnabled;
   memorySheetLayout();
 }
 function memoryFillNotation() {
@@ -9081,6 +9271,8 @@ function memoryRenderControls() {
   document.getElementById('memSpeed').textContent = (memoryPrefs.fixed ? '🔒 ' : '') + memoryRate().toFixed(1) + '×';
   document.getElementById('memLoop').textContent =
     'ループ ' + { off: 'OFF', infinite: '∞', 30: '30' }[memoryPrefs.loop];
+  document.getElementById('memStudySpeed').textContent = (memoryPrefs.fixed ? '🔒 ' : '') + memoryRate().toFixed(1) + '×';
+  document.getElementById('memStudyLoop').textContent = '🔁 ' + { off: 'OFF', infinite: '∞', 30: '30' }[memoryPrefs.loop];
 }
 function memorySettingsChanged() {
   clearTimeout(memoryState.toneTimer);
@@ -9128,7 +9320,7 @@ function memorySaveKey(value) {
 }
 function memoryCycleSpeed() {
   if (memoryPrefs.fixed) {
-    document.getElementById('memSettings').open = true;
+    memoryShowAudioSettings();
     toast('🔒 固定速度は設定から変更できます');
     return;
   }
@@ -9750,36 +9942,13 @@ function memoryInitEvents() {
   }
   document.addEventListener('selectionchange', memoryCaptureSelection);
   memoryBindEditorEvents(document.getElementById('memEditor'));
-  const sheet = document.getElementById('memSheet');
-  for (const grip of sheet.querySelectorAll('button')) {
-    const resize = grip.classList.contains('mem-sheet-size');
-    let drag = null;
-    grip.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      drag = { pointer: e.pointerId, y: e.clientY, start: resize ? memoryState.sheetH : memoryState.sheetY };
-      grip.setPointerCapture(e.pointerId);
+  document.getElementById('memStage').addEventListener('scroll', () => {
+    if (memoryState.maskFrame) return;
+    memoryState.maskFrame = requestAnimationFrame(() => {
+      memoryState.maskFrame = 0;
+      memoryUpdateReadMask();
     });
-    grip.addEventListener('pointermove', (e) => {
-      if (!drag || e.pointerId !== drag.pointer) return;
-      const value = drag.start + e.clientY - drag.y;
-      if (resize) memoryState.sheetH = value;
-      else memoryState.sheetY = value;
-      memorySheetLayout();
-    });
-    for (const type of ['pointerup', 'pointercancel'])
-      grip.addEventListener(type, () => {
-        drag = null;
-      });
-    grip.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        const delta = e.key === 'ArrowUp' ? -10 : 10;
-        if (resize) memoryState.sheetH += delta;
-        else memoryState.sheetY += delta;
-        memorySheetLayout();
-      }
-    });
-  }
+  }, { passive: true });
   const a = document.getElementById('memAudio');
   a.addEventListener('play', () => {
     memoryState.playing = true;
@@ -9814,6 +9983,7 @@ function memoryInitEvents() {
     if (document.hidden && memoryState.note) memorySave();
   });
   window.addEventListener('resize', memorySheetLayout);
+  window.visualViewport?.addEventListener('resize', memorySheetLayout);
 }
 memoryInitEvents();
 /* ============ MEMORY END ============ */

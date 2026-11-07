@@ -179,13 +179,17 @@ const nodePath = require('node:path');
   assert.equal(await page.locator('.mem-mark[data-checked="true"]').count(), 0);
   await page.locator('.mem-mark[data-color="red"]').last().click();
   assert.equal(await page.locator('.mem-mark[data-checked="true"]').count(), 1);
-  // Red sheet drag and keyboard, check remains stacked above it.
-  await page.evaluate(() => memoryToggleSheet());
-  const y0 = await page.locator('#memSheet').evaluate((el) => el.offsetTop);
-  await page.locator('.mem-sheet-grip').focus();
-  await page.keyboard.press('ArrowDown');
-  assert((await page.locator('#memSheet').evaluate((el) => el.offsetTop)) >= y0);
+  // The sheet stays fixed while the document scrolls; dragging is no longer needed.
   assert.equal(await page.locator('#memSheet').isVisible(), true);
+  const y0 = await page.locator('#memSheet').evaluate((el) => el.getBoundingClientRect().top);
+  await page.locator('#memStage').evaluate(el => el.scrollBy(0, 100));
+  assert.equal(await page.locator('#memSheet').evaluate(el => el.getBoundingClientRect().top), y0);
+  await page.locator('#memStudySheetToggle').click();
+  assert.equal(await page.locator('#memSheet').isVisible(), false);
+  await page.locator('#memStudySheetToggle').click();
+  assert.equal(await page.locator('#memSheet').isVisible(), true);
+  await page.locator('.mem-study-toolbar button').first().click();
+  assert.equal(await page.locator('#memEditor').getAttribute('contenteditable'), 'true');
   // Image insert and safe notation round-trip.
   const imageData = await page.evaluate(() => {
     memoryState.selection = null;
