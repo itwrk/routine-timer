@@ -660,8 +660,12 @@ body.meal-waiting #app{padding-bottom:136px}body.meal-waiting #run{padding-botto
 .tabbar button.on{color:var(--cyan);background:rgba(53,224,255,.08)}
 
 /* RUN screen */
-#run{position:fixed;inset:0;background:radial-gradient(900px 500px at 50% 0%, #e3dcfb 0%, var(--bg) 60%);z-index:100;display:none;flex-direction:column;align-items:center;padding:max(calc(8px + env(safe-area-inset-top)),24px) 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto}
+body.run-open{position:fixed;top:var(--run-page-top,0px);left:0;right:0;overflow:hidden}
+#run{position:fixed;inset:0;background:radial-gradient(900px 500px at 50% 0%, #e3dcfb 0%, var(--bg) 60%);z-index:100;display:none;flex-direction:column;align-items:center;padding:max(calc(8px + env(safe-area-inset-top)),24px) 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior-y:contain}
 #run.active{display:flex}
+#run>*{flex-shrink:0}
+/* Touch scrolling takes priority here; the arrow buttons also reorder steps. */
+#upcoming .draghandle{touch-action:pan-y}
 #run .rhead{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
 #run .rtitle{font-weight:800}
 #run .close{background:var(--card2);border:1px solid var(--line2);color:var(--text);border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer;position:relative;z-index:3;touch-action:manipulation}
@@ -2419,7 +2423,7 @@ body.memory-active #memoFab {
   <div class="runmemo" id="runMemo" style="display:none"></div>
   <div class="runck" id="runCk" style="display:none"></div>
   <div class="upcoming" id="upcomingWrap">
-    <h3>▼ このあとのステップ（≡ドラッグ・✏️で編集）</h3>
+    <h3>▼ このあとのステップ（↑↓で並べ替え・✏️で編集）</h3>
     <div class="countup-step-tools" id="countUpStepTools" style="display:none">
       <p class="hint">⏱ 行動しながら、必要になったステップを追加できます</p>
       <div class="habit-add">
@@ -3186,6 +3190,7 @@ function enableDrag(container,rowSel,commit){
   container.querySelectorAll(rowSel+' .draghandle').forEach(h=>{
     h.onpointerdown=e=>{
       if(e.button!=null&&e.button!==0)return;
+      if(e.pointerType==='touch'&&container.id==='upcoming')return;
       e.preventDefault();e.stopPropagation();
       const row=h.closest(rowSel);
       row.classList.add('dragging');
@@ -4960,7 +4965,7 @@ function finishMicroRun(){
   const runLog=addRoutineRunLog(stopped,{endedAt,status:'completed',endType:'manual',microEntry:true,done:0,total:0});
   const log=journeyId&&D.journeyLogs.find(x=>x.id===journeyId);if(log){log.tinyEndedAt=endedAt;log.updatedAt=endedAt;}save();
   logRecordToCalendar(runLog);
-  document.getElementById('run').classList.remove('active');run=null;renderHome();jackpot('ENTRY CLEAR!!','10秒の入口突破 +3XP');toast('🌱 今日はここまでで成功。ちゃんと記録したよ');
+  setRunScreenActive(false);run=null;renderHome();jackpot('ENTRY CLEAR!!','10秒の入口突破 +3XP');toast('🌱 今日はここまでで成功。ちゃんと記録したよ');
 }
 /* confirm代替：2度押し確認（アプリ内ビューはダイアログ不可のため） */
 function resetTwoTap(btn){
@@ -5188,6 +5193,22 @@ function delRoutine(){
 const CIRC=2*Math.PI*43;
 document.getElementById('ringFg').style.strokeDasharray=CIRC;
 let run=null,timer=null;
+let runPageScrollY=null;
+
+function setRunScreenActive(active){
+  const el=document.getElementById('run');
+  if(active){
+    if(runPageScrollY===null)runPageScrollY=window.scrollY;
+    document.body.style.setProperty('--run-page-top',`${-runPageScrollY}px`);
+    document.body.classList.add('run-open');
+    el.classList.add('active');el.scrollTop=0;
+  }else{
+    el.classList.remove('active');
+    document.body.classList.remove('run-open');
+    document.body.style.removeProperty('--run-page-top');
+    if(runPageScrollY!==null){window.scrollTo(0,runPageScrollY);runPageScrollY=null;}
+  }
+}
 
 function setRunMode(checklist){
   if(!run||!run.ready||run.microEntry||run.source!=='normal'||run.checklistMode===checklist)return;
@@ -5266,7 +5287,7 @@ function startRun(id,options={}){
   showScreen('scr-home');
   run={r,idx:startIndex,left:0,leftMs:0,paused:ready,ready,skips:priorSkips,startedAt:ready?0:Date.now(),timerMode:'down',checklistMode:false,muted:!!D.settings.timerMuted,repeatSpeech:!!D.settings.repeatSpeech,repeatText:'',repeatLastAt:0,stepRecords,microEntry:!!options.micro,microEntryDone:false,source:options.source||'normal',journeyId,pendingJourneyId:options.journeyId||''};
   D.combo=D.combo||0;
-  document.getElementById('run').classList.add('active');
+  setRunScreenActive(true);
   document.getElementById('runTitle').textContent=`${r.emoji} ${r.name}`;
   document.getElementById('btnPause').textContent=ready?'▶ 再生':'⏸ 一時停止';
   updateRunMuteUi();
@@ -5350,7 +5371,7 @@ function renderRunCk(s){
           run.ckDone.add(k);beep(1047,.07,'square',.12);hitNoise(.15);
           if(run.ckDone.size===s.checklist.length){sfxDone();burst();toast('☑ 全部チェック完了！');}
         }
-        draw();
+        row.classList.toggle('on',run.ckDone.has(k));
       };
       row.querySelector('.ckdel').onclick=ev=>{ev.stopPropagation();
         s.checklist.splice(k,1);run.ckDone.delete(k);syncShared(s);save();draw();
@@ -5735,7 +5756,7 @@ function finishRun(autoCompleted=false){
 
 let resCountTimer=null;
 function showResult({log,perfect,bonus,xpGained,durSec}){
-  document.getElementById('run').classList.remove('active');
+  setRunScreenActive(false);
   run=null;
   document.getElementById('resTitle').textContent=perfect?'💎 PERFECT!!':'🎉 CLEAR!!';
   document.getElementById('resName').textContent=`${log.routine}`;
@@ -5765,7 +5786,7 @@ function closeResult(){
 function stopRun(saved=false){
   if(!run)return;
   if(run.ready){
-    clearInterval(timer);timer=null;document.getElementById('run').classList.remove('active');run=null;renderHome();return;
+    clearInterval(timer);timer=null;setRunScreenActive(false);run=null;renderHome();return;
   }
   advanceRunClock();const stopped=run,now=Date.now();
   const runLog=addRoutineRunLog(stopped,{endedAt:now,status:'interrupted',endType:saved?'saved':'interrupted'});
@@ -5773,7 +5794,7 @@ function stopRun(saved=false){
   D.journeyLogs.unshift(log);save();
   logRecordToCalendar(runLog);
   clearInterval(timer);timer=null;speechSynthesis.cancel();
-  document.getElementById('run').classList.remove('active');run=null;renderHome();
+  setRunScreenActive(false);run=null;renderHome();
   toast(saved?'💾 ここまでを保存しました。「続きから」で再開できます':'🌱 止まったところも保存したよ。できた分は消えない');
 }
 function endRun(){stopRun(false);}
