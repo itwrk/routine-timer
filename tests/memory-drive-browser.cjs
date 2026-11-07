@@ -31,7 +31,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
     });
     await page.goto(origin);await page.locator('[data-scr="scr-memory"]').click();await page.waitForFunction(()=>memoryState.ready);
     assert.equal(await page.evaluate(()=>getOpenAIKey()),'synthetic-openai-key');assert.equal(await page.evaluate(()=>localStorage.getItem('rvt_memory_openai_key_v1')),null);
-    assert.equal(await page.locator('#memModel').isVisible(),true);assert.equal(await page.locator('#memModel option').count(),10);
+    assert.equal(await page.locator('#memGenerate').isVisible(),true);assert.equal(await page.locator('#memModel').isVisible(),true);assert.equal(await page.locator('#memModel option').count(),10);
     await page.locator('#memEngine').selectOption('device');assert.equal(await page.evaluate(()=>memoryPrefs.engine),'device');
     await page.locator('#memEngine').selectOption('ai');
     await page.evaluate(async()=>{
