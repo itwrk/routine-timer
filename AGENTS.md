@@ -45,8 +45,7 @@ Hal個人用のルーチン実行支援アプリ。「タイマー × 二重音�
   パーフェクトボーナス、バッジ、XP/レベル、ヒートマップ。演出は「速くてパンチがある」方向を維持
 - **共有ステップ**: `sharedId` を持つステップは編集時に `syncShared(s)` で全ルーチンへ伝播。
   ステップ編集系の処理を追加・変更した場合は必ず `syncShared` 呼び出しを維持すること
-- **AI生成**: 設定のAPIキーで api.anthropic.com を直叩き
-  （`anthropic-dangerous-direct-browser-access` ヘッダ使用）。トーン指示は `settings.aiTone`
+- **AI生成**: 設定の共通OpenAIキー（`settings.apiKey`）で Responses API を使用。文章モデルは `settings.aiModel`、トーン指示は `settings.aiTone`。暗記の音声生成も同じキーを使う
 - **Notion記録**: `settings.webhook`（GAS中継）に完走ログをPOST（`sendNotion`）
 
 ## UI方針

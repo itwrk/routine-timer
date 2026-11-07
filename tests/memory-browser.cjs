@@ -37,7 +37,7 @@ const nodePath = require('node:path');
   await page.waitForFunction(() => memoryState.ready && !document.getElementById('memShell').inert);
   // The official catalogs drive options, compatibility, persistence and native device voices.
   await page.locator('#memSettings').evaluate((el) => (el.open = true));
-  assert.equal(await page.locator('#memModel option').count(), 9);
+  assert.equal(await page.locator('#memModel option').count(), 10);
   assert.equal(await page.locator('#memVoice option').count(), 10);
   const initialTone = '明るく親しみやすく、重要な単語は少し強調する。';
   assert.equal(await page.locator('#memTone').isVisible(), true);
@@ -284,7 +284,7 @@ const nodePath = require('node:path');
     memoryPrefs.fixed = true;
     memoryPrefs.fixedRate = 0.5;
     memoryPrefs.loop = '30';
-    localStorage.setItem(MEMORY_API_KEY, 'synthetic-memory-test-key');
+    setOpenAIKey('synthetic-memory-test-key');
     window.qaGenerationCalls = 0;
     memoryGenerateClip = async () => {
       qaGenerationCalls++;

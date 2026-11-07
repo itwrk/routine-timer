@@ -13,9 +13,9 @@
 - ノートと挿入画像：IndexedDB `rvt_memory_v1` の `notes`。
 - 生成音声：同データベースの `clips`。24000 Hz / mono / PCM16。
 - 速度、行間、OpenAIの声・モデル・自由文トーン、端末TTSの声、ループ：localStorage `rvt_memory_prefs_v1`。
-- OpenAIキー：localStorage `rvt_memory_openai_key_v1`。ノート、書出、既存のルーチン同期には含めない。
+- OpenAIキー：ルーチンの設定 `settings.apiKey` に共通化。AI文章生成と暗記音声で同じ値を使う。旧 `rvt_memory_openai_key_v1` のキーは初回起動時に引き継いで削除する。既存のClaudeキーはOpenAIへ送らない。ノート、JSONバックアップ、書出、既存のルーチン同期には含めない。
 - 件数の上限は設けない。利用できる保存容量はブラウザ・端末による。
-- ノートは既存のルーチン同期・ルーチンのJSONバックアップとは独立している。「全件書出」で全ノートと画像を保存し、別端末で読み込む。音声は「音声を書出」で別途保存する。
+- ノートは既存のルーチン同期・ルーチンのJSONバックアップとは独立している。「全件書出」で全ノートと画像を保存し、別端末で読み込む。音声は生成完了後に共有ドライブへ自動保存する。「保存済み音声をDriveへ」で既存の音声も保存できる。「音声を書出」は端末へのダウンロード。
 
 記法は赤《ことば》、緑【ことば】、チェック済み《ことば✓》／【ことば✓】。区切り記号そのものはバックスラッシュでエスケープする。画像はMarkdown形式のdata URLで書き出す。`.txt` はタイトルのヘッダーと記法の本文で構成し、全件書出も同じ形式で復元する。旧JSONは本文の `html` / `text` / `content` / `body` / `notation`、ブロック配列、ノート配列と一般的なラッパーを受け付ける。外部画像URL・スクリプト・イベント属性は取り込まない。
 
@@ -23,12 +23,14 @@
 
 OpenAIキーは利用者が自分の端末で入力する。Realtime miniを標準とし、旧Speech APIも選択できる。APIキーをサーバーに埋め込む構成ではない。Realtimeは一時キーを取得してWebSocket接続し、生成後に接続を閉じる。UIにAI生成音声であることを表示する。
 
+2026年11月8日から「読み上げ方法」「AI音声のモデル・バージョン」「OpenAIの声」「端末TTSの声」を常時見える独立カードに表示する。読み上げ方法はOpenAIの保存音声と無料の端末TTSから選択する。モデルは既存9種類に `gpt-4o-mini-tts-2025-12-15` の固定版を追加した10種類。端末TTSにはOpenAIモデルを適用しない。未生成の本文は従来どおり端末TTSで再生できる。
+
 2026年10月31日に公式ドキュメントを確認し、読み上げ用モデルを9種類に拡張した。設定のモデル・声の選択肢とAPIの分岐は、`MEMORY_MODELS` / `MEMORY_VOICE_SETS` から生成する。
 
 | モデル | 選べるOpenAIの声 |
 | --- | --- |
 | GPT-Realtime 2.1 mini / 2.1 / 2 / 1.5 / Realtime / Realtime mini | 10種類 |
-| GPT-4o mini TTS | 13種類 |
+| GPT-4o mini TTS / 2025-12-15固定版 | 13種類 |
 | TTS-1 / TTS-1 HD | 9種類 |
 
 声は全13種類のMarin、Cedar、Alloy、Ash、Ballad、Coral、Echo、Fable、Nova、Onyx、Sage、Shimmer、Verseをモデルに応じて表示する。RealtimeではFable・Nova・Onyxを表示せず、TTS-1系ではMarin・Cedar・Ballad・Verseを表示しない。モデル変更時、選択中の声が対応していれば維持し、未対応ならそのモデルの既定の声へ切り替えて表示で知らせる。API呼び出し前にも組み合わせを検証し、TTS-1系には未対応のinstructionsを送らない。
@@ -44,6 +46,16 @@ OpenAIキーは利用者が自分の端末で入力する。Realtime miniを標�
 iPhoneでの画面オフ再生は、保存音声を通常のHTML audioで再生する。行間の無音と30回分の繰り返しはWAVに組み込み、バックグラウンドのJavaScriptタイマーで進めない。無限はaudio.loopを使う。再生速度を変更しても行間の実時間を保つため、WAVの無音区間を調整する。速度はaudio.playbackRateで設定するので、書き出したファイルでは再生アプリ側で速度を選ぶ。
 
 Safariで画面を表示して再生を開始してからロックする。Media Sessionの再生・一時停止・停止・シークにも対応する。iOSやアプリ内ブラウザによる停止を完全には制御できず、実機の画面ロック試験は別途必要。端末TTSは未生成時の代替で、画面オフ中の継続は保証しない。
+
+## 共有ドライブへの音声保存
+
+保存先は、ひではる共有ドライブ → 97_春香 → ルーチンタイマー → 暗記音声（フォルダID `1YK8MHPtLHzZ-s3e7DquGTsSesCSvPX9U`）。ファイル名にノート名・モデル・声・音声識別子を含める。再生時のループや行間を含めない、通常速度で1回分のWAVを保存する。最大250MB。端末TTSの声はファイル化しない。
+
+既存同期GASに `memory-drive.gs` を追加し、既存 `doPost(e)` の先頭で `rvtMemoryPost(e)` の返り値があれば返す。同期・Notion・カレンダーの処理は保持する。公開時は既存デプロイを新バージョンへ更新し、URLを変えない。`rvtMemoryCheckSetup` は保存先のアクセス権を読み取るだけで、ファイルを作らない。
+
+アプリは同期URL・合言葉でGASへ認証し、OpenAIキーは送らない。GASの保存先はコード内の指定フォルダに固定し、共有ドライブID・追加権限を検証する。共有設定を変更する処理はない。Drive APIのresumable uploadを1MiBずつ中継する。アップロード先URLはGASのスクリプトプロパティだけに保存する。通信結果が不確かな場合はDriveが受理したバイト位置を読み直し、同じ部分を重ねて保存しない。完了後は親フォルダ・サイズ・音声識別子をAPIで再取得して検証する。同じ音声は再利用する。失敗・中止時も端末の生成済み音声は保持し、画面に再試行ボタンを表示する。
+
+音声保存はノート本文の同期ではない。別端末でノート自体を利用する場合は「全件書出→読込」を使う。保存WAVは共有ドライブのフォルダから開ける。
 
 参考：[OpenAI Docs：モデル一覧](https://developers.openai.com/api/docs/models)、[Text to speech](https://developers.openai.com/api/docs/guides/text-to-speech)、[Realtime conversations](https://developers.openai.com/api/docs/guides/realtime-conversations)、[Media Session](https://developer.mozilla.org/en-US/docs/Web/API/MediaSession)。旧Speech APIのTTSモデルは2027年1月6日の終了予定が案内されているため、標準はRealtimeにしている。
 

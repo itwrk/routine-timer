@@ -38,6 +38,7 @@ const ctx = {
     removeItem: (key) => storage.delete(key)
   },
   navigator: {},
+  getOpenAIKey: () => storage.get('test-openai-common-key') || '',
   window: {}
 };
 ctx.window = ctx;
@@ -277,7 +278,7 @@ vm.runInContext(source, ctx);
   controller.abort();
   await assert.rejects(pending, (e) => e.name === 'AbortError');
   assert.equal(socket.closed, true);
-  storage.set('rvt_memory_openai_key_v1', 'synthetic-secret');
+  storage.set('test-openai-common-key', 'synthetic-secret');
   assert(!ctx.memoryError(Error('failure synthetic-secret')).includes('synthetic-secret'));
   assert.match(ctx.memoryError({ name: 'QuotaExceededError', message: '' }), /保存容量/);
   assert(html.includes("key:''  /* 公開リポジトリ"));
