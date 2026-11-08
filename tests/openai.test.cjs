@@ -13,8 +13,10 @@ function fixture(current='',legacy=''){
   assert.throws(()=>f.ctx.setOpenAIKey('sk-ant-wrong'),/OpenAI/);assert.equal(f.ctx.getOpenAIKey(),'common-replacement');
   assert.equal(await f.ctx.aiRequest('本文',600,'文章だけ'), '["できた"]');
   let req=f.requests[0],body=JSON.parse(req.options.body);
-  assert.equal(req.url,'https://api.openai.com/v1/responses');assert.equal(req.options.headers.Authorization,'Bearer common-replacement');assert.equal(body.store,false);assert.equal(body.input,'本文');assert.equal(body.instructions,'文章だけ');assert.equal(body.model,'gpt-6-luna');assert.equal(body.reasoning.effort,'low');
-  f.ctx.D.settings.aiModel='gpt-6.1-sol';await f.ctx.aiRequest('次');assert.equal(JSON.parse(f.requests[1].options.body).model,'gpt-6.1-sol');
+  assert.equal(req.url,'https://api.openai.com/v1/responses');assert.equal(req.options.headers.Authorization,'Bearer common-replacement');assert.equal(body.store,false);assert.equal(body.input,'本文');assert.equal(body.instructions,'文章だけ');assert.equal(body.model,'gpt-6.1-sol');assert.equal(body.reasoning.effort,'low');
+  for(const staleModel of ['gpt-6-luna','unknown-model']){
+    f.ctx.D.settings.aiModel=staleModel;await f.ctx.aiRequest('次');assert.equal(JSON.parse(f.requests.at(-1).options.body).model,'gpt-6.1-sol','stale settings must never send requests to another text model');
+  }
   f.ctx.fetch=async()=>({ok:false,status:401,json:async()=>({error:{message:'bad common-replacement'}})});
   await assert.rejects(f.ctx.aiRequest('x'),e=>!e.message.includes('common-replacement')&&e.message.includes('401'));
   assert(!f.ctx.aiErrorMessage(Error('common-replacement')).includes('common-replacement'));

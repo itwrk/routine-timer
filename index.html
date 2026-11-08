@@ -2437,13 +2437,13 @@ body.memory-reading #scr-memory { animation: none; }
     <div class="card">
       <h2>🤖 AI設定（OpenAI共通）</h2>
       <div class="field"><label for="setApiKey">OpenAI APIキー（AI文章生成・暗記音声で共通／この端末だけ）</label><input type="password" id="setApiKey" placeholder="OpenAI APIキーを入力" autocomplete="off" autocapitalize="none" spellcheck="false" onchange="saveSettings()" onblur="saveSettings()"></div>
-      <div class="field"><label for="setAiModel">文章生成のモデル</label><select id="setAiModel" onchange="saveSettings()"><option value="gpt-6-luna">GPT-6 Luna（軽い文章生成）</option><option value="gpt-6.1-sol">GPT-6.1 Sol（詳しく考える）</option></select></div>
+      <div class="field"><label for="setAiModel">文章生成のモデル（固定）</label><select id="setAiModel" disabled><option value="gpt-6.1-sol">GPT-6.1 Sol</option></select></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-c btn-sm" style="white-space:nowrap" onclick="testAiConnection(this)">🤖 保存して接続テスト</button>
         <button class="btn btn-c btn-sm" style="white-space:nowrap" onclick="copyAiKey()">📋 キーをコピー</button>
       </div>
       <p class="muted" id="aiConnectionStatus" role="status" aria-live="polite" style="margin-top:8px">短いテスト文だけを送信します。少額のAPIクレジットを使用します。</p>
-      <p class="muted">OpenAIのキーを1回設定すると、ステップ用テキスト・ひとこと・AIコメント・暗記音声で共通に使います。暗記画面のキー欄も同じ設定です。キーは同期・書出に含めません。</p>
+      <p class="muted">文章生成・接続テストはGPT-6.1 Sol固定です。音声生成は音声専用モデルを使います。OpenAIのキーはステップ用テキスト・ひとこと・AIコメント・暗記音声で共通です。キーは同期・書出に含めません。</p>
       <h3 style="margin-top:14px">💬 記録へのAIコメント</h3>
       <div class="field"><label for="aiCommentDays">読み取る記録の期間</label><select id="aiCommentDays" onchange="saveAiCommentSettings()"><option value="7">直近7日</option><option value="30">直近30日</option><option value="90">直近90日</option><option value="0">全期間</option></select></div>
       <div class="field"><label><input type="checkbox" id="aiCommentMeals" style="width:auto;margin-right:6px" onchange="saveAiCommentSettings()">食事・起床・衝動・LOC・安心練習の記録も含める</label></div>
@@ -3007,7 +3007,8 @@ function restoreLocalStopwatch(migrate=false){
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
   d.lifePlan=normalizeLifePlan(d.lifePlan);
-  d.settings=Object.assign({aiModel:'gpt-6-luna',rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false,timerMuted:false,youTubeAudio:false,calLog:'auto',aiCommentPrompt:'',aiCommentDays:30,aiCommentMeals:true,aiCommentNotion:false,notionBridgeUrl:'',notionBridgeKey:''},d.settings||{});
+  d.settings=Object.assign({aiModel:'gpt-6.1-sol',rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false,timerMuted:false,youTubeAudio:false,calLog:'auto',aiCommentPrompt:'',aiCommentDays:30,aiCommentMeals:true,aiCommentNotion:false,notionBridgeUrl:'',notionBridgeKey:''},d.settings||{});
+  d.settings.aiModel='gpt-6.1-sol';
   d.settings.youTubeAudio=d.settings.youTubeAudio===true;
   d.settings.aiCommentPrompt=String(d.settings.aiCommentPrompt||'').slice(0,4000);
   d.settings.aiCommentDays=[0,7,30,90].includes(Number(d.settings.aiCommentDays))?Number(d.settings.aiCommentDays):30;
@@ -3558,7 +3559,7 @@ async function aiRequest(prompt,maxTokens=600,system=''){
     res=await fetch('https://api.openai.com/v1/responses',{
       method:'POST',
       headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},
-      body:JSON.stringify({model:D.settings.aiModel==='gpt-6.1-sol'?'gpt-6.1-sol':'gpt-6-luna',reasoning:{effort:'low'},max_output_tokens:Math.max(2048,maxTokens*2),store:false,...(system?{instructions:system}:{}),input:prompt})
+      body:JSON.stringify({model:'gpt-6.1-sol',reasoning:{effort:'low'},max_output_tokens:Math.max(2048,maxTokens*2),store:false,...(system?{instructions:system}:{}),input:prompt})
     });
   }catch(_){throw new Error('OpenAI APIに通信できません。ネット接続を確認し、アプリ内ブラウザの場合はSafariやChromeでも試してください。');}
   if(!res.ok){
@@ -7957,7 +7958,7 @@ function renderSet(){
   document.getElementById('setAutoSync').checked=!!D.settings.autoSync;
   document.getElementById('setWebhook').value=D.settings.webhook||'';
   document.getElementById('setApiKey').value=D.settings.apiKey||'';
-  document.getElementById('setAiModel').value=D.settings.aiModel==='gpt-6.1-sol'?'gpt-6.1-sol':'gpt-6-luna';
+  document.getElementById('setAiModel').value='gpt-6.1-sol';
   document.getElementById('aiCommentPrompt').value=D.settings.aiCommentPrompt||DEFAULT_AI_COMMENT_PROMPT;
   document.getElementById('aiCommentDays').value=String(D.settings.aiCommentDays);
   document.getElementById('aiCommentMeals').checked=D.settings.aiCommentMeals;
@@ -7980,7 +7981,7 @@ function saveSettings(){
   D.settings.autoSync=document.getElementById('setAutoSync').checked;
   D.settings.tickPattern=document.getElementById('setTick').value;
   try{setOpenAIKey(document.getElementById('setApiKey').value);}catch(error){toast(aiErrorMessage(error));return;}
-  D.settings.aiModel=document.getElementById('setAiModel').value;
+  D.settings.aiModel='gpt-6.1-sol';
   D.settings.webhook=document.getElementById('setWebhook').value.trim();
   D.settings.rate=Math.min(2,Math.max(.5,+document.getElementById('setRate').value||1));
   D.settings.voiceVolume=Math.min(1,Math.max(.1,+document.getElementById('setVoiceVolume').value||1));
