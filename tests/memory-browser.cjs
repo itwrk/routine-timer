@@ -273,7 +273,8 @@ const nodePath = require('node:path');
       const text = '長い文章。'.repeat(500);
       const plan = memoryAudioPlan(memoryParseNotation(text));
       return (
-        plan.segments.every((s) => Array.from(s.text).length <= 400) &&
+        plan.segments.length === 1 &&
+        memoryAudioChunks(text).every((s) => Array.from(s).length <= 400) &&
         plan.segments.map((s) => s.text).join('') === text
       );
     }),
@@ -290,11 +291,11 @@ const nodePath = require('node:path');
     memoryPrefs.loop = '30';
     setOpenAIKey('synthetic-memory-test-key');
     window.qaGenerationCalls = 0;
-    memoryGenerateClip = async () => {
+    memoryGenerateClip = async (text) => {
       qaGenerationCalls++;
-      return new Blob([new Uint8Array(4800)]);
+      return new Blob([new Uint8Array(4800).fill(text === '一行目' ? 1 : 2)]);
     };
-    await memoryGenerate();
+    await Promise.all([memoryGenerate(), memoryGenerate()]);
   });
   assert.equal(await page.evaluate(() => qaGenerationCalls), 2);
   const wave = await page.evaluate(async () => {
@@ -313,16 +314,28 @@ const nodePath = require('node:path');
   assert.equal(wave.loop, false);
   await page.evaluate(() => memoryGenerate());
   assert.equal(await page.evaluate(() => qaGenerationCalls), 2);
+  // Reordering rebuilds playback in the new order from the same two cached lines.
+  await page.evaluate(async () => { memoryMoveBlock(1,-1); await memoryPrepareAudio(); });
+  assert.deepEqual(await page.evaluate(()=>memoryState.prepared.plan.segments.map(s=>s.text)),['二行目','一行目']);
+  assert.equal(await page.evaluate(async()=>new Uint8Array(await memoryState.prepared.blob.arrayBuffer())[44]),2);
+  await page.evaluate(()=>memoryGenerate());assert.equal(await page.evaluate(()=>qaGenerationCalls),2);
+  await page.evaluate(async()=>{memorySetEditorHTML(memoryParseNotation('二行目\n《一行目✓》'));memoryChanged();await memoryPrepareAudio();});
+  assert.equal(await page.evaluate(()=>!!memoryState.prepared),true);
+  await page.evaluate(()=>memoryGenerate());assert.equal(await page.evaluate(()=>qaGenerationCalls),2);
+  // Only editing a line requests new audio; restore the original text for the remaining playback tests.
+  await page.evaluate(async()=>{memorySetEditorHTML(memoryParseNotation('二行目を変更\n《一行目✓》'));memoryChanged();await memoryGenerate();});
+  assert.equal(await page.evaluate(()=>qaGenerationCalls),3);
+  await page.evaluate(async()=>{memorySetEditorHTML(memoryParseNotation('一行目\n二行目'));memoryChanged();await memoryPrepareAudio();});
   // A new tone needs its own audio; restoring a saved tone reuses the old clips.
   await page.locator('#memSettings').evaluate((el) => (el.open = true));
   await page.locator('#memTone').fill('低めの声で、落ち着いて穏やかに。');
   assert.equal(await page.evaluate(() => memoryPrepareAudio()), false);
   await page.evaluate(() => memoryGenerate());
-  assert.equal(await page.evaluate(() => qaGenerationCalls), 4);
+  assert.equal(await page.evaluate(() => qaGenerationCalls), 5);
   await page.locator('#memTone').fill(initialTone);
   assert.equal(await page.evaluate(() => memoryPrepareAudio()), true);
   await page.evaluate(() => memoryGenerate());
-  assert.equal(await page.evaluate(() => qaGenerationCalls), 4);
+  assert.equal(await page.evaluate(() => qaGenerationCalls), 5);
   await page.locator('#memSettings').evaluate((el) => (el.open = false));
   // Changing gap/speed/check doesn't spend tokens, no timer drives saved playback.
   await page.evaluate(async () => {
@@ -332,7 +345,7 @@ const nodePath = require('node:path');
     memoryInvalidateAudio();
     await memoryPrepareAudio();
   });
-  assert.equal(await page.evaluate(() => qaGenerationCalls), 4);
+  assert.equal(await page.evaluate(() => qaGenerationCalls), 5);
   assert.equal(await page.locator('#memAudio').evaluate((a) => a.loop), true);
   assert.equal(await page.evaluate(() => memoryState.prepared.blob.size), 44 + 9600);
   await page.evaluate(() => memoryPlay());

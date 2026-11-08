@@ -113,6 +113,23 @@ vm.runInContext(source, ctx);
     await ctx.memoryClipId(segment, classicPrefs),
     await ctx.memoryClipId(segment, { ...classicPrefs, tone: '無視される指定' })
   );
+  // Line identity never includes its position. Duplicate/reordered/marked lines spend no new generation.
+  const originalStore=ctx.memoryStore,originalGenerator=ctx.memoryGenerateClip,lineCache=new Map(),generatedLines=[];
+  ctx.memoryStore=async(store,method,value)=>method==='get'?lineCache.get(value):(lineCache.set(value.id,value),value);
+  ctx.memoryGenerateClip=async(text)=>{generatedLines.push(text);return new Blob([new Uint8Array([1,2])]);};
+  const lineSignal=new AbortController().signal;
+  for(const text of ['一行目','二行目'])await ctx.memoryResolveLineClip({text,line:0},prefs,'synthetic-key',lineSignal);
+  for(const [line,text] of ['二行目','一行目','一行目'].entries())assert((await ctx.memoryResolveLineClip({text,line},prefs,'synthetic-key',lineSignal)).reused);
+  assert.deepEqual(generatedLines,['一行目','二行目']);
+  await ctx.memoryResolveLineClip({text:'変更した行',line:1},prefs,'synthetic-key',lineSignal);assert.equal(generatedLines.length,3);
+  assert.equal(await ctx.memoryResolveLineClip({text:'未生成の行',line:9},prefs),null,'playback never invokes generation');
+  assert.equal(generatedLines.length,3);
+  const longText='長い文章。'.repeat(180),oldChunks=ctx.memoryAudioChunks(longText);
+  assert(oldChunks.length>1);assert(oldChunks.every(text=>Array.from(text).length<=400));assert.equal(oldChunks.join(''),longText);
+  for(const text of oldChunks){const id=await ctx.memoryClipId({text},prefs);lineCache.set(id,{id,pcm:new Blob([new Uint8Array([5,6])])});}
+  const migrated=await ctx.memoryResolveLineClip({text:longText,line:20},prefs);
+  assert(migrated.reused);assert.equal(migrated.clip.pcm.size,oldChunks.length*2);assert.equal(generatedLines.length,3,'old chunks combine into a reusable line without an API request');
+  ctx.memoryStore=originalStore;ctx.memoryGenerateClip=originalGenerator;
   // A .5x player needs .5 seconds of encoded silence for one second of wall-clock gap.
   const clips = [{ pcm: new Blob([new Uint8Array([1, 2, 3, 4])]) }, { pcm: new Blob([new Uint8Array([5, 6])]) }];
   const plan = { prefs: { ...prefs, fixed: true, fixedRate: 0.5, loop: '30' }, segments: [{ line: 0 }, { line: 2 }] };

@@ -17,6 +17,13 @@ function fixture(current='',legacy=''){
   for(const staleModel of ['gpt-6-luna','unknown-model']){
     f.ctx.D.settings.aiModel=staleModel;await f.ctx.aiRequest('次');assert.equal(JSON.parse(f.requests.at(-1).options.body).model,'gpt-6.1-sol','stale settings must never send requests to another text model');
   }
+  const controller=new AbortController(),format={type:'json_schema',name:'test_map',strict:true,schema:{type:'object',properties:{},required:[],additionalProperties:false}};
+  await f.ctx.aiRequest('暗記箇所',4000,'本文は書き換えない',{format,signal:controller.signal});
+  assert.deepEqual(JSON.parse(f.requests.at(-1).options.body).text,{format});assert.equal(f.requests.at(-1).options.signal,controller.signal);
+  const originalFetch=f.ctx.fetch;
+  f.ctx.fetch=async()=>{throw new DOMException('中止','AbortError')};
+  await assert.rejects(f.ctx.aiRequest('中止',32,'',{signal:controller.signal}),e=>e.name==='AbortError');
+  f.ctx.fetch=originalFetch;
   f.ctx.fetch=async()=>({ok:false,status:401,json:async()=>({error:{message:'bad common-replacement'}})});
   await assert.rejects(f.ctx.aiRequest('x'),e=>!e.message.includes('common-replacement')&&e.message.includes('401'));
   assert(!f.ctx.aiErrorMessage(Error('common-replacement')).includes('common-replacement'));
