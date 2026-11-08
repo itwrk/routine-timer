@@ -1839,9 +1839,12 @@ body.memory-reading #scr-memory { animation: none; }
           <button class="btn btn-g" id="memStudySpeed" type="button" onclick="memoryCycleSpeed()">1.0×</button>
           <button class="btn btn-g" id="memStudyGap" type="button" onclick="memoryToggleGapPanel()" aria-expanded="false" aria-controls="memStudyGapPanel">無音 0秒</button>
           <button class="btn btn-g" id="memStudyEcho" type="button" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button>
+          <button class="btn btn-g" id="memStudyBgm" type="button" onclick="memoryToggleBgmPanel()" aria-expanded="false" aria-controls="memStudyBgmPanel">BGM OFF</button>
           <button class="btn btn-g" type="button" onclick="memoryShowAudioSettings()" aria-label="音声設定を開く">⚙</button>
+          <span id="memStudyAudioStatus" class="mem-help" role="status" aria-live="polite" style="flex-basis:100%;margin:0" hidden></span>
         </div>
         <div id="memStudyGapPanel" class="mem-gap-panel" hidden aria-label="1行後の無音時間"></div>
+        <div id="memStudyBgmPanel" class="mem-gap-panel mem-bgm-panel" hidden aria-label="暗記のBGM"></div>
         <div class="mem-head"><h2>📚 暗記</h2><span id="memSaveState" class="mem-save-state" role="status"></span><button class="btn btn-p" type="button" onclick="memoryNew()">＋ 新規</button></div>
         <div class="mem-library"><select id="memLibrary" aria-label="保存した暗記ノート" onchange="memoryOpen(this.value)"><option value="">読み込み中…</option></select><button class="btn btn-g" type="button" onclick="memorySave(true)">💾 保存</button></div>
         <input class="mem-title" id="memTitle" aria-label="暗記ノートのタイトル" placeholder="タイトル（例：英単語・試験対策）" oninput="memoryChanged()">
@@ -1888,8 +1891,9 @@ body.memory-reading #scr-memory { animation: none; }
         <p id="memDriveStatus" class="mem-help" role="status" aria-live="polite">生成した音声は共有ドライブの「97_春香／ルーチンタイマー／暗記音声」にWAVで保存します。通信に失敗しても端末に残り、上のボタンから再試行できます。</p>
       </div>
       <div class="card mem-player">
-        <div class="mem-player-buttons"><button class="btn btn-p" type="button" id="memPlay" onclick="memoryPlay()">▶ 再生</button><button class="btn btn-g" type="button" onclick="memoryStop()">⏹ 停止</button><button class="btn btn-g" type="button" id="memLoop" onclick="memoryCycleLoop()">ループ OFF</button><button class="btn btn-g" type="button" id="memSpeed" onclick="memoryCycleSpeed()">1.0×</button><button class="btn btn-g" type="button" id="memGapButton" onclick="memoryToggleGapPanel()" aria-expanded="false" aria-controls="memGapPanel">無音 0秒</button><button class="btn btn-g" type="button" id="memEcho" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button><button class="btn btn-g" type="button" onclick="document.getElementById('memSettings').open=!document.getElementById('memSettings').open">⚙ 設定</button></div>
+        <div class="mem-player-buttons"><button class="btn btn-p" type="button" id="memPlay" onclick="memoryPlay()">▶ 再生</button><button class="btn btn-g" type="button" onclick="memoryStop()">⏹ 停止</button><button class="btn btn-g" type="button" id="memLoop" onclick="memoryCycleLoop()">ループ OFF</button><button class="btn btn-g" type="button" id="memSpeed" onclick="memoryCycleSpeed()">1.0×</button><button class="btn btn-g" type="button" id="memGapButton" onclick="memoryToggleGapPanel()" aria-expanded="false" aria-controls="memGapPanel">無音 0秒</button><button class="btn btn-g" type="button" id="memEcho" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button><button class="btn btn-g" type="button" id="memBgmButton" onclick="memoryToggleBgmPanel()" aria-expanded="false" aria-controls="memBgmPanel">BGM OFF</button><button class="btn btn-g" type="button" onclick="document.getElementById('memSettings').open=!document.getElementById('memSettings').open">⚙ 設定</button></div>
         <div id="memGapPanel" class="mem-gap-panel" hidden aria-label="1行後の無音時間"></div>
+        <div id="memBgmPanel" class="mem-gap-panel mem-bgm-panel" hidden aria-label="暗記のBGM"></div>
         <audio id="memAudio" controls preload="auto" playsinline hidden aria-label="保存した暗記音声"></audio>
         <div id="memStatus" class="mem-status" role="status" aria-live="polite">未生成なら端末TTSで再生。画面オフで聞く場合は音声を生成してからSafariで再生してください。</div>
         <details class="mem-settings" id="memSettings"><summary>音声・速度・行間・エコー</summary><div class="mem-setting-grid">
@@ -3268,7 +3272,7 @@ function speakLater(text,delay){
   setTimeout(()=>{if(serial===timerVoiceState.serial)speak(text);},delay);
 }
 function speak(text,cb){
-  if(isTimerAudioMuted()){if(cb)cb();return;}
+  if(isTimerAudioMuted() || (typeof memoryState!=='undefined' && memoryState.playing)){if(cb)cb();return;}
   const serial=stopSpeech();
   if(D.settings.youTubeAudio){playSavedSpeech(text,cb,serial);return;}
   useMixedAudioSession();
@@ -8197,6 +8201,11 @@ document.addEventListener('click',e=>{
 /* ============ MEMORY START ============ */
 // Notes/images and reusable PCM clips live in IndexedDB, outside routine sync and localStorage quotas.
 const MEMORY_PREF_KEY = 'rvt_memory_prefs_v1';
+const MEMORY_BGM_TRACKS = [
+  {id:'sunset-walk',name:'Sunset Walk · やさしいメロディ',author:'kiluaboy',page:'https://opengameart.org/node/87082'},
+  {id:'calm-loop',name:'Calm Loop · ゆったりしたビート',author:'wipics',page:'https://opengameart.org/content/calm-loop'},
+  {id:'contemplation',name:'Contemplation · 静かなアンビエント',author:'Joth',page:'https://opengameart.org/content/contemplation-0'}
+];
 // Official model pages + speech/realtime instruction support checked on 2026-11-08.
 // Keep endpoint and voice compatibility together; labels/options derive from this catalog.
 const MEMORY_VOICE_SETS = {
@@ -8389,9 +8398,16 @@ const memoryState = {
   prepareSerial: 0,
   echoRestore: null,
   gapPanelOpen: false,
+  bgmPanelOpen: false,
+  bgm: {context:null,gain:null,source:null,buffer:null,bufferTrack:'',controller:null,serial:0,requested:false,loading:false,ducked:false,error:''},
   playing: false,
   ttsToken: 0,
   ttsTimer: null,
+  ttsUtterance: null,
+  ttsWatchdog: null,
+  ttsSpeaking: false,
+  ttsActive: false,
+  prepareTimer: null,
   toneTimer: null,
   generation: null,
   startingGeneration: false,
@@ -8414,7 +8430,10 @@ function memoryPrefsNormalize(raw) {
       tone: '',
       ttsVoiceURI: '',
       echo: false,
-      echoAmount: 0.3
+      echoAmount: 0.3,
+      bgmEnabled: false,
+      bgmTrack: 'sunset-walk',
+      bgmVolume: 0.2
     },
     raw || {}
   );
@@ -8429,6 +8448,9 @@ function memoryPrefsNormalize(raw) {
   p.voice = voices.includes(p.voice) ? p.voice : voices[0];
   p.ttsVoiceURI = String(p.ttsVoiceURI || '').slice(0, 500);
   p.tone = memoryNormalizeTone(p.tone);
+  p.bgmEnabled = p.bgmEnabled === true;
+  p.bgmTrack = MEMORY_BGM_TRACKS.some(track=>track.id===p.bgmTrack) ? p.bgmTrack : 'sunset-walk';
+  p.bgmVolume = Number.isFinite(Number(p.bgmVolume)) ? Math.min(.5,Math.max(0,Number(p.bgmVolume))) : .2;
   p.echo = p.echo === true;
   p.echoAmount = Number.isFinite(Number(p.echoAmount)) ? Math.min(.6, Math.max(.1, Number(p.echoAmount))) : .3;
   return p;
@@ -8442,7 +8464,9 @@ try {
 function memoryRate() {
   return memoryPrefs.fixed ? memoryPrefs.fixedRate : memoryPrefs.speed;
 }
-function memorySetStatus(text) {
+function memorySetStatus(text, showInReader = false) {
+  const reader = document.getElementById('memStudyAudioStatus');
+  if (reader) { reader.textContent = text;reader.hidden = !showInReader; }
   const el = document.getElementById('memStatus');
   if (el) el.textContent = text;
 }
@@ -8774,6 +8798,7 @@ function memoryRefreshEditor() {
   document.getElementById('memMode').textContent = memoryState.readMode ? '編集する' : '暗記を始める';
   memoryPrepareReadMarks();
   memoryRenderGapPanels();
+  memoryRenderBgmPanels();
   memorySheetLayout();
 }
 function memoryRenderBlockPanel() {
@@ -8860,11 +8885,12 @@ function memoryChanged() {
     document.getElementById('memAutoMarkUndo').hidden = true;
   }
   if (!memoryState.prepared || memoryState.prepared.plan.text !== text) {
-    if (memoryState.playing) memoryStop();
+    if (memoryState.playing) memoryStop(false);
     memoryInvalidateAudio();
     if (!memoryState.generation)
-      memorySetStatus('本文を更新しました。保存音声は再生時に確認します。未生成部分は端末TTSで再生できます。');
+      memorySetStatus('本文を更新しました。保存音声を確認します。準備前でも端末TTSは再生できます。');
   }
+  memoryQueuePrepare();
 }
 async function memorySave(explicit = false) {
   if (!memoryState.note) return false;
@@ -9663,6 +9689,7 @@ function memoryRenderControls() {
   document.getElementById('memEchoAmountLabel').textContent = Math.round(memoryPrefs.echoAmount * 100) + '%';
   document.getElementById('memGap').value = memoryPrefs.gap;
   memoryRenderGapPanels();
+  memoryRenderBgmPanels();
 }
 function memoryRenderGapPanels() {
   const seconds = String(Math.round(memoryPrefs.gap * 10) / 10);
@@ -9686,8 +9713,104 @@ function memoryRenderGapPanels() {
     button.setAttribute('aria-expanded', String(!panel.hidden));
   }
 }
+function memoryRenderBgmPanels() {
+  const bgm = memoryState.bgm, active = !!bgm.source && bgm.context?.state === 'running';
+  for (const [panelId,buttonId,reading] of [['memBgmPanel','memBgmButton',false],['memStudyBgmPanel','memStudyBgm',true]]) {
+    const panel=document.getElementById(panelId),button=document.getElementById(buttonId);
+    if (!panel.dataset.ready) {
+      panel.innerHTML='<div class="mem-gap-head"><strong>暗記のBGM</strong><button class="btn btn-g btn-sm" type="button" onclick="memoryToggleBgmPanel(false)">閉じる</button></div>'+
+        '<div class="mem-setting-grid"><label class="mem-wide">ループする曲<select data-bgm-track onchange="memoryChangeBgmTrack(this.value)">'+MEMORY_BGM_TRACKS.map(track=>`<option value="${track.id}">${esc(track.name)}</option>`).join('')+'</select></label>'+
+        '<label class="mem-wide">BGM音量 <output data-bgm-volume-label></output><input data-bgm-volume type="range" min="0" max="0.5" step="0.01" aria-label="BGM音量" oninput="memorySetBgmVolume(this.value)"></label></div>'+
+        '<button class="btn btn-g btn-sm" type="button" data-bgm-toggle onclick="memoryToggleBgm()">▶ BGMを再生</button><p class="mem-help" data-bgm-status role="status" aria-live="polite"></p>'+
+        '<p class="mem-help">選んだ曲を繰り返し流します。ナレーション中は音量を下げます。停止ボタンで音声とBGMを止め、次の再生時にBGMも再開します。画面OFF中のBGMはiOSにより止まる場合があります。</p>'+
+        '<details><summary class="mem-help">音源の出典・ライセンス</summary><p class="mem-help">同梱音源はすべてCC0です。'+MEMORY_BGM_TRACKS.map(track=>`<a href="${track.page}" target="_blank" rel="noopener">${esc(track.name.split(' · ')[0])} / ${esc(track.author)}</a>`).join('<br>')+'<br><a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></p></details>';
+      panel.dataset.ready='true';
+      panel.onkeydown=event=>{if(event.key==='Escape'){event.preventDefault();memoryToggleBgmPanel(false);button.focus({preventScroll:true});}};
+    }
+    panel.hidden=!memoryState.bgmPanelOpen||memoryState.readMode!==reading;
+    panel.querySelector('[data-bgm-track]').value=memoryPrefs.bgmTrack;
+    panel.querySelector('[data-bgm-volume]').value=memoryPrefs.bgmVolume;
+    panel.querySelector('[data-bgm-volume-label]').textContent=Math.round(memoryPrefs.bgmVolume*100)+'%';
+    const toggle=panel.querySelector('[data-bgm-toggle]');
+    toggle.textContent=bgm.requested?'■ BGMを止める':'▶ BGMを再生';toggle.setAttribute('aria-pressed',String(bgm.requested));
+    panel.querySelector('[data-bgm-status]').textContent=bgm.error||(bgm.loading?'BGMを読み込んでいます…':active?'BGMをループ再生中です。':memoryPrefs.bgmEnabled?'BGMは待機中です。再生を押すと再開します。':'BGMはOFFです。');
+    button.textContent=bgm.loading?'BGM 読込中':active?'BGM ON':memoryPrefs.bgmEnabled?'BGM 待機':'BGM OFF';
+    button.setAttribute('aria-expanded',String(!panel.hidden));
+  }
+}
+function memoryToggleBgmPanel(force) {
+  memoryState.bgmPanelOpen=typeof force==='boolean'?force:!memoryState.bgmPanelOpen;
+  if(memoryState.bgmPanelOpen){memoryState.gapPanelOpen=false;memoryRenderGapPanels();}
+  memoryRenderBgmPanels();
+  if(memoryState.bgmPanelOpen&&!memoryState.readMode)document.getElementById('memBgmPanel').scrollIntoView({block:'nearest'});
+}
+function memoryBgmDuck(ducked) {
+  const bgm=memoryState.bgm;bgm.ducked=!!ducked;
+  if(bgm.gain&&bgm.context)bgm.gain.gain.setTargetAtTime(memoryPrefs.bgmVolume*(bgm.ducked ? .4 : 1),bgm.context.currentTime,.08);
+}
+function memoryStopBgm() {
+  const bgm=memoryState.bgm;bgm.serial++;bgm.requested=false;bgm.loading=false;
+  if(bgm.controller){bgm.controller.abort();bgm.controller=null;}
+  if(bgm.source){const source=bgm.source;bgm.source=null;source.onended=null;try{source.stop();source.disconnect();}catch(e){}}
+  memoryRenderBgmPanels();
+}
+async function memoryStartBgm() {
+  const bgm=memoryState.bgm;
+  if(bgm.requested&&(bgm.source||bgm.loading)) {
+    if(bgm.context?.state!=='running')try{await bgm.context.resume();}catch(e){}
+    memoryRenderBgmPanels();return;
+  }
+  const track=MEMORY_BGM_TRACKS.find(t=>t.id===memoryPrefs.bgmTrack)||MEMORY_BGM_TRACKS[0],serial=++bgm.serial;
+  bgm.requested=true;bgm.loading=true;bgm.error='';memoryRenderBgmPanels();
+  try{
+    // Create/resume in the tap handler, before fetching. This context only plays BGM.
+    if(!document.getElementById('memAudio').paused)memoryUsePlaybackSession();else useMixedAudioSession();
+    if(!bgm.context||bgm.context.state==='closed'){
+      bgm.context=new (window.AudioContext||window.webkitAudioContext)();
+      bgm.gain=bgm.context.createGain();bgm.gain.gain.value=memoryPrefs.bgmVolume;bgm.gain.connect(bgm.context.destination);
+      bgm.context.addEventListener('statechange',()=>memoryRenderBgmPanels());
+    }
+    const context=bgm.context,resuming=Promise.race([context.resume().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,3000))]);
+    if(!bgm.buffer||bgm.bufferTrack!==track.id){
+      const controller=new AbortController();bgm.controller=controller;
+      const timeout=setTimeout(()=>controller.abort(),30000);
+      let bytes;
+      try{const response=await fetch(`assets/bgm/${track.id}.mp3`,{signal:controller.signal});if(!response.ok)throw Error('BGMを読み込めませんでした。ネット接続を確認してください。');bytes=await response.arrayBuffer();}
+      finally{clearTimeout(timeout);}
+      const buffer=await context.decodeAudioData(bytes);
+      if(serial!==bgm.serial)return;
+      bgm.buffer=buffer;bgm.bufferTrack=track.id;bgm.controller=null;
+    }
+    await resuming;if(serial!==bgm.serial)return;
+    if(context.state!=='running')throw Error('BGMを開始できませんでした。もう一度「BGMを再生」を押してください。');
+    const source=context.createBufferSource();source.buffer=bgm.buffer;source.loop=true;source.connect(bgm.gain);
+    bgm.source=source;bgm.loading=false;
+    memoryBgmDuck(memoryState.ttsSpeaking||!document.getElementById('memAudio').paused);
+    source.onended=()=>{source.disconnect();if(bgm.source===source){bgm.source=null;bgm.requested=false;memoryRenderBgmPanels();}};
+    source.start();memoryRenderBgmPanels();
+  }catch(error){
+    if(serial!==bgm.serial)return;
+    bgm.requested=false;bgm.loading=false;bgm.error=error?.name==='AbortError'?'BGMの読込を中止しました。もう一度再生してください。':memoryError(error);
+    memoryRenderBgmPanels();
+  }
+}
+function memoryToggleBgm() {
+  memoryPrefs.bgmEnabled=!memoryState.bgm.requested;memorySavePrefs();
+  if(memoryPrefs.bgmEnabled)return memoryStartBgm();
+  memoryStopBgm();
+}
+function memoryChangeBgmTrack(id) {
+  const resume=memoryState.bgm.requested;
+  memoryStopBgm();memoryPrefs.bgmTrack=MEMORY_BGM_TRACKS.some(track=>track.id===id)?id:MEMORY_BGM_TRACKS[0].id;
+  memorySavePrefs();memoryRenderBgmPanels();if(resume)return memoryStartBgm();
+}
+function memorySetBgmVolume(value) {
+  const volume=Number(value);if(!Number.isFinite(volume))return;
+  memoryPrefs.bgmVolume=Math.min(.5,Math.max(0,volume));memorySavePrefs();memoryBgmDuck(memoryState.bgm.ducked);memoryRenderBgmPanels();
+}
 function memoryToggleGapPanel(force) {
   memoryState.gapPanelOpen = typeof force === 'boolean' ? force : !memoryState.gapPanelOpen;
+  if (memoryState.gapPanelOpen) { memoryState.bgmPanelOpen = false;memoryRenderBgmPanels(); }
   memoryRenderGapPanels();
   if (memoryState.gapPanelOpen && !memoryState.readMode) document.getElementById('memGapPanel').scrollIntoView({block:'nearest'});
 }
@@ -9739,7 +9862,7 @@ function memoryEchoPosition(previous, next, position) {
 async function memoryChangePlaybackSettings(changes) {
   const audio = document.getElementById('memAudio'), pending = memoryState.echoRestore;
   const restore = Object.assign({}, pending || { previous: memoryState.prepared, position: audio.currentTime || 0, playing: !audio.paused, noteId: memoryState.note?.id });
-  memoryStop();
+  memoryStop(false);
   memoryPrefs = memoryPrefsNormalize(Object.assign({}, memoryPrefs, changes));
   memorySavePrefs();memoryRenderControls();memoryInvalidateAudio();
   memoryState.echoRestore = restore;
@@ -9766,7 +9889,7 @@ function memoryToggleEcho() { return memoryChangeEcho({ echo: !memoryPrefs.echo 
 function memoryEchoAmountChanged(value) { return memoryChangeEcho({ echoAmount: value }); }
 function memorySettingsChanged() {
   clearTimeout(memoryState.toneTimer);
-  memoryStop();
+  memoryStop(false);
   const previousVoice = document.getElementById('memVoice').value;
   memoryPrefs = memoryPrefsNormalize(
     Object.assign({}, memoryPrefs, {
@@ -9793,7 +9916,7 @@ function memorySettingsChanged() {
 function memoryToneChanged() {
   const tone = memoryNormalizeTone(document.getElementById('memTone').value);
   if (tone === memoryPrefs.tone) return;
-  memoryStop();
+  memoryStop(false);
   memoryPrefs.tone = tone;
   memorySavePrefs();
   memoryInvalidateAudio();
@@ -9814,7 +9937,7 @@ function memoryCycleSpeed() {
     toast('🔒 固定速度は設定から変更できます');
     return;
   }
-  memoryStop();
+  memoryStop(false);
   const speeds = [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2],
     next = speeds.find((s) => s > memoryPrefs.speed + 0.01);
   memoryPrefs.speed = next || 0.5;
@@ -9824,7 +9947,7 @@ function memoryCycleSpeed() {
   memoryPrepareAudio();
 }
 function memoryCycleLoop() {
-  memoryStop();
+  memoryStop(false);
   memoryPrefs.loop = { off: 'infinite', infinite: '30', 30: 'off' }[memoryPrefs.loop];
   memorySavePrefs();
   memoryRenderControls();
@@ -9978,7 +10101,7 @@ async function memoryPrepareAudio() {
     previous &&
     previous.noteId === memoryState.note.id &&
     previous.plan.text === plan.text &&
-    JSON.stringify(previous.plan.prefs) === JSON.stringify(plan.prefs)
+    memoryAudioPrefsKey(previous.plan.prefs) === memoryAudioPrefsKey(plan.prefs)
   )
     return true;
   const serial = ++memoryState.prepareSerial,
@@ -10016,6 +10139,10 @@ async function memoryPrepareAudio() {
     if (serial === memoryState.prepareSerial) memorySetStatus(memoryError(error));
     return false;
   }
+}
+function memoryAudioPrefsKey(prefs) {
+  const copy=Object.assign({},prefs);delete copy.bgmEnabled;delete copy.bgmTrack;delete copy.bgmVolume;
+  return JSON.stringify(copy);
 }
 async function memoryApiJSON(url, body, key, signal) {
   const res = await fetch(url, {
@@ -10358,84 +10485,143 @@ function memoryResume() {
         memorySetStatus('Safariで▶をもう一度タップしてください。');
     });
 }
-async function memoryPlay(forceTTS = false) {
+function memoryPlay(forceTTS = false) {
   if (!memoryState.note) return;
   forceTTS = forceTTS || memoryPrefs.engine === 'device';
   if (!forceTTS && memoryState.prepared) {
-    memoryResume();
-    return;
+    if (memoryState.ttsActive) memoryStop(false);
+    if (memoryPrefs.bgmEnabled) memoryStartBgm();
+    memoryResume();return;
   }
-  memoryStop();
-  if (!forceTTS) {
-    memorySetStatus('保存音声を確認しています…');
-    if (await memoryPrepareAudio()) {
-      memoryResume();
-      return;
-    }
-  }
+  // Speech must begin in the tap handler. Awaiting IndexedDB before the TTS
+  // fallback loses iPhone's user activation and can silently leave it queued.
   memoryPlayTTS();
 }
+function memoryTtsSegments(plan, rate) {
+  const segments = [], limit = Math.max(25, Math.min(120, Math.round(60 * rate)));
+  for (const line of plan.segments) {
+    const chars = Array.from(line.text);
+    while (chars.length) {
+      let count = Math.min(limit, chars.length);
+      if (count < chars.length) {
+        const head = chars.slice(0, count).join('');
+        const split = Math.max(...['。','！','？','、','. ',' '].map(mark => head.lastIndexOf(mark)));
+        if (split >= limit * .4) count = Array.from(head.slice(0, split + 1)).length;
+      }
+      const text = chars.splice(0, count).join('');
+      if (text.trim()) segments.push({text, line:line.line});
+    }
+  }
+  return segments;
+}
+function memoryQueuePrepare() {
+  clearTimeout(memoryState.prepareTimer);
+  memoryState.prepareTimer = setTimeout(() => {
+    if (!memoryState.playing && !memoryState.generation && !memoryState.startingGeneration) memoryPrepareAudio();
+  }, 200);
+}
 function memoryPlayTTS() {
-  if (!('speechSynthesis' in window)) {
-    memorySetStatus('端末TTS非対応です。音声生成をご利用ください。');
-    return;
+  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+    memorySetStatus('端末TTS非対応です。保存音声をご利用ください。', true);return;
   }
-  const plan = memoryAudioPlan(memoryEditorHTML());
-  if (!plan.text) {
-    memorySetStatus('テキストを入力してください');
-    return;
-  }
+  const plan = memoryAudioPlan(memoryEditorHTML()), segments = memoryTtsSegments(plan, memoryRate());
+  if (!segments.length) { memorySetStatus('テキストを入力してください。', true);return; }
+  const hadTTS = !!memoryState.ttsUtterance, synth = window.speechSynthesis;
+  memoryStop(false);
   const token = ++memoryState.ttsToken;
-  memoryState.playing = true;
+  memoryState.prepareSerial++;memoryState.ttsActive = true;memoryState.playing = true;
+  if (!hadTTS && (synth.speaking || synth.pending)) synth.cancel();
+  if (synth.paused) synth.resume();
+  useMixedAudioSession();
+  if (memoryPrefs.bgmEnabled) memoryStartBgm();
   const count = memoryPrefs.loop === 'infinite' ? Infinity : memoryPrefs.loop === '30' ? 30 : 1;
-  let round = 0,
-    index = 0;
+  let round = 0, index = 0;
+  function finish(message) {
+    clearTimeout(memoryState.ttsWatchdog);clearTimeout(memoryState.ttsTimer);
+    memoryState.ttsUtterance = null;memoryState.ttsSpeaking = false;memoryState.ttsActive = false;memoryState.playing = false;
+    memoryBgmDuck(false);memorySetStatus(message, true);
+  }
   function next() {
     if (token !== memoryState.ttsToken) return;
-    if (index >= plan.segments.length) {
-      index = 0;
-      round++;
+    if (index >= segments.length) {
+      index = 0;round++;
       if (round >= count) {
-        memoryState.playing = false;
-        memorySetStatus('端末TTSの再生が終わりました');
-        return;
+        finish('端末TTSの再生が終わりました');memoryQueuePrepare();return;
       }
     }
-    const current = plan.segments[index++],
-      u = new SpeechSynthesisUtterance(current.text);
-    u.lang = 'ja-JP';
-    u.rate = memoryRate();
-    const voices = memoryTtsVoices();
-    const voice =
-      voices.find((v) => v.voiceURI === memoryPrefs.ttsVoiceURI) || voices.find((v) => v.lang.startsWith('ja'));
-    if (voice) {
-      u.voice = voice;
-      u.lang = voice.lang;
-    }
-    u.onend = () => {
-      if (token !== memoryState.ttsToken) return;
-      const nextSegment = plan.segments[index],
-        gap = memoryPrefs.gap * (nextSegment ? Math.max(0, nextSegment.line - current.line) : 1);
+    playPart(segments[index++], 0);
+  }
+  function playPart(current, attempt) {
+    if (token !== memoryState.ttsToken) return;
+    const u = new SpeechSynthesisUtterance(current.text);
+    let started = false, settled = false;
+    const active = () => token === memoryState.ttsToken && memoryState.ttsUtterance === u && !settled;
+    const fail = message => {
+      if (!active()) return;
+      settled = true;finish(message);
+      if (synth.speaking || synth.pending) synth.cancel();
+    };
+    const retry = () => {
+      if (!active()) return;
+      settled = true;clearTimeout(memoryState.ttsWatchdog);
+      memoryState.ttsUtterance = null;memoryState.ttsSpeaking = false;memoryBgmDuck(false);
+      if (synth.speaking || synth.pending) synth.cancel();
+      if (synth.paused) synth.resume();
+      memoryState.ttsTimer = setTimeout(() => playPart(current, 1), 120);
+    };
+    const complete = () => {
+      if (!active()) return;
+      settled = true;clearTimeout(memoryState.ttsWatchdog);
+      memoryState.ttsUtterance = null;memoryState.ttsSpeaking = false;memoryBgmDuck(false);
+      const following = segments[index], gap = following ? Math.max(0, following.line - current.line) * memoryPrefs.gap : memoryPrefs.gap;
       memoryState.ttsTimer = setTimeout(next, gap * 1000);
     };
-    u.onerror = (e) => {
-      if (token === memoryState.ttsToken) {
-        memoryState.playing = false;
-        memorySetStatus('端末TTSが停止しました。再生を押すか保存音声をご利用ください。');
-      }
+    u.lang = 'ja-JP';u.rate = memoryRate();u.volume = 1;
+    const voices = memoryTtsVoices(), voice = (!attempt && voices.find(v => v.voiceURI === memoryPrefs.ttsVoiceURI)) || voices.find(v => v.lang.startsWith('ja') && v.localService) || voices.find(v => v.lang.startsWith('ja'));
+    if (voice) { u.voice = voice;u.lang = voice.lang; }
+    u.onstart = () => {
+      if (!active()) return;
+      started = true;memoryState.ttsSpeaking = true;memoryBgmDuck(true);
+      clearTimeout(memoryState.ttsWatchdog);
+      memorySetStatus('端末TTSで再生中。' + (memoryPrefs.echo ? 'エコーは保存音声にのみかかります。' : '') + '画面を表示したままご利用ください。');
+      memoryState.ttsWatchdog = setTimeout(() => {
+        if (!active()) return;
+        if (!synth.speaking && !synth.pending) complete();
+        else fail('端末TTSが停止しました。再生ボタンをもう一度押してください。');
+      }, Math.max(20000, Array.from(current.text).length / u.rate * 1200 + 5000));
     };
-    speechSynthesis.speak(u);
+    u.onend = complete;
+    u.onerror = event => {
+      if (!active()) return;
+      if (!started && !attempt && event.error !== 'not-allowed') retry();
+      else fail(event.error === 'not-allowed' ? '端末TTSを開始できません。再生ボタンをもう一度タップしてください。' : '端末TTSが中断されました。再生ボタンをもう一度押してください。');
+    };
+    // Keep a strong reference until the engine finishes; Safari can otherwise lose callbacks.
+    memoryState.ttsUtterance = u;
+    memoryState.ttsWatchdog = setTimeout(() => {
+      if (!active() || started) return;
+      if (synth.paused) synth.resume();
+      memoryState.ttsWatchdog = setTimeout(() => {
+        if (!active() || started) return;
+        if (synth.speaking && !synth.paused) u.onstart();
+        else if (!attempt) retry();
+        else fail('端末TTSを開始できませんでした。再生ボタンをもう一度タップしてください。');
+      }, 1000);
+    }, 3000);
+    try { if (synth.paused) synth.resume();synth.speak(u);if (synth.paused) synth.resume(); }
+    catch (error) { if (!attempt) retry();else fail('端末TTSを開始できませんでした。再生ボタンをもう一度押してください。'); }
   }
-  speechSynthesis.cancel();
-  memorySetStatus('端末TTSで再生中。' + (memoryPrefs.echo ? 'エコーは保存音声にのみかかります。' : '') + '画面オフで聞くには音声を生成してください。');
+  memorySetStatus('端末TTSを開始しています…', true);
   next();
 }
-function memoryStop() {
+function memoryStop(stopBgm = true) {
   memoryState.echoRestore = null;
   const wasPlaying = memoryState.playing;
   memoryState.playing = false;
   memoryState.ttsToken++;
-  clearTimeout(memoryState.ttsTimer);
+  clearTimeout(memoryState.ttsTimer);clearTimeout(memoryState.ttsWatchdog);
+  memoryState.ttsUtterance = null;memoryState.ttsSpeaking = false;memoryState.ttsActive = false;
+  memoryBgmDuck(false);if (stopBgm) memoryStopBgm();
   const a = document.getElementById('memAudio');
   if (a) {
     a.pause();
@@ -10443,7 +10629,7 @@ function memoryStop() {
       a.currentTime = 0;
     } catch (e) {}
   }
-  if ('speechSynthesis' in window && wasPlaying) speechSynthesis.cancel();
+  if ('speechSynthesis' in window && wasPlaying && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
   if (navigator.mediaSession && wasPlaying) {
     try {
       navigator.mediaSession.playbackState = 'none';
@@ -10503,19 +10689,22 @@ function memoryInitEvents() {
   const a = document.getElementById('memAudio');
   a.addEventListener('play', () => {
     memoryState.playing = true;
+    memoryBgmDuck(true);
     memoryUsePlaybackSession();
     memoryMediaSession();
     memorySetStatus('保存音声を再生中。' + (memoryState.prepared?.plan.prefs.echo ? 'エコーON。' : '') + '画面オフ中もこの音声を連続再生します。');
   });
   a.addEventListener('pause', () => {
-    memoryState.playing = false;
+    if (memoryState.ttsActive) return;
+    memoryState.playing = false;memoryBgmDuck(false);
     if (navigator.mediaSession)
       try {
         navigator.mediaSession.playbackState = 'paused';
       } catch (e) {}
   });
   a.addEventListener('ended', () => {
-    memoryState.playing = false;
+    if (memoryState.ttsActive) return;
+    memoryState.playing = false;memoryBgmDuck(false);
     memorySetStatus('保存音声の再生が終わりました');
     if (navigator.mediaSession)
       try {
