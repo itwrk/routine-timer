@@ -2392,6 +2392,18 @@ body.memory-reading #scr-memory { animation: none; }
     </div>
     <div class="card">
       <h2>🔊 音声設定</h2>
+      <div class="field"><label><input type="checkbox" id="setYouTubeAudio" onchange="setYouTubeAudio(this.checked)" style="width:auto;margin-right:6px">YouTubeと併用（保存音声）</label></div>
+      <div id="youTubeAudioTools" hidden>
+        <p class="muted">端末読み上げを使わず、保存音声をYouTubeに重ねて鳴らします。まずこのiPhoneで音声を準備してください。未保存の案内は画面だけで知らせます。</p>
+        <div class="field"><label for="youTubeAudioRoutine">音声を準備するルーチン</label><select id="youTubeAudioRoutine" onchange="refreshYouTubeAudio()"></select></div>
+        <p class="muted" id="youTubeAudioStatus" role="status" aria-live="polite"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+          <button class="btn btn-c btn-sm" type="button" id="youTubeAudioPrepare" onclick="prepareYouTubeAudio()" style="white-space:nowrap">音声を準備</button>
+          <button class="btn btn-g btn-sm" type="button" id="youTubeAudioCancel" onclick="cancelYouTubeAudio()" hidden style="white-space:nowrap">生成を中止</button>
+        </div>
+        <p class="muted">AI生成音声（Marin）。準備時は共通OpenAIキーを使い、未保存の文章をOpenAIへ送信します。生成料金が発生します。保存済みの音声は再利用し、再生は追加消費なし。音声は端末ごとに準備してください。</p>
+        <p class="muted">YouTubeを流し、下の「テスト再生」で確認してください。iPhoneの消音モードは解除し、タイマーの画面を表示して使ってください。同時再生はiOSの動作に左右されます。YouTubeの自動再開は操作できません。</p>
+      </div>
       <div class="field"><label>読み上げ速度</label><input type="number" id="setRate" min="0.5" max="2" step="0.1" onchange="saveSettings()"></div>
       <div class="field"><label>読み上げ音量</label><input type="range" id="setVoiceVolume" min="0.1" max="1" step="0.05" onchange="saveSettings()"></div>
       <div class="field"><label>SE音量</label><input type="range" id="setSfxVolume" min="0.1" max="1" step="0.05" onchange="saveSettings()"></div>
@@ -2405,8 +2417,8 @@ body.memory-reading #scr-memory { animation: none; }
           <option value="10s">10秒ごと</option>
         </select>
       </div>
-      <button class="btn btn-g btn-sm" onclick="speak('テスト読み上げです。今日もがんばろう！')">🔊 テスト再生</button>
-      <p class="muted" style="margin-top:8px">iPhoneでは一度ボタンを押した後から音声が有効になります。</p>
+      <button class="btn btn-g btn-sm" onclick="speak(TIMER_VOICE_TEST)" style="white-space:nowrap">🔊 テスト再生</button>
+      <p class="muted" style="margin-top:8px">iPhoneでは一度ボタンを押した後から音声が有効になります。モチベテキストをONにした時や文章・時間を変更した時は、保存音声を再度準備してください。</p>
     </div>
     <div class="card" id="syncSettingsCard">
       <h2>☁️ 端末間同期（スマホ⇄Mac）</h2>
@@ -2995,7 +3007,8 @@ function restoreLocalStopwatch(migrate=false){
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
   d.lifePlan=normalizeLifePlan(d.lifePlan);
-  d.settings=Object.assign({aiModel:'gpt-6-luna',rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false,timerMuted:false,calLog:'auto',aiCommentPrompt:'',aiCommentDays:30,aiCommentMeals:true,aiCommentNotion:false,notionBridgeUrl:'',notionBridgeKey:''},d.settings||{});
+  d.settings=Object.assign({aiModel:'gpt-6-luna',rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false,timerMuted:false,youTubeAudio:false,calLog:'auto',aiCommentPrompt:'',aiCommentDays:30,aiCommentMeals:true,aiCommentNotion:false,notionBridgeUrl:'',notionBridgeKey:''},d.settings||{});
+  d.settings.youTubeAudio=d.settings.youTubeAudio===true;
   d.settings.aiCommentPrompt=String(d.settings.aiCommentPrompt||'').slice(0,4000);
   d.settings.aiCommentDays=[0,7,30,90].includes(Number(d.settings.aiCommentDays))?Number(d.settings.aiCommentDays):30;
   d.settings.aiCommentMeals=!!d.settings.aiCommentMeals;
@@ -3198,9 +3211,27 @@ useMixedAudioSession();
 
 /* ============ speech ============ */
 let voiceReady=false;
+const timerVoiceState={serial:0,source:null,gain:null,pending:false,generation:null,scan:0,noticeAt:0};
+const TIMER_VOICE_PREFS={model:'gpt-realtime-2.1-mini',voice:'marin',tone:'日本語で、明るく、はっきり、短いアナウンスとして読み上げてください。'};
+const TIMER_VOICE_TEST='テスト読み上げです。今日もがんばろう！';
 function isTimerAudioMuted(){return typeof run!=='undefined'&&!!(run&&run.muted);}
+function stopSpeech(){
+  timerVoiceState.serial++;timerVoiceState.pending=false;
+  const source=timerVoiceState.source;timerVoiceState.source=null;
+  if(source){source.onended=null;try{source.stop();source.disconnect();}catch(e){}}
+  if(timerVoiceState.gain){timerVoiceState.gain.disconnect();timerVoiceState.gain=null;}
+  if('speechSynthesis' in window&&(speechSynthesis.speaking||speechSynthesis.pending))speechSynthesis.cancel();
+  return timerVoiceState.serial;
+}
+function isSpeechBusy(){return timerVoiceState.pending||!!timerVoiceState.source||('speechSynthesis' in window&&speechSynthesis.speaking);}
+function speakLater(text,delay){
+  const serial=timerVoiceState.serial;
+  setTimeout(()=>{if(serial===timerVoiceState.serial)speak(text);},delay);
+}
 function speak(text,cb){
   if(isTimerAudioMuted()){if(cb)cb();return;}
+  const serial=stopSpeech();
+  if(D.settings.youTubeAudio){playSavedSpeech(text,cb,serial);return;}
   useMixedAudioSession();
   try{
     speechSynthesis.cancel();
@@ -3208,11 +3239,165 @@ function speak(text,cb){
     u.lang='ja-JP';u.rate=D.settings.rate||1;u.volume=Math.min(1,Math.max(.1,+D.settings.voiceVolume||1));
     const vs=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('ja'));
     if(vs.length)u.voice=vs.find(v=>/Kyoko|O-?ren|Google/.test(v.name))||vs[0];
-    if(cb)u.onend=cb;
+    if(cb)u.onend=()=>{if(serial===timerVoiceState.serial)cb();};
     speechSynthesis.speak(u);voiceReady=true;
   }catch(e){if(cb)cb();}
 }
 if('speechSynthesis' in window)speechSynthesis.getVoices();
+
+// 短い句を共有して、ステップ名・時間・リピートの組み合わせごとの再生成を避ける。
+function timerVoiceParts(text){
+  return String(text||'').split(/[、。！？!?\n]+/u).map(t=>t.trim()).filter(Boolean);
+}
+async function timerVoiceClipId(text){return 'timer-voice-v1-'+await memoryClipId({text},TIMER_VOICE_PREFS);}
+function timerVoiceClipData(clip){
+  const bytes=clip?.pcmBytes;
+  return bytes instanceof ArrayBuffer&&bytes.byteLength>0&&bytes.byteLength%2===0?bytes:null;
+}
+function timerVoicePlan(routine){
+  const texts=[TIMER_VOICE_TEST,'まず10秒だけです。','実時間計測です。終わったら次へを押してください。','あと半分です！','10秒できた！','時間です！',
+    '時間です。チェックを続けるか、終了を押してください。',
+    '10分たちました。今はどうですか。必要なら追加して大丈夫です。',
+    '5分たちました。いま、どのくらい食べたい気持ちですか。','10分たちました。いま、どのくらい食べたい気持ちですか。',
+    ...Array.from({length:11},(_,i)=>String(i))];
+  if(routine){
+    texts.push(`${routine.name}。チェックリストを始めます。`,runCompletionSpeech(routine.name,true),runCompletionSpeech(routine.name,false));
+    for(const step of routine.steps){
+      const dur=step.sec>=60?`${Math.round(step.sec/60)}分`:`${step.sec}秒`;
+      texts.push(step.name,`${dur}です。`);
+      if(D.settings.moti)texts.push(...(step.texts||[]));
+    }
+    if(D.settings.moti)texts.push(...D.hitokoto);
+  }
+  return [...new Set(texts.flatMap(timerVoiceParts))];
+}
+function timerAudioContext(){
+  useMixedAudioSession();
+  AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  return AC;
+}
+function timerVoiceStatus(message){
+  const el=document.getElementById('youTubeAudioStatus');if(el)el.textContent=message;
+}
+function timerVoiceNotice(message){
+  timerVoiceStatus(message);
+  if(!timerVoiceState.noticeAt||Date.now()-timerVoiceState.noticeAt>12000){timerVoiceState.noticeAt=Date.now();toast(message);}
+}
+async function playSavedSpeech(text,cb,serial){
+  timerVoiceState.pending=true;
+  let gain;
+  try{
+    // resume はタップの同期処理内で呼ぶ。HTMLAudioElement / MediaSession は使わない。
+    const ac=timerAudioContext();
+    // Safariがユーザー操作を待ち続ける場合にも、案内の処理を終えられるようにする。
+    const resuming=ac.state==='running'?Promise.resolve():Promise.race([
+      ac.resume().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,3000))
+    ]);
+    const clips=await Promise.all(timerVoiceParts(text).map(async part=>{
+      const id=await timerVoiceClipId(part),bytes=timerVoiceClipData(await memoryStore('clips','get',id));
+      if(!bytes)throw Error('音声が未保存です。設定の「YouTubeと併用」から音声を準備してください。');
+      return bytes;
+    }));
+    // 中断済みの読み込みが、次のステップや消音後に遅れて再生されないようにする。
+    if(serial!==timerVoiceState.serial)return;
+    await resuming;
+    if(serial!==timerVoiceState.serial)return;
+    if(ac.state!=='running')throw Error('音声を再生できません。テスト再生をタップし、iPhoneの消音モードも確認してください。');
+    const gap=1920,length=clips.reduce((n,bytes)=>n+bytes.byteLength/2,0)+Math.max(0,clips.length-1)*gap;
+    if(!length){timerVoiceState.pending=false;if(cb)cb();return;}
+    const buffer=ac.createBuffer(1,length,24000),channel=buffer.getChannelData(0);
+    let offset=0;
+    for(const bytes of clips){
+      if(bytes.byteLength%2)throw Error('保存音声を読み取れません。音声を再度準備してください。');
+      const samples=new DataView(bytes);
+      for(let i=0;i<bytes.byteLength/2;i++)channel[offset++]=samples.getInt16(i*2,true)/32768;
+      offset+=gap;
+    }
+    const source=ac.createBufferSource();gain=ac.createGain();source.buffer=buffer;
+    source.playbackRate.value=Math.min(2,Math.max(.5,Number(D.settings.rate)||1));
+    gain.gain.value=Math.min(1,Math.max(.1,Number(D.settings.voiceVolume)||1));
+    source.connect(gain);gain.connect(ac.destination);
+    source.onended=()=>{
+      source.disconnect();gain.disconnect();
+      if(serial!==timerVoiceState.serial)return;
+      timerVoiceState.source=null;timerVoiceState.gain=null;if(cb)cb();
+    };
+    timerVoiceState.source=source;timerVoiceState.gain=gain;timerVoiceState.pending=false;source.start();voiceReady=true;
+  }catch(e){
+    if(serial!==timerVoiceState.serial)return;
+    timerVoiceState.pending=false;timerVoiceState.source=null;timerVoiceState.gain=null;if(gain)gain.disconnect();
+    // YouTubeを止めないため、失敗時も端末TTSへは戻さず、生成APIも自動で呼ばない。
+    timerVoiceNotice(e.message||'保存音声を再生できません。設定から音声を準備してください。');
+    if(cb)cb();
+  }
+}
+function setYouTubeAudio(enabled){
+  stopSpeech();D.settings.youTubeAudio=!!enabled;save();timerVoiceState.noticeAt=0;
+  if(!enabled)cancelYouTubeAudio();
+  renderYouTubeAudio();
+}
+function renderYouTubeAudio(){
+  document.getElementById('setYouTubeAudio').checked=!!D.settings.youTubeAudio;
+  document.getElementById('youTubeAudioTools').hidden=!D.settings.youTubeAudio;
+  const select=document.getElementById('youTubeAudioRoutine'),current=select.value;
+  select.replaceChildren();
+  for(const r of D.routines.filter(r=>r.steps.length)){
+    const option=document.createElement('option');option.value=r.id;option.textContent=`${r.emoji||'▶'} ${r.name}`;select.appendChild(option);
+  }
+  const common=document.createElement('option');common.value='';common.textContent='共通のお知らせだけ';select.appendChild(common);
+  if([...select.options].some(o=>o.value===current)&&current)select.value=current;
+  if(D.settings.youTubeAudio)refreshYouTubeAudio();
+}
+async function refreshYouTubeAudio(){
+  if(timerVoiceState.generation)return;
+  const scan=++timerVoiceState.scan,button=document.getElementById('youTubeAudioPrepare');button.disabled=true;
+  timerVoiceStatus('この端末の保存音声を確認しています…');
+  try{
+    const routine=D.routines.find(r=>r.id===document.getElementById('youTubeAudioRoutine').value),parts=timerVoicePlan(routine);
+    let missing=0,chars=0;
+    for(const text of parts){
+      const id=await timerVoiceClipId(text),clip=await memoryStore('clips','get',id);
+      if(!timerVoiceClipData(clip)){missing++;chars+=text.length;}
+    }
+    if(scan!==timerVoiceState.scan)return;
+    timerVoiceStatus(missing?`未保存 ${missing}件・${chars}文字。準備すると、この分の音声生成料金が発生します。`:'✅ このルーチンと共通のお知らせは保存済みです。YouTubeを流してテスト再生してください。');
+    button.disabled=!missing;
+  }catch(e){if(scan===timerVoiceState.scan)timerVoiceStatus(memoryError(e));}
+}
+async function prepareYouTubeAudio(){
+  if(timerVoiceState.generation)return;
+  const key=getOpenAIKey();
+  if(!key){timerVoiceStatus('下の「AI設定」に共通OpenAIキーを設定してください。');document.getElementById('setApiKey').focus();return;}
+  const routine=D.routines.find(r=>r.id===document.getElementById('youTubeAudioRoutine').value),parts=timerVoicePlan(routine);
+  if(parts.some(text=>text.length>400)){timerVoiceStatus('400文字を超える案内があります。文章を「。」で区切ってから準備してください。');return;}
+  const controller=new AbortController();timerVoiceState.generation=controller;timerVoiceState.scan++;
+  const button=document.getElementById('youTubeAudioPrepare'),cancel=document.getElementById('youTubeAudioCancel'),select=document.getElementById('youTubeAudioRoutine');
+  button.disabled=true;button.setAttribute('aria-busy','true');cancel.hidden=false;select.disabled=true;
+  let created=0,reused=0;
+  try{
+    for(let i=0;i<parts.length;i++){
+      if(controller.signal.aborted)throw new DOMException('中止','AbortError');
+      const text=parts[i],id=await timerVoiceClipId(text),clip=await memoryStore('clips','get',id);
+      if(controller.signal.aborted)throw new DOMException('中止','AbortError');
+      if(timerVoiceClipData(clip)){reused++;continue;}
+      timerVoiceStatus(`音声を準備中 ${i+1}/${parts.length}（再利用 ${reused}）。画面を開いたままお待ちください。`);
+      const timeout=setTimeout(()=>controller.abort(),150000);
+      let pcm;
+      try{pcm=await memoryGenerateClip(text,TIMER_VOICE_PREFS,key,controller.signal);}
+      finally{clearTimeout(timeout);}
+      // SafariでBlobのIndexedDB保存が拒否される場合も使えるよう、生のPCMを保存する。
+      const record={id,pcmBytes:await pcm.arrayBuffer(),createdAt:Date.now()};
+      if(!timerVoiceClipData(record))throw Error('音声データを読み取れませんでした。もう一度準備してください。');
+      await memoryStore('clips','put',record);created++;
+    }
+    timerVoiceState.noticeAt=0;
+    timerVoiceStatus(`✅ 音声を保存しました（新規 ${created}・再利用 ${reused}）。YouTubeを流して「テスト再生」を押してください。`);
+  }catch(e){timerVoiceStatus(memoryError(e));}
+  finally{
+    timerVoiceState.generation=null;button.disabled=false;button.removeAttribute('aria-busy');cancel.hidden=true;select.disabled=false;
+  }
+}
+function cancelYouTubeAudio(){if(timerVoiceState.generation)timerVoiceState.generation.abort();}
 
 /* ============ sound fx ============ */
 let AC;
@@ -3222,7 +3407,7 @@ function trackTimerTone(oscillator){
   oscillator.onended=()=>activeTimerTones.delete(oscillator);
 }
 function stopTimerAudio(){
-  if('speechSynthesis' in window)speechSynthesis.cancel();
+  stopSpeech();
   for(const tone of activeTimerTones){try{tone.stop();tone.disconnect();}catch(e){}}
   activeTimerTones.clear();
 }
@@ -5101,7 +5286,7 @@ function showMicroWin(){if(!run)return;rescueState={mode:'micro-win'};renderResc
 function continueMicroRun(){if(!run)return;document.getElementById('rescueModal').classList.remove('show');rescueState=null;run.microEntry=false;run.microEntryDone=false;run.paused=false;loadStep(true);toast('🔥 その勢い、借りていこう！');}
 function finishMicroRun(){
   if(!run)return;advanceRunClock();const stopped=run,journeyId=run.journeyId,endedAt=Date.now();
-  document.getElementById('rescueModal').classList.remove('show');rescueState=null;clearInterval(timer);timer=null;speechSynthesis.cancel();
+  document.getElementById('rescueModal').classList.remove('show');rescueState=null;clearInterval(timer);timer=null;stopSpeech();
   const runLog=addRoutineRunLog(stopped,{endedAt,status:'completed',endType:'manual',microEntry:true,done:0,total:0});
   const log=journeyId&&D.journeyLogs.find(x=>x.id===journeyId);if(log){log.tinyEndedAt=endedAt;log.updatedAt=endedAt;}save();
   logRecordToCalendar(runLog);
@@ -5353,7 +5538,7 @@ function setRunScreenActive(active){
 function setRunMode(checklist){
   if(!run||!run.ready||run.microEntry||run.source!=='normal'||run.checklistMode===checklist)return;
   run.checklistMode=checklist;
-  speechSynthesis.cancel();
+  stopSpeech();
   if(checklist){
     run.checklistDone=new Set();run.checklistSubDone=new Set();
     run.checklistMinutes=Math.min(1440,Math.max(1,Math.ceil(run.r.steps.reduce((n,s)=>n+(Number(s.sec)||0),0)/60)));
@@ -5407,7 +5592,7 @@ function renderRoutineChecklist(){
 function finishChecklistRun(){
   if(!run||!run.checklistMode)return;
   if(run.ready){stopRun();return;}
-  advanceRunClock();speechSynthesis.cancel();
+  advanceRunClock();stopSpeech();
   run.stepRecords=run.r.steps.map(s=>({stepId:s.id,name:s.name,actualSec:0,plannedSec:s.sec,mode:run.timerMode==='up'?'checklist-countup':'checklist-countdown',outcome:run.checklistDone.has(s.id)?'done':'skipped',checklist:(s.checklist||[]).map((c,k)=>({t:c.t,done:run.checklistSubDone.has(`${s.id}:${k}`)}))}));
   run.skips=run.r.steps.length-run.checklistDone.size;
   run.source='checklist';
@@ -5420,6 +5605,7 @@ function finishChecklistRun(){
 function startRun(id,options={}){
   const r=D.routines.find(x=>x.id===id);
   if(!r||!r.steps.length){toast('ステップを追加してから開始してね');return;}
+  stopSpeech();
   const startIndex=Math.min(r.steps.length-1,Math.max(0,Number(options.startIndex)||0));
   const stepRecords=(Array.isArray(options.stepRecords)?options.stepRecords:[]).map(x=>Object.assign({},x));
   const priorSkips=Number.isFinite(Number(options.skips))?Number(options.skips):stepRecords.filter(x=>x.outcome==='skipped').length;
@@ -5729,14 +5915,14 @@ function repeatCurrentSpeech(force=false){
   if(!run||run.muted||!run.repeatSpeech||run.paused||!run.repeatText)return;
   if(run.timerMode==='down'&&(run.left<=10||run.halfSpeechActive))return;
   const now=Date.now();if(!force&&now-(run.repeatLastAt||0)<12000)return;
-  if('speechSynthesis' in window&&speechSynthesis.speaking)return;
+  if(isSpeechBusy())return;
   run.repeatLastAt=now;speak(run.repeatText);
 }
 function toggleVoiceRepeat(){
   if(!run||run.muted)return;
   run.repeatSpeech=!run.repeatSpeech;D.settings.repeatSpeech=run.repeatSpeech;save();updateVoiceRepeatUi();
   if(run.repeatSpeech){run.repeatLastAt=0;repeatCurrentSpeech(true);toast('🔁 読み上げリピート ON');}
-  else{speechSynthesis.cancel();toast('🔁 読み上げリピート OFF');}
+  else{stopSpeech();toast('🔁 読み上げリピート OFF');}
 }
 function updateTimerModeUi(){
   if(!run)return;
@@ -5779,7 +5965,7 @@ function togglePause(){
   if(!run.paused){advanceRunClock();run.paused=true;}
   else{run.paused=false;run.lastTickAt=Date.now();}
   document.getElementById('btnPause').textContent=run.paused?'▶ 再開':'⏸ 一時停止';
-  if(run.paused){speechSynthesis.cancel();run.halfSpeechActive=false;}
+  if(run.paused){stopSpeech();run.halfSpeechActive=false;}
 }
 function skipStep(){
   run.skips++;D.combo=0;renderCombo();
@@ -5887,7 +6073,7 @@ function finishRun(autoCompleted=false){
   sfxJackpot();burst(true);
   const completionSpeech=runCompletionSpeech(r.name,perfect);
   if(!run.muted){
-    if(autoCompleted)setTimeout(()=>speak(completionSpeech),300);
+    if(autoCompleted)speakLater(completionSpeech,300);
     else speak(completionSpeech);
   }
   const xpGained=(run.xp||0)+bonus;
@@ -5926,14 +6112,14 @@ function closeResult(){
 function stopRun(saved=false){
   if(!run)return;
   if(run.ready){
-    clearInterval(timer);timer=null;setRunScreenActive(false);run=null;renderHome();return;
+    stopSpeech();clearInterval(timer);timer=null;setRunScreenActive(false);run=null;renderHome();return;
   }
   advanceRunClock();const stopped=run,now=Date.now();
   const runLog=addRoutineRunLog(stopped,{endedAt:now,status:'interrupted',endType:saved?'saved':'interrupted'});
   const log=normalizeJourneyLog({id:uid(),at:now,updatedAt:now,type:'stopped',choice:saved?'saved':'stopped',routineId:stopped.r.id,routineName:stopped.r.name,stepIndex:stopped.idx,stepRecords:stopped.stepRecords.map(x=>Object.assign({},x)),skips:stopped.skips,elapsedSec:Math.max(0,Math.round((now-stopped.startedAt)/1000)),parentJourneyId:stopped.journeyId||''});
   D.journeyLogs.unshift(log);save();
   logRecordToCalendar(runLog);
-  clearInterval(timer);timer=null;speechSynthesis.cancel();
+  clearInterval(timer);timer=null;stopSpeech();
   setRunScreenActive(false);run=null;renderHome();
   toast(saved?'💾 ここまでを保存しました。「続きから」で再開できます':'🌱 止まったところも保存したよ。できた分は消えない');
 }
@@ -7478,12 +7664,13 @@ function syncDataForCloud(){
   delete data.settings.autoSync;
   delete data.settings.notionBridgeUrl;
   delete data.settings.notionBridgeKey;
+  delete data.settings.youTubeAudio;
   return data;
 }
 function applySyncPullData(remote,auto){
   if(!remote||typeof remote!=='object'||Array.isArray(remote)||!Array.isArray(remote.routines))throw Error('同期データの形式を確認してください');
   const remoteNewer=(remote.updatedAt||0)>(D.updatedAt||0);
-  const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey,notionBridgeUrl:D.settings.notionBridgeUrl,notionBridgeKey:D.settings.notionBridgeKey},localActiveStopwatch=D.activeStopwatch;
+  const localSync={syncUrl:D.settings.syncUrl,syncKey:D.settings.syncKey,autoSync:D.settings.autoSync,apiKey:D.settings.apiKey,notionBridgeUrl:D.settings.notionBridgeUrl,notionBridgeKey:D.settings.notionBridgeKey,youTubeAudio:D.settings.youTubeAudio},localActiveStopwatch=D.activeStopwatch;
   // Prepare a copy; a failed browser-storage write must leave the current data intact.
   const local=JSON.parse(JSON.stringify(D)),incomingRemote=JSON.parse(JSON.stringify(remote));
   const base=auto&&!remoteNewer?local:incomingRemote,incoming=base===incomingRemote?local:incomingRemote;
@@ -7756,6 +7943,7 @@ function askCalLog(log,startMs,endMs,kind='routine'){
 
 /* ============ SETTINGS / CSV ============ */
 function renderSet(){
+  renderYouTubeAudio();
   document.getElementById('setRate').value=D.settings.rate;
   document.getElementById('setVoiceVolume').value=D.settings.voiceVolume;
   document.getElementById('setSfxVolume').value=D.settings.sfxVolume;
@@ -7797,6 +7985,7 @@ function saveSettings(){
   D.settings.rate=Math.min(2,Math.max(.5,+document.getElementById('setRate').value||1));
   D.settings.voiceVolume=Math.min(1,Math.max(.1,+document.getElementById('setVoiceVolume').value||1));
   D.settings.sfxVolume=Math.min(1,Math.max(.1,+document.getElementById('setSfxVolume').value||.45));
+  const motiChanged=D.settings.moti!==document.getElementById('setMoti').checked;
   D.settings.moti=document.getElementById('setMoti').checked;
   D.settings.sound=document.getElementById('setSound').checked;
   D.mealPrefs.defaultWaitSec=Number(document.getElementById('setMealWait').value)===600?600:300;
@@ -7809,6 +7998,7 @@ function saveSettings(){
   D.mealPrefs.askStartTiming=document.getElementById('setMealStartTiming').checked;
   D.mealPrefs.updatedAt=Date.now();
   save();
+  if(motiChanged&&D.settings.youTubeAudio)refreshYouTubeAudio();
 }
 const csvEsc=value=>{
   const s=String(value??'');

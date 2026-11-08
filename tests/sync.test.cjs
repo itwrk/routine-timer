@@ -54,7 +54,8 @@ function fixture() {
       syncUrl: 'https://sync.invalid',
       syncKey: 'synthetic-key',
       autoSync: false,
-      apiKey: 'synthetic-device-key'
+      apiKey: 'synthetic-device-key',
+      youTubeAudio: true
     },
     activeStopwatch: { id: 'synthetic-local-stopwatch', startedAt: 1 },
     simpleNotes: [{ id: 'synthetic-note', body: 'local draft' }],
@@ -136,6 +137,8 @@ function fixture() {
   assert.equal(f.ctx.D.habits.length, 13);
   assert.equal(f.ctx.D.settings.autoSync, false);
   assert.equal(f.ctx.D.settings.apiKey, 'synthetic-device-key');
+  assert.equal(f.ctx.D.settings.youTubeAudio, true, 'another device must not replace the local audio mode');
+  assert.equal(f.ctx.syncDataForCloud().settings.youTubeAudio, undefined, 'saved audio mode stays on the prepared device');
   assert.equal(f.ctx.D.activeStopwatch.id, 'synthetic-local-stopwatch');
   assert.equal(f.ctx.D.simpleNotes[0].id, 'synthetic-note');
   assert(!b.dataset.armed);

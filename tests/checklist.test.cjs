@@ -4,7 +4,7 @@ const source=html.slice(html.indexOf('/* ============ RUN ============ */'),html
 let now=100000,alarms=0;
 const elements=new Map();
 function element(){return {style:{},dataset:{},children:[],set innerHTML(value){this.children=[]},classList:{toggle(){}},append(...items){this.children.push(...items)},appendChild(item){this.children.push(item)},setAttribute(){},removeAttribute(){}};}
-const ctx={Date:class extends Date{static now(){return now}},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},createElement:element,querySelector:()=>element()},D:{xp:0,settings:{}},speechSynthesis:{cancel(){}},beep(){},speak(){alarms++},sfxDone(){},burst(){},toast(){},resetTwoTap(){},awardRewardPoints(){},claimJourneyForStart(){return ''}};
+const ctx={Date:class extends Date{static now(){return now}},document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},createElement:element,querySelector:()=>element()},D:{xp:0,settings:{}},speechSynthesis:{cancel(){}},stopSpeech(){},isSpeechBusy(){return false},beep(){},speak(){alarms++},sfxDone(){},burst(){},toast(){},resetTwoTap(){},awardRewardPoints(){},claimJourneyForStart(){return ''}};
 vm.createContext(ctx);vm.runInContext(source,ctx);
 vm.runInContext(`finishRun=()=>{finished=run;run=null};stopRun=()=>{run=null};`,ctx);
 const evaluate=s=>vm.runInContext(s,ctx);
