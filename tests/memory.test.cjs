@@ -60,6 +60,12 @@ vm.runInContext(source, ctx);
   assert.equal(normalized.loop, 'off');
   assert.equal(normalized.voice, 'marin');
   assert.equal(normalized.model, 'gpt-realtime-2.1-mini');
+  assert.equal(normalized.echo, false);
+  assert.equal(normalized.echoAmount, .3);
+  assert.equal(ctx.memoryPrefsNormalize({echo:true,echoAmount:9}).echoAmount,.6);
+  assert.equal(ctx.memoryPrefsNormalize({echo:'true',echoAmount:-1}).echo,false);
+  assert.equal(ctx.memoryPrefsNormalize({echoAmount:-1}).echoAmount,.1);
+  assert.equal(ctx.memoryPrefsNormalize({echoAmount:'bad'}).echoAmount,.3);
   const realtimeModels = [
     'gpt-realtime-2.1-mini',
     'gpt-realtime-2.1',
@@ -93,6 +99,7 @@ vm.runInContext(source, ctx);
   const segment = { text: 'テスト' };
   const id = await ctx.memoryClipId(segment, prefs);
   assert.equal(id, await ctx.memoryClipId(segment, { ...prefs, speed: 0.5, gap: 9, loop: '30' }));
+  assert.equal(id, await ctx.memoryClipId(segment, { ...prefs, echo:true,echoAmount:.6 }), 'echo is local playback processing, not another paid voice');
   assert.notEqual(id, await ctx.memoryClipId({ text: '変更' }, prefs));
   assert.notEqual(id, await ctx.memoryClipId(segment, { ...prefs, voice: 'cedar' }));
   assert.notEqual(id, await ctx.memoryClipId(segment, { ...prefs, model: 'gpt-4o-mini-tts' }));
@@ -152,6 +159,33 @@ vm.runInContext(source, ctx);
   assert.throws(() => ctx.memoryWave([{ size: 0xffffffff }], 30), /長すぎ/);
   const noGap = ctx.memoryBuildWave({ ...plan, prefs: { ...prefs, gap: 0, loop: 'infinite' } }, clips);
   assert.equal(noGap.size, 50, 'infinite uses native audio.loop on a single pass');
+  // Echo is deterministic local PCM processing; the native WAV transport stays the same.
+  assert.deepEqual(new Uint8Array(await (await ctx.memoryPlaybackWave(plan,clips)).arrayBuffer()),new Uint8Array(bytes),'echo off is byte-for-byte identical');
+  const impulseBytes=new Uint8Array(9600*2),impulseView=new DataView(impulseBytes.buffer);
+  impulseView.setInt16(0,30000,true);impulseView.setInt16(impulseBytes.length-2,30000,true);
+  const impulseClip={pcm:new Blob([impulseBytes])},echoPlan={prefs:{...prefs,gap:0,loop:'off',echo:true,echoAmount:.3},segments:[{line:0}]};
+  const echoed=await ctx.memoryPlaybackWave(echoPlan,[impulseClip]),echoBytes=await echoed.arrayBuffer(),echoView=new DataView(echoBytes),delay=5280,normalizer=1+.3+.09+.027;
+  assert.equal(echoed.size,44+(9600+delay*3)*2);
+  assert.equal(echoView.getUint32(4,true),echoed.size-8);
+  assert.equal(echoView.getUint32(40,true),echoed.size-44,'the WAV header must include every processed byte');
+  for(let tap=0;tap<4;tap++)assert.equal(echoView.getInt16(44+delay*tap*2,true),Math.round(30000*(.3**tap)/normalizer));
+  assert.equal(echoView.getInt16(echoBytes.byteLength-2,true),Math.round(30000*.027/normalizer),'the last word keeps its complete echo tail');
+  assert.deepEqual(new Uint8Array(await impulseClip.pcm.arrayBuffer()),impulseBytes,'never alter cached original audio');
+  const slowEcho=await ctx.memoryPlaybackWave({...echoPlan,prefs:{...echoPlan.prefs,fixed:true,fixedRate:.5}},[impulseClip]);
+  assert.equal(new DataView(await slowEcho.arrayBuffer()).getInt16(44+2640*2,true),Math.round(30000*.3/normalizer),'delay stays 220ms in wall-clock time at .5x');
+  const loopEchoPlan={...echoPlan,prefs:{...echoPlan.prefs,loop:'30',gap:1}},loopEcho=await ctx.memoryPlaybackWave(loopEchoPlan,[impulseClip]);
+  assert.equal(loopEcho.size,44+(9600+24000)*2*30,'existing loop gap absorbs the echo tail without extending each repetition');
+  const loopEchoArray=new Uint8Array(await loopEcho.arrayBuffer());assert.deepEqual(loopEchoArray.slice(44,44+67200),loopEchoArray.slice(44+67200,44+134400));
+  const crossing=new Uint8Array(70000*2);new DataView(crossing.buffer).setInt16(65535*2,20000,true);
+  const across=await ctx.memoryPlaybackWave(echoPlan,[{pcm:new Blob([crossing])}]);
+  assert.equal(new DataView(await across.arrayBuffer()).getInt16(44+(65535+delay)*2,true),Math.round(20000*.3/normalizer),'echo survives processing-block boundaries');
+  const fullScale=new Uint8Array(30000*2),fullView=new DataView(fullScale.buffer);for(let i=0;i<30000;i++)fullView.setInt16(i*2,32767,true);
+  const fullEcho=await ctx.memoryPlaybackWave(echoPlan,[{pcm:new Blob([fullScale])}]);
+  assert.equal(new DataView(await fullEcho.arrayBuffer()).getInt16(44+20000*2,true),32767,'overlapping taps cannot overflow PCM');
+  let currentChecks=0;await assert.rejects(ctx.memoryPlaybackWave(echoPlan,[impulseClip],()=>++currentChecks<2),e=>e.name==='AbortError');
+  const prepared=(seconds,loop='off')=>({blob:{size:44+seconds*48000},plan:{prefs:{loop}}});
+  assert.equal(ctx.memoryEchoPosition(prepared(150,'30'),prepared(169.8,'30'),12),13.32);
+  assert.equal(ctx.memoryEchoPosition(prepared(5),prepared(5.66),2),2);
   // PCM REST requests use only the intended destination and a user-supplied key.
   let requests = [];
   ctx.fetch = async (url, options) => {

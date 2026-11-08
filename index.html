@@ -1808,6 +1808,7 @@ body.memory-reading #scr-memory { animation: none; }
           <button class="btn btn-g" type="button" onclick="memoryStop()" aria-label="暗記音声を停止">■</button>
           <button class="btn btn-g" id="memStudyLoop" type="button" onclick="memoryCycleLoop()" aria-label="繰り返しを切り替え">🔁 OFF</button>
           <button class="btn btn-g" id="memStudySpeed" type="button" onclick="memoryCycleSpeed()">1.0×</button>
+          <button class="btn btn-g" id="memStudyEcho" type="button" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button>
           <button class="btn btn-g" type="button" onclick="memoryShowAudioSettings()" aria-label="音声設定を開く">⚙</button>
         </div>
         <div class="mem-head"><h2>📚 暗記</h2><span id="memSaveState" class="mem-save-state" role="status"></span><button class="btn btn-p" type="button" onclick="memoryNew()">＋ 新規</button></div>
@@ -1856,13 +1857,14 @@ body.memory-reading #scr-memory { animation: none; }
         <p id="memDriveStatus" class="mem-help" role="status" aria-live="polite">生成した音声は共有ドライブの「97_春香／ルーチンタイマー／暗記音声」にWAVで保存します。通信に失敗しても端末に残り、上のボタンから再試行できます。</p>
       </div>
       <div class="card mem-player">
-        <div class="mem-player-buttons"><button class="btn btn-p" type="button" id="memPlay" onclick="memoryPlay()">▶ 再生</button><button class="btn btn-g" type="button" onclick="memoryStop()">⏹ 停止</button><button class="btn btn-g" type="button" id="memLoop" onclick="memoryCycleLoop()">ループ OFF</button><button class="btn btn-g" type="button" id="memSpeed" onclick="memoryCycleSpeed()">1.0×</button><button class="btn btn-g" type="button" onclick="document.getElementById('memSettings').open=!document.getElementById('memSettings').open">⚙ 設定</button></div>
+        <div class="mem-player-buttons"><button class="btn btn-p" type="button" id="memPlay" onclick="memoryPlay()">▶ 再生</button><button class="btn btn-g" type="button" onclick="memoryStop()">⏹ 停止</button><button class="btn btn-g" type="button" id="memLoop" onclick="memoryCycleLoop()">ループ OFF</button><button class="btn btn-g" type="button" id="memSpeed" onclick="memoryCycleSpeed()">1.0×</button><button class="btn btn-g" type="button" id="memEcho" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button><button class="btn btn-g" type="button" onclick="document.getElementById('memSettings').open=!document.getElementById('memSettings').open">⚙ 設定</button></div>
         <audio id="memAudio" controls preload="auto" playsinline hidden aria-label="保存した暗記音声"></audio>
         <div id="memStatus" class="mem-status" role="status" aria-live="polite">未生成なら端末TTSで再生。画面オフで聞く場合は音声を生成してからSafariで再生してください。</div>
-        <details class="mem-settings" id="memSettings"><summary>音声・速度・行間</summary><div class="mem-setting-grid">
+        <details class="mem-settings" id="memSettings"><summary>音声・速度・行間・エコー</summary><div class="mem-setting-grid">
           <label>速度モード<select id="memSpeedMode" onchange="memorySettingsChanged()"><option value="cycle">ボタンで切替</option><option value="fixed">固定（🔒）</option></select></label>
           <label>固定速度（0.3〜3×）<input id="memFixedRate" type="number" min="0.3" max="3" step="0.1" value="1" onchange="memorySettingsChanged()"></label>
           <label>行間（秒・0なら間を空けず再生）<input id="memGap" type="number" min="0" max="60" step="0.1" value="0" onchange="memorySettingsChanged()"></label>
+          <label class="mem-wide">エコーの強さ <output id="memEchoAmountLabel" for="memEchoAmount">30%</output><input id="memEchoAmount" type="range" min="0.1" max="0.6" step="0.05" value="0.3" oninput="document.getElementById('memEchoAmountLabel').textContent=Math.round(this.value*100)+'%'" onchange="memoryEchoAmountChanged(this.value)"><span class="mem-help">「エコー」ボタンでON／OFF。保存音声に端末内でかけるので、再生成・追加のAPI料金は不要です。端末TTSにはかかりません。音声書出にはエコーも含み、Driveには原音を保存します。</span></label>
           <label class="mem-wide" id="memToneField" hidden>OpenAIの話し方・トーン（自由文）<textarea id="memTone" rows="3" maxlength="1000" oninput="memoryToneChanged()" placeholder="例：明るく親しみやすく。落ち着いた先生のように、語尾まで明瞭に。重要な単語は少し強調する。"></textarea><span class="mem-help">感情・抑揚・話す速さなどを指定できます。本文の言葉は変えず、読み方に反映します。空欄は標準の読み方です。</span></label>
           <label class="mem-wide">OpenAI共通キー（AI文章生成と同じ／この端末だけ）<input id="memApiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="OpenAI APIキーを入力" onchange="memorySaveKey(this.value)"></label>
         </div><p class="mem-help">モデル・声・トーンを選んで「音声生成・Drive保存」を押すと、その設定の音声を作成します。同じ設定の保存音声は再利用します。モデルにより生成料金は異なります。端末TTSはこの端末の声を選べますが、自由文のトーン指定には対応しません。</p><div class="mem-tools"><button class="btn btn-g" type="button" id="memDownloadAudio" onclick="memoryDownloadAudio()" disabled>音声を書出</button><button class="btn btn-g" type="button" onclick="memoryPlay(true)">端末TTS</button></div><p class="mem-help">AI生成音声です。生成時のみAPIを使用し、保存音声の再生は追加消費なし。音声は1行ずつ保存します。行の並べ替え・マーカー・確認状態が変わっても、本文・声・モデル・対応するトーンが同じ行は再利用します。変更した行だけ生成し、速度・行間変更にも再生成は不要です。キーは同期・書出に含みません。旧TTS APIは2027年1月6日終了予定です。音声の書出はWAVです。</p><p class="mem-help">画面オフ中は保存音声を連続再生し、ロック画面の操作にも対応します。iOSやアプリ内ブラウザにより停止する場合はSafariで開くか、音声を書き出して再生してください。端末TTSは画面オフ中の継続を保証できません。</p></details>
@@ -8353,6 +8355,7 @@ const memoryState = {
   version: 0,
   prepared: null,
   prepareSerial: 0,
+  echoRestore: null,
   playing: false,
   ttsToken: 0,
   ttsTimer: null,
@@ -8376,7 +8379,9 @@ function memoryPrefsNormalize(raw) {
       engine: 'ai',
       model: 'gpt-realtime-2.1-mini',
       tone: '',
-      ttsVoiceURI: ''
+      ttsVoiceURI: '',
+      echo: false,
+      echoAmount: 0.3
     },
     raw || {}
   );
@@ -8391,6 +8396,8 @@ function memoryPrefsNormalize(raw) {
   p.voice = voices.includes(p.voice) ? p.voice : voices[0];
   p.ttsVoiceURI = String(p.ttsVoiceURI || '').slice(0, 500);
   p.tone = memoryNormalizeTone(p.tone);
+  p.echo = p.echo === true;
+  p.echoAmount = Number.isFinite(Number(p.echoAmount)) ? Math.min(.6, Math.max(.1, Number(p.echoAmount))) : .3;
   return p;
 }
 let memoryPrefs;
@@ -9599,6 +9606,7 @@ function memoryRenderSettings() {
     memModel: memoryPrefs.model,
     memVoice: memoryPrefs.voice,
     memTone: memoryPrefs.tone,
+    memEchoAmount: memoryPrefs.echoAmount,
     memApiKey: getOpenAIKey()
   }))
     document.getElementById(id).value = value;
@@ -9610,7 +9618,51 @@ function memoryRenderControls() {
     'ループ ' + { off: 'OFF', infinite: '∞', 30: '30' }[memoryPrefs.loop];
   document.getElementById('memStudySpeed').textContent = (memoryPrefs.fixed ? '🔒 ' : '') + memoryRate().toFixed(1) + '×';
   document.getElementById('memStudyLoop').textContent = '🔁 ' + { off: 'OFF', infinite: '∞', 30: '30' }[memoryPrefs.loop];
+  for (const id of ['memEcho', 'memStudyEcho']) {
+    const button = document.getElementById(id);
+    button.textContent = 'エコー ' + (memoryPrefs.echo ? 'ON' : 'OFF');
+    button.setAttribute('aria-pressed', String(memoryPrefs.echo));
+    button.disabled = memoryPrefs.engine === 'device';
+  }
+  document.getElementById('memEchoAmount').value = memoryPrefs.echoAmount;
+  document.getElementById('memEchoAmount').disabled = !memoryPrefs.echo || memoryPrefs.engine === 'device';
+  document.getElementById('memEchoAmountLabel').textContent = Math.round(memoryPrefs.echoAmount * 100) + '%';
 }
+function memoryEchoPosition(previous, next, position) {
+  const duration = prepared => (prepared.blob.size - 44) / 48000,
+    previousPass = duration(previous) / (previous.plan.prefs.loop === '30' ? 30 : 1),
+    nextPass = duration(next) / (next.plan.prefs.loop === '30' ? 30 : 1);
+  if (!(previousPass > 0 && nextPass > 0)) return 0;
+  const round = Math.floor(position / previousPass), offset = position % previousPass;
+  return Math.min(Math.max(0, duration(next) - .001), round * nextPass + Math.min(offset, Math.max(0, nextPass - .001)));
+}
+async function memoryChangeEcho(changes) {
+  if (memoryPrefs.engine === 'device') {
+    memorySetStatus('エコーは保存音声で使えます。読み上げ方法を「OpenAIの保存音声」にしてください。');return;
+  }
+  const audio = document.getElementById('memAudio'), pending = memoryState.echoRestore;
+  const restore = Object.assign({}, pending || { previous: memoryState.prepared, position: audio.currentTime || 0, playing: !audio.paused, noteId: memoryState.note?.id });
+  memoryStop();
+  memoryPrefs = memoryPrefsNormalize(Object.assign({}, memoryPrefs, changes));
+  memorySavePrefs();memoryRenderControls();memoryInvalidateAudio();
+  memoryState.echoRestore = restore;
+  const ready = await memoryPrepareAudio();
+  if (memoryState.echoRestore !== restore) return;
+  if (!ready) { memoryState.echoRestore = null;return; }
+  const next = memoryState.prepared, serial = memoryState.prepareSerial;
+  if (!restore.previous || next.noteId !== restore.noteId || (!restore.playing && !restore.position)) { memoryState.echoRestore = null;return; }
+  const apply = () => {
+    if (memoryState.echoRestore !== restore || serial !== memoryState.prepareSerial || memoryState.note?.id !== restore.noteId) return;
+    memoryState.echoRestore = null;
+    try { audio.currentTime = memoryEchoPosition(restore.previous, next, restore.position); } catch (e) {}
+  };
+  if (audio.readyState >= 1) apply();
+  else audio.addEventListener('loadedmetadata', apply, { once: true });
+  // Safari may wait for play() before loading metadata; seek as soon as it arrives.
+  if (restore.playing) memoryResume();
+}
+function memoryToggleEcho() { return memoryChangeEcho({ echo: !memoryPrefs.echo }); }
+function memoryEchoAmountChanged(value) { return memoryChangeEcho({ echoAmount: value }); }
 function memorySettingsChanged() {
   clearTimeout(memoryState.toneTimer);
   memoryStop();
@@ -9679,6 +9731,7 @@ function memoryCycleLoop() {
   memoryPrepareAudio();
 }
 function memoryInvalidateAudio() {
+  memoryState.echoRestore = null;
   memoryState.prepareSerial++;
   if (memoryState.prepared) {
     URL.revokeObjectURL(memoryState.prepared.url);
@@ -9768,7 +9821,7 @@ function memoryWave(parts, repeat = 1) {
   for (let i = 0; i < repeat; i++) all.push(...parts);
   return new Blob(all, { type: 'audio/wav' });
 }
-function memoryBuildWave(plan, clips) {
+function memoryWaveParts(plan, clips) {
   const rate = plan.prefs.fixed ? plan.prefs.fixedRate : plan.prefs.speed,
     parts = [];
   for (let i = 0; i < clips.length; i++) {
@@ -9780,7 +9833,41 @@ function memoryBuildWave(plan, clips) {
   }
   if (plan.prefs.loop !== 'off' && plan.prefs.gap > 0)
     parts.push(new Blob([new Uint8Array(Math.round(24000 * plan.prefs.gap * rate) * 2)]));
-  return memoryWave(parts, plan.prefs.loop === '30' ? 30 : 1);
+  return parts;
+}
+function memoryBuildWave(plan, clips) {
+  return memoryWave(memoryWaveParts(plan, clips), plan.prefs.loop === '30' ? 30 : 1);
+}
+async function memoryPlaybackWave(plan, clips, isCurrent = () => true) {
+  if (!plan.prefs.echo) return memoryBuildWave(plan, clips);
+  // Bake a short, fading echo into playback PCM so the existing native <audio>
+  // player can keep working with the screen off. Original cached clips stay dry.
+  const source = new Blob(memoryWaveParts(plan, clips)), frames = source.size / 2;
+  if (!Number.isInteger(frames)) throw Error('保存音声を読み取れません。');
+  if (!frames) return memoryBuildWave(plan, clips);
+  const prefs = memoryPrefsNormalize(plan.prefs), rate = prefs.fixed ? prefs.fixedRate : prefs.speed,
+    delay = Math.max(1, Math.round(24000 * .22 * rate)), weights = [1, prefs.echoAmount, prefs.echoAmount ** 2, prefs.echoAmount ** 3],
+    gain = 1 / weights.reduce((a, b) => a + b, 0),
+    endGap = prefs.loop !== 'off' ? Math.round(24000 * prefs.gap * rate) : 0,
+    outputFrames = frames + Math.max(0, delay * 3 - endGap), repeat = prefs.loop === '30' ? 30 : 1, parts = [];
+  if (outputFrames * 2 * repeat > 0xffffffff - 36) throw Error('音声が長すぎます。ノートを分けるか、ループをOFFにしてください');
+  for (let start = 0; start < outputFrames; start += 65536) {
+    if (!isCurrent()) throw new DOMException('中止', 'AbortError');
+    const count = Math.min(65536, outputFrames - start), from = Math.max(0, start - delay * 3), to = Math.min(frames, start + count),
+      input = new DataView(await source.slice(from * 2, to * 2).arrayBuffer()), bytes = new Uint8Array(count * 2), output = new DataView(bytes.buffer);
+    if (!isCurrent()) throw new DOMException('中止', 'AbortError');
+    for (let i = 0; i < count; i++) {
+      let sample = 0;
+      for (let tap = 0; tap < weights.length; tap++) {
+        const frame = start + i - delay * tap;
+        if (frame >= from && frame < to) sample += input.getInt16((frame - from) * 2, true) * weights[tap];
+      }
+      output.setInt16(i * 2, Math.max(-32768, Math.min(32767, Math.round(sample * gain))), true);
+    }
+    parts.push(new Blob([bytes]));
+  }
+  if (!isCurrent()) throw new DOMException('中止', 'AbortError');
+  return memoryWave(parts, repeat);
 }
 async function memoryPrepareAudio() {
   if (!memoryState.note || memoryState.generation) return false;
@@ -9809,7 +9896,8 @@ async function memoryPrepareAudio() {
       }
       clips.push(resolved.clip);
     }
-    const blob = memoryBuildWave(plan, clips);
+    if (plan.prefs.echo) memorySetStatus('保存音声にエコーをかけています…（端末内で処理・API消費なし）');
+    const blob = await memoryPlaybackWave(plan, clips, () => serial === memoryState.prepareSerial);
     if (serial !== memoryState.prepareSerial) return false;
     if (memoryState.prepared) URL.revokeObjectURL(memoryState.prepared.url);
     const url = URL.createObjectURL(blob);
@@ -9821,7 +9909,7 @@ async function memoryPrepareAudio() {
     audio.playbackRate = memoryRate();
     audio.defaultPlaybackRate = memoryRate();
     document.getElementById('memDownloadAudio').disabled = false;
-    memorySetStatus('保存音声を準備しました。▶ で再生してから画面をオフにできます。追加のAPI消費はありません。');
+    memorySetStatus('保存音声を準備しました。' + (plan.prefs.echo ? `エコーON（強さ${Math.round(plan.prefs.echoAmount * 100)}%）。` : '') + '▶ で再生してから画面をオフにできます。追加のAPI消費はありません。');
     return true;
   } catch (error) {
     if (serial === memoryState.prepareSerial) memorySetStatus(memoryError(error));
@@ -10154,15 +10242,20 @@ function memoryMediaPosition() {
 }
 function memoryResume() {
   const a = document.getElementById('memAudio');
-  if (!a.getAttribute('src')) return;
+  const source = a.getAttribute('src');
+  if (!source) return;
   memoryUsePlaybackSession();
   a.playbackRate = memoryRate();
   a.play()
     .then(() => {
+      if (a.paused || a.getAttribute('src') !== source) return;
       memoryState.playing = true;
       memoryMediaSession();
     })
-    .catch(() => memorySetStatus('Safariで▶をもう一度タップしてください。'));
+    .catch(error => {
+      if (error.name !== 'AbortError' && a.paused && a.getAttribute('src') === source)
+        memorySetStatus('Safariで▶をもう一度タップしてください。');
+    });
 }
 async function memoryPlay(forceTTS = false) {
   if (!memoryState.note) return;
@@ -10234,10 +10327,11 @@ function memoryPlayTTS() {
     speechSynthesis.speak(u);
   }
   speechSynthesis.cancel();
-  memorySetStatus('端末TTSで再生中。画面オフで聞くには音声を生成してください。');
+  memorySetStatus('端末TTSで再生中。' + (memoryPrefs.echo ? 'エコーは保存音声にのみかかります。' : '') + '画面オフで聞くには音声を生成してください。');
   next();
 }
 function memoryStop() {
+  memoryState.echoRestore = null;
   const wasPlaying = memoryState.playing;
   memoryState.playing = false;
   memoryState.ttsToken++;
@@ -10311,7 +10405,7 @@ function memoryInitEvents() {
     memoryState.playing = true;
     memoryUsePlaybackSession();
     memoryMediaSession();
-    memorySetStatus('保存音声を再生中。画面オフ中もこの音声を連続再生します。');
+    memorySetStatus('保存音声を再生中。' + (memoryState.prepared?.plan.prefs.echo ? 'エコーON。' : '') + '画面オフ中もこの音声を連続再生します。');
   });
   a.addEventListener('pause', () => {
     memoryState.playing = false;
