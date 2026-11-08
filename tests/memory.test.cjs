@@ -186,6 +186,16 @@ vm.runInContext(source, ctx);
   const prepared=(seconds,loop='off')=>({blob:{size:44+seconds*48000},plan:{prefs:{loop}}});
   assert.equal(ctx.memoryEchoPosition(prepared(150,'30'),prepared(169.8,'30'),12),13.32);
   assert.equal(ctx.memoryEchoPosition(prepared(5),prepared(5.66),2),2);
+  // Changing a line's pause keeps the same spoken word, including later repetitions.
+  const gapClips=[{pcm:{size:48000*2}},{pcm:{size:48000*3}}],gapPlan={prefs:{speed:1,fixed:false,gap:1,loop:'off'},segments:[{line:0},{line:1}]};
+  const oldTimeline=ctx.memoryWaveTimeline(gapPlan,gapClips),newTimeline=ctx.memoryWaveTimeline({...gapPlan,prefs:{...gapPlan.prefs,gap:5}},gapClips);
+  assert.deepEqual(JSON.parse(JSON.stringify(oldTimeline)),[{start:0,end:2},{start:3,end:6}]);
+  const oldGap={...prepared(6),timeline:oldTimeline},newGap={...prepared(10),timeline:newTimeline};
+  assert.equal(ctx.memoryEchoPosition(oldGap,newGap,4.25),8.25,'preserve the word in line two after the gap grows');
+  assert.equal(ctx.memoryEchoPosition(oldGap,newGap,2.5),2.5,'preserve elapsed silence when extending a gap');
+  const noPause={...prepared(5),timeline:ctx.memoryWaveTimeline({...gapPlan,prefs:{...gapPlan.prefs,gap:0}},gapClips)};
+  assert.equal(ctx.memoryEchoPosition(oldGap,noPause,2.5),2,'a shortened gap advances to the next line');
+  assert.equal(ctx.memoryEchoPosition({...prepared(180,'30'),timeline:oldTimeline},{...prepared(300,'30'),timeline:newTimeline},16.25),28.25,'preserve both repetition and word');
   // PCM REST requests use only the intended destination and a user-supplied key.
   let requests = [];
   ctx.fetch = async (url, options) => {

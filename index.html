@@ -1511,7 +1511,7 @@ body.memory-reading #scr-memory { animation: none; }
   border-radius: 0;
   background: var(--bg);
 }
-.mem-reading .mem-document > :not(.mem-study-toolbar):not(.mem-stage):not(.mem-study-sheet-toggle) {
+.mem-reading .mem-document > :not(.mem-study-toolbar):not(.mem-stage):not(.mem-study-sheet-toggle):not(.mem-gap-panel) {
   display: none !important;
 }
 .mem-reading .mem-study-toolbar {
@@ -1607,6 +1607,35 @@ body.memory-reading #scr-memory { animation: none; }
 }
 .mem-settings {
   margin: 8px 0;
+}
+.mem-gap-panel {
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.mem-gap-head,.mem-gap-presets,.mem-gap-adjust {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.mem-gap-head { margin-bottom: 8px; font-size: calc(12px * var(--text-scale)); }
+.mem-gap-head strong { flex: 1; }
+.mem-gap-presets { margin-bottom: 8px; }
+.mem-gap-presets button[aria-pressed="true"] { background: var(--purple); color: #fff; }
+.mem-gap-adjust label { display: flex; align-items: center; gap: 5px; font-size: calc(12px * var(--text-scale)); }
+.mem-gap-adjust input { width: 76px; min-width: 0; padding: 7px; font-size: 16px; }
+.mem-reading .mem-gap-panel {
+  flex-shrink: 0;
+  max-height: min(38dvh,260px);
+  overflow-y: auto;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 10px 12px;
 }
 .mem-settings summary,
 .mem-notation summary {
@@ -1808,9 +1837,11 @@ body.memory-reading #scr-memory { animation: none; }
           <button class="btn btn-g" type="button" onclick="memoryStop()" aria-label="暗記音声を停止">■</button>
           <button class="btn btn-g" id="memStudyLoop" type="button" onclick="memoryCycleLoop()" aria-label="繰り返しを切り替え">🔁 OFF</button>
           <button class="btn btn-g" id="memStudySpeed" type="button" onclick="memoryCycleSpeed()">1.0×</button>
+          <button class="btn btn-g" id="memStudyGap" type="button" onclick="memoryToggleGapPanel()" aria-expanded="false" aria-controls="memStudyGapPanel">無音 0秒</button>
           <button class="btn btn-g" id="memStudyEcho" type="button" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button>
           <button class="btn btn-g" type="button" onclick="memoryShowAudioSettings()" aria-label="音声設定を開く">⚙</button>
         </div>
+        <div id="memStudyGapPanel" class="mem-gap-panel" hidden aria-label="1行後の無音時間"></div>
         <div class="mem-head"><h2>📚 暗記</h2><span id="memSaveState" class="mem-save-state" role="status"></span><button class="btn btn-p" type="button" onclick="memoryNew()">＋ 新規</button></div>
         <div class="mem-library"><select id="memLibrary" aria-label="保存した暗記ノート" onchange="memoryOpen(this.value)"><option value="">読み込み中…</option></select><button class="btn btn-g" type="button" onclick="memorySave(true)">💾 保存</button></div>
         <input class="mem-title" id="memTitle" aria-label="暗記ノートのタイトル" placeholder="タイトル（例：英単語・試験対策）" oninput="memoryChanged()">
@@ -1857,7 +1888,8 @@ body.memory-reading #scr-memory { animation: none; }
         <p id="memDriveStatus" class="mem-help" role="status" aria-live="polite">生成した音声は共有ドライブの「97_春香／ルーチンタイマー／暗記音声」にWAVで保存します。通信に失敗しても端末に残り、上のボタンから再試行できます。</p>
       </div>
       <div class="card mem-player">
-        <div class="mem-player-buttons"><button class="btn btn-p" type="button" id="memPlay" onclick="memoryPlay()">▶ 再生</button><button class="btn btn-g" type="button" onclick="memoryStop()">⏹ 停止</button><button class="btn btn-g" type="button" id="memLoop" onclick="memoryCycleLoop()">ループ OFF</button><button class="btn btn-g" type="button" id="memSpeed" onclick="memoryCycleSpeed()">1.0×</button><button class="btn btn-g" type="button" id="memEcho" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button><button class="btn btn-g" type="button" onclick="document.getElementById('memSettings').open=!document.getElementById('memSettings').open">⚙ 設定</button></div>
+        <div class="mem-player-buttons"><button class="btn btn-p" type="button" id="memPlay" onclick="memoryPlay()">▶ 再生</button><button class="btn btn-g" type="button" onclick="memoryStop()">⏹ 停止</button><button class="btn btn-g" type="button" id="memLoop" onclick="memoryCycleLoop()">ループ OFF</button><button class="btn btn-g" type="button" id="memSpeed" onclick="memoryCycleSpeed()">1.0×</button><button class="btn btn-g" type="button" id="memGapButton" onclick="memoryToggleGapPanel()" aria-expanded="false" aria-controls="memGapPanel">無音 0秒</button><button class="btn btn-g" type="button" id="memEcho" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button><button class="btn btn-g" type="button" onclick="document.getElementById('memSettings').open=!document.getElementById('memSettings').open">⚙ 設定</button></div>
+        <div id="memGapPanel" class="mem-gap-panel" hidden aria-label="1行後の無音時間"></div>
         <audio id="memAudio" controls preload="auto" playsinline hidden aria-label="保存した暗記音声"></audio>
         <div id="memStatus" class="mem-status" role="status" aria-live="polite">未生成なら端末TTSで再生。画面オフで聞く場合は音声を生成してからSafariで再生してください。</div>
         <details class="mem-settings" id="memSettings"><summary>音声・速度・行間・エコー</summary><div class="mem-setting-grid">
@@ -8356,6 +8388,7 @@ const memoryState = {
   prepared: null,
   prepareSerial: 0,
   echoRestore: null,
+  gapPanelOpen: false,
   playing: false,
   ttsToken: 0,
   ttsTimer: null,
@@ -8740,6 +8773,7 @@ function memoryRefreshEditor() {
     editor.classList.toggle('mem-read-mode', memoryState.readMode);
   document.getElementById('memMode').textContent = memoryState.readMode ? '編集する' : '暗記を始める';
   memoryPrepareReadMarks();
+  memoryRenderGapPanels();
   memorySheetLayout();
 }
 function memoryRenderBlockPanel() {
@@ -9627,6 +9661,60 @@ function memoryRenderControls() {
   document.getElementById('memEchoAmount').value = memoryPrefs.echoAmount;
   document.getElementById('memEchoAmount').disabled = !memoryPrefs.echo || memoryPrefs.engine === 'device';
   document.getElementById('memEchoAmountLabel').textContent = Math.round(memoryPrefs.echoAmount * 100) + '%';
+  document.getElementById('memGap').value = memoryPrefs.gap;
+  memoryRenderGapPanels();
+}
+function memoryRenderGapPanels() {
+  const seconds = String(Math.round(memoryPrefs.gap * 10) / 10);
+  for (const [panelId, buttonId, reading] of [['memGapPanel','memGapButton',false],['memStudyGapPanel','memStudyGap',true]]) {
+    const panel = document.getElementById(panelId), button = document.getElementById(buttonId);
+    if (!panel.dataset.ready) {
+      panel.innerHTML = '<div class="mem-gap-head"><strong>1行後の無音時間</strong><button class="btn btn-g btn-sm" type="button" onclick="memoryToggleGapPanel(false)">閉じる</button></div>' +
+        '<div class="mem-gap-presets">' + [0,.5,1,2,3,5,10].map(value => `<button class="btn btn-g btn-sm" type="button" data-gap-preset="${value}" onclick="memorySetGap(${value})" aria-pressed="false">${value}秒</button>`).join('') + '</div>' +
+        '<div class="mem-gap-adjust"><button class="btn btn-g btn-sm" type="button" onclick="memoryAdjustGap(-.5)" aria-label="無音時間を0.5秒短くする">−0.5秒</button><label>無音 <input type="number" min="0" max="60" step="0.1" inputmode="decimal" aria-label="1行後の無音時間（秒）" onchange="memorySetGap(this.value)">秒</label><button class="btn btn-g btn-sm" type="button" onclick="memoryAdjustGap(.5)" aria-label="無音時間を0.5秒長くする">＋0.5秒</button></div>' +
+        '<p class="mem-help">1行を読み終えたあとの待ち時間です。空行があると、その行数分だけ長くなります。音声の再生成・追加のAPI料金は不要です。</p>';
+      panel.onkeydown = event => {
+        if (event.key === 'Escape') { event.preventDefault();memoryToggleGapPanel(false);button.focus({preventScroll:true}); }
+      };
+      panel.dataset.ready = 'true';
+    }
+    panel.hidden = !memoryState.gapPanelOpen || memoryState.readMode !== reading;
+    panel.querySelector('input').value = memoryPrefs.gap;
+    for (const preset of panel.querySelectorAll('[data-gap-preset]')) preset.setAttribute('aria-pressed',String(Number(preset.dataset.gapPreset) === memoryPrefs.gap));
+    button.textContent = `無音 ${seconds}秒`;
+    button.setAttribute('aria-label', `1行後の無音時間 ${seconds}秒を変更する`);
+    button.setAttribute('aria-expanded', String(!panel.hidden));
+  }
+}
+function memoryToggleGapPanel(force) {
+  memoryState.gapPanelOpen = typeof force === 'boolean' ? force : !memoryState.gapPanelOpen;
+  memoryRenderGapPanels();
+  if (memoryState.gapPanelOpen && !memoryState.readMode) document.getElementById('memGapPanel').scrollIntoView({block:'nearest'});
+}
+async function memorySetGap(value) {
+  const number = Number(value);
+  if (String(value).trim() === '' || !Number.isFinite(number) || number < 0 || number > 60) {
+    memoryRenderGapPanels();toast('無音時間は0〜60秒で入力してください。');return;
+  }
+  const gap = Math.round(number * 10) / 10;
+  if (gap === memoryPrefs.gap) { memoryRenderControls();return; }
+  if (memoryPrefs.engine === 'device') {
+    memoryPrefs.gap = gap;memorySavePrefs();memoryRenderControls();
+    memorySetStatus(`1行後の無音を${gap}秒にしました。端末TTSは次の読み上げ区切りから反映します。`);
+    return;
+  }
+  return memoryChangePlaybackSettings({gap});
+}
+function memoryAdjustGap(amount) { return memorySetGap(Math.min(60, Math.max(0, memoryPrefs.gap + amount))); }
+function memoryWaveTimeline(plan, clips) {
+  const rate = plan.prefs.fixed ? plan.prefs.fixedRate : plan.prefs.speed;
+  let frames = 0;
+  return clips.map((clip, i) => {
+    if (i) frames += Math.round(24000 * plan.prefs.gap * rate * (plan.segments[i].line - plan.segments[i-1].line));
+    const start = frames / 24000;
+    frames += clip.pcm.size / 2;
+    return {start, end:frames / 24000};
+  });
 }
 function memoryEchoPosition(previous, next, position) {
   const duration = prepared => (prepared.blob.size - 44) / 48000,
@@ -9634,12 +9722,21 @@ function memoryEchoPosition(previous, next, position) {
     nextPass = duration(next) / (next.plan.prefs.loop === '30' ? 30 : 1);
   if (!(previousPass > 0 && nextPass > 0)) return 0;
   const round = Math.floor(position / previousPass), offset = position % previousPass;
-  return Math.min(Math.max(0, duration(next) - .001), round * nextPass + Math.min(offset, Math.max(0, nextPass - .001)));
-}
-async function memoryChangeEcho(changes) {
-  if (memoryPrefs.engine === 'device') {
-    memorySetStatus('エコーは保存音声で使えます。読み上げ方法を「OpenAIの保存音声」にしてください。');return;
+  let mapped = Math.min(offset, Math.max(0, nextPass - .001));
+  const oldLines = previous.timeline, newLines = next.timeline;
+  if (oldLines?.length && oldLines.length === newLines?.length) {
+    const index = oldLines.findIndex(line => offset <= line.end);
+    if (index >= 0) {
+      if (offset >= oldLines[index].start) mapped = newLines[index].start + offset - oldLines[index].start;
+      else {
+        const oldGapStart = index ? oldLines[index-1].end : 0, newGapStart = index ? newLines[index-1].end : 0;
+        mapped = newGapStart + Math.min(offset-oldGapStart, newLines[index].start-newGapStart);
+      }
+    } else mapped = newLines.at(-1).end + Math.min(offset-oldLines.at(-1).end, Math.max(0,nextPass-newLines.at(-1).end));
   }
+  return Math.min(Math.max(0, duration(next) - .001), round * nextPass + mapped);
+}
+async function memoryChangePlaybackSettings(changes) {
   const audio = document.getElementById('memAudio'), pending = memoryState.echoRestore;
   const restore = Object.assign({}, pending || { previous: memoryState.prepared, position: audio.currentTime || 0, playing: !audio.paused, noteId: memoryState.note?.id });
   memoryStop();
@@ -9660,6 +9757,10 @@ async function memoryChangeEcho(changes) {
   else audio.addEventListener('loadedmetadata', apply, { once: true });
   // Safari may wait for play() before loading metadata; seek as soon as it arrives.
   if (restore.playing) memoryResume();
+}
+function memoryChangeEcho(changes) {
+  if (memoryPrefs.engine === 'device') { memorySetStatus('エコーは保存音声で使えます。読み上げ方法を「OpenAIの保存音声」にしてください。');return; }
+  return memoryChangePlaybackSettings(changes);
 }
 function memoryToggleEcho() { return memoryChangeEcho({ echo: !memoryPrefs.echo }); }
 function memoryEchoAmountChanged(value) { return memoryChangeEcho({ echoAmount: value }); }
@@ -9901,7 +10002,7 @@ async function memoryPrepareAudio() {
     if (serial !== memoryState.prepareSerial) return false;
     if (memoryState.prepared) URL.revokeObjectURL(memoryState.prepared.url);
     const url = URL.createObjectURL(blob);
-    memoryState.prepared = { url, blob, plan, noteId: memoryState.note.id };
+    memoryState.prepared = { url, blob, plan, timeline: memoryWaveTimeline(plan, clips), noteId: memoryState.note.id };
     const audio = document.getElementById('memAudio');
     audio.src = url;
     audio.hidden = false;
@@ -10284,7 +10385,6 @@ function memoryPlayTTS() {
     memorySetStatus('テキストを入力してください');
     return;
   }
-  if (plan.prefs.gap === 0) plan.segments = [{ text: plan.text, line: 0 }];
   const token = ++memoryState.ttsToken;
   memoryState.playing = true;
   const count = memoryPrefs.loop === 'infinite' ? Infinity : memoryPrefs.loop === '30' ? 30 : 1;
@@ -10315,7 +10415,7 @@ function memoryPlayTTS() {
     u.onend = () => {
       if (token !== memoryState.ttsToken) return;
       const nextSegment = plan.segments[index],
-        gap = plan.prefs.gap * (nextSegment ? Math.max(0, nextSegment.line - current.line) : 1);
+        gap = memoryPrefs.gap * (nextSegment ? Math.max(0, nextSegment.line - current.line) : 1);
       memoryState.ttsTimer = setTimeout(next, gap * 1000);
     };
     u.onerror = (e) => {
