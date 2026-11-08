@@ -9670,8 +9670,8 @@ function memoryRenderGapPanels() {
     const panel = document.getElementById(panelId), button = document.getElementById(buttonId);
     if (!panel.dataset.ready) {
       panel.innerHTML = '<div class="mem-gap-head"><strong>1行後の無音時間</strong><button class="btn btn-g btn-sm" type="button" onclick="memoryToggleGapPanel(false)">閉じる</button></div>' +
-        '<div class="mem-gap-presets">' + [0,.5,1,2,3,5,10].map(value => `<button class="btn btn-g btn-sm" type="button" data-gap-preset="${value}" onclick="memorySetGap(${value})" aria-pressed="false">${value}秒</button>`).join('') + '</div>' +
-        '<div class="mem-gap-adjust"><button class="btn btn-g btn-sm" type="button" onclick="memoryAdjustGap(-.5)" aria-label="無音時間を0.5秒短くする">−0.5秒</button><label>無音 <input type="number" min="0" max="60" step="0.1" inputmode="decimal" aria-label="1行後の無音時間（秒）" onchange="memorySetGap(this.value)">秒</label><button class="btn btn-g btn-sm" type="button" onclick="memoryAdjustGap(.5)" aria-label="無音時間を0.5秒長くする">＋0.5秒</button></div>' +
+        '<div class="mem-gap-presets">' + [0,1,2,3,5,10].map(value => `<button class="btn btn-g btn-sm" type="button" data-gap-preset="${value}" onclick="memorySetGap(${value})" aria-pressed="false">${value}秒</button>`).join('') + '</div>' +
+        '<div class="mem-gap-adjust"><button class="btn btn-g btn-sm" type="button" onclick="memoryAdjustGap(-1)" aria-label="無音時間を1秒短くする">−1秒</button><label>無音 <input type="number" min="0" max="60" step="0.1" inputmode="decimal" aria-label="1行後の無音時間（秒）" onchange="memorySetGap(this.value)">秒</label><button class="btn btn-g btn-sm" type="button" onclick="memoryAdjustGap(1)" aria-label="無音時間を1秒長くする">＋1秒</button></div>' +
         '<p class="mem-help">1行を読み終えたあとの待ち時間です。空行があると、その行数分だけ長くなります。音声の再生成・追加のAPI料金は不要です。</p>';
       panel.onkeydown = event => {
         if (event.key === 'Escape') { event.preventDefault();memoryToggleGapPanel(false);button.focus({preventScroll:true}); }

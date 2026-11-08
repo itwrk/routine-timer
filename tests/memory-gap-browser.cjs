@@ -28,12 +28,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),http=require('n
       await page.waitForFunction(()=>memoryState.prepared?.plan.prefs.gap===3&&memoryState.echoRestore===null);
       assert.equal(await page.locator('#memGapButton').innerText(),'無音 3秒');assert.equal(await page.locator('#memGap').inputValue(),'3');
       assert.equal(await page.evaluate(()=>memoryState.prepared.blob.size),44+48000*7);
-      await page.locator('#memGapPanel [aria-label="無音時間を0.5秒長くする"]').click();await page.waitForFunction(()=>memoryState.prepared?.plan.prefs.gap===3.5);
-      await page.locator('#memGapPanel [aria-label="無音時間を0.5秒短くする"]').click();await page.waitForFunction(()=>memoryState.prepared?.plan.prefs.gap===3);
+      assert.equal(await page.locator('#memGapPanel [data-gap-preset="0.5"]').count(),0);
+      await page.locator('#memGapPanel [aria-label="無音時間を1秒長くする"]').click();await page.waitForFunction(()=>memoryState.prepared?.plan.prefs.gap===4);
+      await page.locator('#memGapPanel [aria-label="無音時間を1秒短くする"]').click();await page.waitForFunction(()=>memoryState.prepared?.plan.prefs.gap===3);
       await page.locator('#memGapPanel input').fill('1.2');await page.locator('#memGapPanel input').press('Tab');await page.waitForFunction(()=>memoryState.prepared?.plan.prefs.gap===1.2);
       await page.locator('#memGapPanel input').fill('61');await page.locator('#memGapPanel input').press('Tab');assert.equal(await page.evaluate(()=>memoryPrefs.gap),1.2);
       assert.equal(await page.locator('#memGapPanel input').inputValue(),'1.2');
-      await page.evaluate(()=>memorySetGap(60));await page.locator('#memGapPanel [aria-label="無音時間を0.5秒長くする"]').click();assert.equal(await page.evaluate(()=>memoryPrefs.gap),60);
+      await page.evaluate(()=>memorySetGap(60));await page.locator('#memGapPanel [aria-label="無音時間を1秒長くする"]').click();assert.equal(await page.evaluate(()=>memoryPrefs.gap),60);
       await page.locator('#memGapPanel [data-gap-preset="0"]').click();await page.waitForFunction(()=>memoryState.prepared?.plan.prefs.gap===0);
       assert.equal(await page.locator('#memGapPanel [data-gap-preset="0"]').getAttribute('aria-pressed'),'true');
       await page.evaluate(()=>memorySetGap(1));await page.locator('#memPlay').click();
