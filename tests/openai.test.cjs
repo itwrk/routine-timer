@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=fs.readFileSync('index.html','utf8');
-const source=html.slice(html.indexOf('/* ============ OpenAI shared key ============ */'),html.indexOf('async function copyAiKey()'));
+const source=html.slice(html.indexOf('/* ============ API USAGE START ============ */'),html.indexOf('/* ============ API USAGE END ============ */'))+html.slice(html.indexOf('/* ============ OpenAI shared key ============ */'),html.indexOf('async function copyAiKey()'));
 function fixture(current='',legacy=''){
   const storage=new Map([['rvt_memory_openai_key_v1',legacy]]),nodes=new Map(),requests=[];
   const ctx={D:{settings:{apiKey:current}},KEY:'rvt_v1',localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},document:{getElementById(id){if(!nodes.has(id))nodes.set(id,{});return nodes.get(id)}},toast(){},showScreen(){},fetch:async(url,options)=>{requests.push({url,options});return {ok:true,json:async()=>({status:'completed',output:[{type:'reasoning',content:[]},{type:'message',content:[{type:'output_text',text:'["できた"]'}]}]})}}};

@@ -2486,6 +2486,15 @@ body.memory-reading #scr-memory { animation: none; }
       </div>
       <p class="muted" id="aiConnectionStatus" role="status" aria-live="polite" style="margin-top:8px">短いテスト文だけを送信します。少額のAPIクレジットを使用します。</p>
       <p class="muted">文章生成・接続テストはGPT-6.1 Sol固定です。音声生成は音声専用モデルを使います。OpenAIのキーはステップ用テキスト・ひとこと・AIコメント・暗記音声で共通です。キーは同期・書出に含めません。</p>
+      <div id="apiUsagePanel" style="margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:12px">
+        <h3>APIクレジット（月別の概算）</h3>
+        <div class="field"><label for="apiUsageMonth">集計する月（日本時間）</label><select id="apiUsageMonth" onchange="renderApiUsage(this.value)"></select></div>
+        <p id="apiUsageTotal" style="font-size:20px;font-weight:800;margin:8px 0" role="status" aria-live="polite">約 $0.0000 USD</p>
+        <p class="muted" id="apiUsageBreakdown"></p>
+        <p class="muted" id="apiUsageNotice" role="status"></p>
+        <p class="muted">この更新以降、このアプリで使った文章生成・音声生成を、同じAPIキーの利用として合算します。端末間同期を使うと他端末の記録も合算されます。</p>
+        <details><summary class="muted">概算について</summary><p class="muted">使用量の回答がある場合はトークン数、ない場合は文字数・生成音声の長さから推定します。端末TTS・BGM・保存音声の再生は加算しません。過去の利用や他アプリでの利用、通信中断で記録できなかった分は含みません。税・割引・為替等を含む請求額や残高とは異なります。単価確認：2026/11/08（標準料金）。<a href="https://developers.openai.com/api/docs/pricing" target="_blank" rel="noopener">公式料金</a></p></details>
+      </div>
       <h3 style="margin-top:14px">💬 記録へのAIコメント</h3>
       <div class="field"><label for="aiCommentDays">読み取る記録の期間</label><select id="aiCommentDays" onchange="saveAiCommentSettings()"><option value="7">直近7日</option><option value="30">直近30日</option><option value="90">直近90日</option><option value="0">全期間</option></select></div>
       <div class="field"><label><input type="checkbox" id="aiCommentMeals" style="width:auto;margin-right:6px" onchange="saveAiCommentSettings()">食事・起床・衝動・LOC・安心練習の記録も含める</label></div>
@@ -3027,6 +3036,96 @@ function exportLifeCsv(){
   download(`life-plan-${D.lifePlan.startYear}.csv`,[['年','年齢（11月に迎える年齢）','収入（万円）','支出（万円）','年間収支（万円）','年末資産（万円）'],...rows.map(r=>[r.year,lifeYearAge(r.year),...['income','expense','net','assets'].map(k=>Math.round(r[k]*100)/100)])].map(r=>r.join(',')).join('\r\n'));
 }
 /* ============ LIFE PLAN END ============ */
+/* ============ API USAGE START ============ */
+// USD per 1M tokens, checked 2026-11-08: https://developers.openai.com/api/docs/pricing
+// Store costs at generation time, not prompts, audio, API keys or key fingerprints.
+let apiUsageWriter='',apiUsageSelectedMonth='',apiUsageWarning='';
+function apiUsageMonthKey(at=Date.now()){
+  return new Date(Number(at)+9*60*60*1000).toISOString().slice(0,7);
+}
+function apiUsageMerge(...collections){
+  const map=new Map(),integer=v=>Number.isSafeInteger(v)&&v>=0;
+  for(const collection of collections)for(const row of Array.isArray(collection)?collection:[]){
+    if(!row||typeof row.id!=='string'||!/^[a-zA-Z0-9_:.-]{1,120}$/.test(row.id)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(row.month)||!['text','audio'].includes(row.kind)||!row.id.endsWith(':'+row.month+':'+row.kind))continue;
+    if(!integer(row.nanoUsd)||!integer(row.calls)||row.calls<1||!integer(row.estimated)||row.estimated>row.calls||!Number.isFinite(row.firstAt)||row.firstAt<=0||!Number.isFinite(row.updatedAt)||row.updatedAt<row.firstAt)continue;
+    const next={id:row.id,month:row.month,kind:row.kind,nanoUsd:row.nanoUsd,calls:row.calls,estimated:row.estimated,firstAt:row.firstAt,updatedAt:row.updatedAt},previous=map.get(row.id);
+    // Each page writes only its own cumulative buckets. Max merges are idempotent
+    // across devices, repeated syncs and clocks that disagree.
+    if(previous)for(const key of ['nanoUsd','calls','estimated','updatedAt'])next[key]=Math.max(previous[key],next[key]);
+    if(previous)next.firstAt=Math.min(previous.firstAt,next.firstAt);
+    map.set(next.id,next);
+  }
+  return [...map.values()].sort((a,b)=>a.id.localeCompare(b.id));
+}
+function apiUsageReadLocal(){
+  try{return apiUsageMerge(JSON.parse(localStorage.getItem(KEY)||'{}').apiUsage);}catch(e){return [];}
+}
+function apiUsagePreserveLocal(){D.apiUsage=apiUsageMerge(D.apiUsage,apiUsageReadLocal());}
+function apiUsageRecord(kind,cost,at=Date.now()){
+  if(!cost||!Number.isFinite(cost.usd)||cost.usd<0||!['text','audio'].includes(kind))return;
+  try{
+    apiUsagePreserveLocal();
+    if(!apiUsageWriter)apiUsageWriter=globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
+    const month=apiUsageMonthKey(at),id=apiUsageWriter+':'+month+':'+kind;
+    let row=D.apiUsage.find(row=>row.id===id);
+    if(!row){row={id,month,kind,nanoUsd:0,calls:0,estimated:0,firstAt:at,updatedAt:at};D.apiUsage.push(row);}
+    row.nanoUsd+=Math.round(cost.usd*1e9);row.calls++;row.estimated+=cost.estimated?1:0;row.updatedAt=Math.max(row.updatedAt,at);
+    save();apiUsageWarning='';
+  }catch(e){apiUsageWarning='利用額の記録を保存できませんでした。端末の空き容量を確認してください。';}
+  // Accounting must never interrupt a paid result or start another API request.
+  try{renderApiUsage();}catch(e){}
+}
+function apiUsageHasCount(value){return typeof value==='number'&&Number.isFinite(value)&&value>=0;}
+function apiUsageTextTokens(text){
+  // Fallback only: roughly one token per non-ASCII character, four ASCII chars/token.
+  let ascii=0,other=0;for(const char of String(text||'')){if(char.codePointAt(0)<128)ascii++;else other++;}
+  return Math.ceil(ascii/4+other);
+}
+function apiUsageTextCost(data,prompt='',instructions=''){
+  const u=data.usage||{},has=apiUsageHasCount;
+  const output=(data.output||[]).filter(item=>item.type==='message').flatMap(item=>item.content||[]).filter(item=>item.type==='output_text').map(item=>item.text).join('\n');
+  const input=has(u.input_tokens)?u.input_tokens:apiUsageTextTokens(prompt+'\n'+instructions)+16,out=has(u.output_tokens)?u.output_tokens:apiUsageTextTokens(output);
+  const details=u.input_tokens_details||{},writes=details.cache_write_tokens_details||{},cached=Math.min(input,has(details.cached_tokens)?details.cached_tokens:0),long=input>272000;
+  // Cache writes replace ordinary input charges; never add the total again.
+  const write12=Math.min(input-cached,has(writes.ttl_12h_tokens)?writes.ttl_12h_tokens:0);
+  const write30=Math.min(input-cached-write12,has(writes.ttl_30m_tokens)?writes.ttl_30m_tokens:has(details.cache_write_tokens)?Math.max(0,details.cache_write_tokens-write12):0),inputRate=long?4:2;
+  const tier=({flex:.5,priority:2,fast:2,ultrafast:6})[data.service_tier]||1;
+  return {usd:((input-cached-write30-write12)*inputRate+cached*(long?.2:.1)+write30*inputRate*1.25+write12*inputRate*2.5+out*(long?15:10))*tier/1e6,estimated:!has(u.input_tokens)||!has(u.output_tokens)};
+}
+function apiUsageAudioCost(model,text,instructions,seconds,usage){
+  const has=apiUsageHasCount,tokens=apiUsageTextTokens;
+  if(model==='tts-1'||model==='tts-1-hd')return {usd:Array.from(text).length*(model==='tts-1'?15:30)/1e6,estimated:false};
+  if(model==='gpt-4o-mini-tts'||model==='gpt-4o-mini-tts-2025-12-15')return {usd:(tokens(text+'\n'+instructions)*.6+Math.ceil(seconds*20)*12)/1e6,estimated:true};
+  if(!['gpt-realtime-2.1-mini','gpt-realtime-mini','gpt-realtime-2.1','gpt-realtime-2','gpt-realtime-1.5','gpt-realtime'].includes(model))return null;
+  const mini=model.includes('mini'),modern=model==='gpt-realtime-2.1'||model==='gpt-realtime-2';
+  const u=usage||{},i=u.input_token_details||{},o=u.output_token_details||{},c=i.cached_tokens_details||{};
+  const ia=has(i.audio_tokens)?i.audio_tokens:0,ii=has(i.image_tokens)?i.image_tokens:0;
+  const it=has(i.text_tokens)?i.text_tokens:has(u.input_tokens)?Math.max(0,u.input_tokens-ia-ii):tokens(text+'\n'+instructions)+16;
+  // Realtime fallback: one output audio token per 50ms. The TTS heuristic above
+  // uses the same duration ratio, but is always labelled estimated.
+  const oa=has(o.audio_tokens)?o.audio_tokens:Math.ceil(Math.max(0,seconds)*20);
+  const ot=has(o.text_tokens)?o.text_tokens:has(u.output_tokens)?Math.max(0,u.output_tokens-oa):seconds>0?tokens(text):0;
+  const ct=Math.min(it,has(c.text_tokens)?c.text_tokens:has(i.cached_tokens)&&!ia&&!ii?i.cached_tokens:0),ca=Math.min(ia,has(c.audio_tokens)?c.audio_tokens:0),ci=Math.min(ii,has(c.image_tokens)?c.image_tokens:0);
+  const usd=((it-ct)*(mini?.6:4)+ct*(mini?.06:.4)+(ia-ca)*(mini?10:32)+ca*(mini?.3:.4)+(ii-ci)*(mini?.8:5)+ci*(mini?.08:.5)+ot*(mini?2.4:modern?24:16)+oa*(mini?20:64))/1e6;
+  return {usd,estimated:!has(i.text_tokens)||!has(o.text_tokens)||!has(o.audio_tokens)};
+}
+function apiUsageTrackAudio(model,text,instructions,seconds,usage){
+  apiUsageRecord('audio',apiUsageAudioCost(model,text,instructions,seconds,usage));
+}
+function renderApiUsage(month){
+  const select=document.getElementById('apiUsageMonth');if(!select)return;
+  apiUsagePreserveLocal();if(month)apiUsageSelectedMonth=month;
+  const current=apiUsageMonthKey(),months=[...new Set([current,...D.apiUsage.map(row=>row.month)])].sort().reverse();
+  if(apiUsageSelectedMonth&&!months.includes(apiUsageSelectedMonth))apiUsageSelectedMonth='';
+  const selected=apiUsageSelectedMonth||current,rows=D.apiUsage.filter(row=>row.month===selected),sum=kind=>rows.filter(row=>!kind||row.kind===kind).reduce((n,row)=>n+row.nanoUsd,0)/1e9;
+  select.innerHTML=months.map(value=>`<option value="${value}">${value.replace('-','年')}月${value===current?'（今月）':''}</option>`).join('');select.value=selected;
+  const money=value=>'$'+value.toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:value>0&&value<.0001?6:4});
+  document.getElementById('apiUsageTotal').textContent='約 '+money(sum())+' USD';
+  const calls=rows.reduce((n,row)=>n+row.calls,0),estimated=rows.reduce((n,row)=>n+row.estimated,0);
+  document.getElementById('apiUsageBreakdown').textContent=`文章 ${money(sum('text'))} ／ 音声 ${money(sum('audio'))} · ${calls}件${estimated?`（うち${estimated}件は使用量を推定）`:''}`;
+  document.getElementById('apiUsageNotice').textContent=apiUsageWarning||(!calls?'この月の利用記録はまだありません。':'保存した音声の再利用・再生では増えません。');
+}
+/* ============ API USAGE END ============ */
 function normalizeActiveStopwatch(raw){
   if(!raw||!Number.isFinite(Number(raw.startedAt))||Number(raw.startedAt)<=0)return null;
   const active=Object.assign({id:uid(),label:'',pageId:'',source:'',stepId:'',emoji:'',updatedAt:0},raw,{startedAt:Number(raw.startedAt)});
@@ -3048,6 +3147,7 @@ function restoreLocalStopwatch(migrate=false){
 }
 function normalizeData(raw){
   const d=Object.assign({moods:defaultMoods(),moodLogs:[]},raw||{});
+  d.apiUsage=apiUsageMerge(d.apiUsage);
   d.lifePlan=normalizeLifePlan(d.lifePlan);
   d.settings=Object.assign({aiModel:'gpt-6.1-sol',rate:1,voiceVolume:1,sfxVolume:.45,moti:true,sound:true,repeatSpeech:false,timerMuted:false,youTubeAudio:false,calLog:'auto',aiCommentPrompt:'',aiCommentDays:30,aiCommentMeals:true,aiCommentNotion:false,notionBridgeUrl:'',notionBridgeKey:''},d.settings||{});
   d.settings.aiModel='gpt-6.1-sol';
@@ -3228,7 +3328,7 @@ try{
       history.replaceState(null,'',location.pathname+location.search);}
   }
 }catch(e){}
-const save=()=>{D.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(D));scheduleAutoPush();};
+const save=()=>{apiUsagePreserveLocal();D.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(D));scheduleAutoPush();};
 
 /* ============ level / streak ============ */
 const lvlNeed=l=>100+ (l-1)*60;
@@ -3574,6 +3674,7 @@ function getOpenAIKey(){return String(D.settings.apiKey||'').trim();}
 function setOpenAIKey(value){
   const key=String(value||'').trim();
   if(key.startsWith('sk-ant-'))throw Error('OpenAIで発行したAPIキーを入力してください。');
+  apiUsagePreserveLocal();
   const next=Object.assign({},D,{settings:Object.assign({},D.settings,{apiKey:key})});
   localStorage.setItem(KEY,JSON.stringify(next));
   D.settings.apiKey=key;
@@ -3612,6 +3713,7 @@ async function aiRequest(prompt,maxTokens=600,system='',options={}){
     throw new Error(`HTTP ${res.status}: ${hint}${detail?' '+detail:''}`);
   }
   const data=await res.json();
+  if(data.usage||data.status==='completed'||data.status==='incomplete')apiUsageRecord('text',apiUsageTextCost(data,prompt,system));
   if(data.status==='incomplete'||data.error)throw Error('文章を最後まで生成できませんでした。もう一度試してください。');
   const text=(data.output||[]).filter(b=>b.type==='message').flatMap(b=>b.content||[]).filter(b=>b.type==='output_text').map(b=>b.text).join('\n');
   if(!text.trim())throw new Error('OpenAIからテキストが返りませんでした。もう一度試してください。');
@@ -7559,6 +7661,7 @@ function buildLocCsv(){
 function exportLocCsv(){download('loc_logs.csv',buildLocCsv());toast('🧭 LOC CSVを書き出しました');}
 const MERGE_COLLECTIONS=['mealSessions','mealTemplates','foodRules','urgeLogs','foodItems','wakeLogs','locLogs','mealPlans','mealSafetyLogs','personalNotes','simpleNotes','moodLogs','habitLogs','todayTaskLogs','journeyLogs','stopwatchLogs','routineRunLogs','activityPages','rewards','rewardRedemptions','rewardPointEvents','aiComments'];
 function mergeMealCollections(local,remote){
+  remote.apiUsage=apiUsageMerge(local.apiUsage,remote.apiUsage,apiUsageReadLocal());
   const legacyXp=Math.max(legacyXpOpeningCandidate(local),legacyXpOpeningCandidate(remote));
   const openingAmounts=[...(Array.isArray(local&&local.rewardPointEvents)?local.rewardPointEvents:[]),...(Array.isArray(remote&&remote.rewardPointEvents)?remote.rewardPointEvents:[])].filter(isOpeningRewardPointEvent).map(event=>Math.floor(Number(event.amount)||0));
   const openingBaseline=Math.max(legacyXp,...openingAmounts,0);
@@ -7699,6 +7802,7 @@ async function syncPush(silent){
   }catch(e){setSyncStatus(uploadStarted?'⚠️ アップロード結果を確認できません。通信を確認し、再取得する前に端末の内容を確認してください。':'⚠️ クラウドを確認できなかったため、アップロードしていません（URL・合言葉・通信・端末の保存容量を確認）。',true);if(!silent)toast('⚠️ アップロード失敗（URL/通信を確認）');}
 }
 function syncDataForCloud(){
+  apiUsagePreserveLocal();
   const data=JSON.parse(JSON.stringify(D));
   delete data.activeStopwatch;
   data.settings=Object.assign({},data.settings||{});
@@ -7987,6 +8091,7 @@ function askCalLog(log,startMs,endMs,kind='routine'){
 
 /* ============ SETTINGS / CSV ============ */
 function renderSet(){
+  renderApiUsage();
   renderYouTubeAudio();
   document.getElementById('setRate').value=D.settings.rate;
   document.getElementById('setVoiceVolume').value=D.settings.voiceVolume;
@@ -10176,6 +10281,7 @@ async function memoryGenerateClip(text, prefs, key, signal) {
     if (model.instructions) body.instructions = memoryVoiceInstructions(prefs);
     const response = await memoryApiJSON('https://api.openai.com/v1/audio/speech', body, key, signal);
     const pcm = await response.blob();
+    apiUsageTrackAudio(prefs.model,text,body.instructions||'',pcm.size/48000);
     if (!pcm.size || pcm.size % 2) throw Error('音声データを読み取れませんでした');
     return pcm;
   }
@@ -10195,7 +10301,7 @@ async function memoryGenerateClip(text, prefs, key, signal) {
     ]);
     let done = false,
       parts = [],
-      size = 0;
+      size = 0, accepted = false, responseUsage = null;
     const timer = setTimeout(
       () => finish(Error('音声生成がタイムアウトしました。保存済みの部分は再利用できます。')),
       120000
@@ -10203,6 +10309,7 @@ async function memoryGenerateClip(text, prefs, key, signal) {
     function finish(error) {
       if (done) return;
       done = true;
+      if(accepted||size||responseUsage)apiUsageTrackAudio(prefs.model,text,memoryVoiceInstructions(prefs,true),size/48000,responseUsage);
       clearTimeout(timer);
       signal.removeEventListener('abort', abort);
       ws.close();
@@ -10249,7 +10356,8 @@ async function memoryGenerateClip(text, prefs, key, signal) {
               response: { output_modalities: ['audio'], max_output_tokens: 4096 }
             })
           );
-        } else if (e.type === 'response.output_audio.delta') {
+        } else if (e.type === 'response.created') accepted = true;
+        else if (e.type === 'response.output_audio.delta') {
           const binary = atob(e.delta),
             bytes = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -10258,6 +10366,8 @@ async function memoryGenerateClip(text, prefs, key, signal) {
           parts.push(bytes);
         } else if (e.type === 'error') finish(Error((e.error && e.error.message) || 'OpenAI音声生成エラー'));
         else if (e.type === 'response.done') {
+          accepted = !!e.response;
+          responseUsage = e.response?.usage;
           if (e.response && e.response.status === 'completed') finish();
           else finish(Error('音声を最後まで生成できませんでした。本文を短く分けてください'));
         }

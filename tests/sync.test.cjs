@@ -2,7 +2,7 @@ const fs = require('node:fs'),
   vm = require('node:vm'),
   assert = require('node:assert/strict');
 const html = fs.readFileSync('index.html', 'utf8');
-const source = html.slice(
+const source = html.slice(html.indexOf('/* ============ API USAGE START ============ */'),html.indexOf('/* ============ API USAGE END ============ */')) + html.slice(
   html.indexOf('/* ============ ☁️ 端末間同期 (GAS) ============ */'),
   html.indexOf('/* ============ 📓 Notionタスク表示')
 );

@@ -3,7 +3,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { webcrypto } = require('node:crypto');
 const html = fs.readFileSync('index.html', 'utf8');
-const source = html
+const source = html.slice(html.indexOf('/* ============ API USAGE START ============ */'),html.indexOf('/* ============ API USAGE END ============ */')) + html
   .slice(
     html.indexOf('/* ============ MEMORY START ============ */'),
     html.indexOf('/* ============ MEMORY END ============ */')
