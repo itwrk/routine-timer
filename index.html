@@ -688,6 +688,15 @@ body.run-open{position:fixed;top:var(--run-page-top,0px);left:0;right:0;overflow
 .upedit input[type=text],.upedit textarea{font-size:calc(13px * var(--text-scale));padding:8px 10px;margin-bottom:6px}
 .upedit .secbtns{margin-top:2px}
 .memoedit-btn{background:none;border:none;color:var(--cyan);cursor:pointer;font-size:calc(13px * var(--text-scale));padding:2px 6px}
+.run-message-editor{width:100%;max-width:460px;margin:6px 0;padding:10px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.run-message-editor summary{cursor:pointer;font-weight:800;font-size:12px}
+.run-message-editor .field{margin:8px 0}
+.run-message-row{display:flex;align-items:flex-start;gap:6px;margin:6px 0}
+.run-message-row textarea{flex:1;min-width:0;font-size:13px}
+.run-message-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.run-speech-help{width:100%;max-width:400px;font-size:11px;color:var(--dim);line-height:1.5;margin:0 0 5px}
+.run-step-duration{display:flex;align-items:center;gap:6px;font-size:12px;margin:6px 0}
+.run-step-duration input{width:90px;padding:6px}
 .runbtns{display:flex;gap:8px;margin-top:8px;width:100%;max-width:460px}
 .runbtns .btn{flex:1;white-space:nowrap;font-size:calc(14px * var(--text-scale));padding:13px 6px;letter-spacing:0}
 .run-save-end{width:100%;max-width:460px;margin-top:6px;padding:9px 10px!important;font-size:calc(11px * var(--text-scale))!important;white-space:nowrap}
@@ -752,7 +761,7 @@ body.run-open{position:fixed;top:var(--run-page-top,0px);left:0;right:0;overflow
 .ckaddrow input{flex:1;font-size:calc(13px * var(--text-scale));padding:7px 9px}
 .upcoming{width:100%;max-width:460px;margin-top:12px}
 .upcoming h3{font-size:calc(12px * var(--text-scale));color:var(--dim);font-weight:700;margin-bottom:6px;letter-spacing:.1em}
-.countup-step-tools{background:rgba(255,201,60,.08);border:1px solid rgba(255,201,60,.45);border-radius:12px;padding:9px 10px;margin-bottom:8px}
+.countup-step-tools{width:100%;max-width:460px;background:rgba(255,201,60,.08);border:1px solid rgba(255,201,60,.45);border-radius:12px;padding:9px 10px;margin:8px 0}
 .countup-step-tools .hint{color:var(--gold);font-size:calc(10px * var(--text-scale));font-weight:700;margin-bottom:6px}
 .countup-step-tools .btn-full{margin-top:6px;white-space:nowrap}
 .uprow{display:flex;align-items:center;gap:6px;background:rgba(237,234,249,.8);border:1px solid var(--line);border-radius:12px;padding:8px 8px;margin-bottom:6px;font-size:calc(13px * var(--text-scale));animation:fadein .15s}
@@ -2550,6 +2559,11 @@ body.memory-reading #scr-memory { animation: none; }
   <div class="stepprog" id="runProg"></div>
   <div class="nextstep" id="runNext" aria-live="polite"></div>
   <div class="combo" id="combo"></div>
+  <div class="timer-mode-switch" aria-label="読み上げの実行モード">
+    <button id="btnRunTts" type="button" onclick="setRunSpeechMode('tts')">TTSで実行</button>
+    <button id="btnRunAudio" type="button" onclick="setRunSpeechMode('audio')">保存音声で実行</button>
+  </div>
+  <p class="run-speech-help" id="runSpeechHelp" role="status"></p>
   <div class="timer-mode-switch" aria-label="ルーチンの実行モード">
     <button id="btnRunTimer" class="on" type="button" onclick="setRunMode(false)">⏲ タイマー</button>
     <button id="btnRunChecklist" type="button" onclick="setRunMode(true)">☑ チェックリスト</button>
@@ -2592,6 +2606,18 @@ body.memory-reading #scr-memory { animation: none; }
   <div class="checklist-finish"><button class="btn btn-p" type="button" onclick="finishChecklistRun()">🏁 終了</button></div>
   <button class="btn btn-c run-save-end" type="button" onclick="twoTap(this,'もう一度で途中保存',saveAndEndRun)">💾 途中保存して終わります</button>
   <div class="moti" id="runMoti">…</div>
+  <button class="voice-repeat-btn" id="btnRunSpeakAgain" type="button" onclick="speakCurrentRunStep()">🔊 ステップ名をもう一度</button>
+  <details class="run-message-editor" id="runMessageEditor">
+    <summary>💬 読み上げメッセージを追加・編集</summary>
+    <p class="muted">保存した内容は次回の実行から反映します。今回の読み上げは変わりません。共有ステップの編集は他のルーチンにも保存されます。</p>
+    <div class="field"><label for="runMessageTarget">編集するメッセージ</label><select id="runMessageTarget" onchange="selectRunMessageTarget(this.value)"></select></div>
+    <div id="runMessageRows"></div>
+    <div class="run-message-actions">
+      <button class="btn btn-c btn-sm" type="button" onclick="addRunMessageRow()">＋ メッセージ</button>
+      <button class="btn btn-p btn-sm" type="button" onclick="saveRunMessages()">次回用に保存</button>
+    </div>
+    <p class="muted" id="runMessageStatus" role="status"></p>
+  </details>
   <div class="run-note-composer">
     <div class="run-note-head"><span>📝 実行中のひとこと</span><span class="run-note-context" id="runNoteContext"></span></div>
     <div class="run-note-row">
@@ -2601,16 +2627,17 @@ body.memory-reading #scr-memory { animation: none; }
   </div>
   <div class="runmemo" id="runMemo" style="display:none"></div>
   <div class="runck" id="runCk" style="display:none"></div>
-  <div class="upcoming" id="upcomingWrap">
-    <h3>▼ このあとのステップ（↑↓で並べ替え・✏️で編集）</h3>
-    <div class="countup-step-tools" id="countUpStepTools" style="display:none">
-      <p class="hint">⏱ 行動しながら、必要になったステップを追加できます</p>
+    <div class="countup-step-tools" id="countUpStepTools">
+      <p class="hint">今回の末尾に追加し、次回用にも保存します</p>
       <div class="habit-add">
         <input type="text" id="runNewStepInput" maxlength="60" placeholder="新しいステップ名" onkeydown="submitShortcut(event,addRunStep)">
         <button class="btn btn-p btn-sm" type="button" onclick="addRunStep()">＋ 新規</button>
       </div>
+      <label class="run-step-duration">追加する時間 <input id="runNewStepSec" type="number" min="5" max="86400" step="1" value="60" inputmode="numeric"> 秒</label>
       <button class="btn btn-c btn-sm btn-full" type="button" onclick="openLib('run')">📚 ライブラリから追加</button>
     </div>
+  <div class="upcoming" id="upcomingWrap">
+    <h3>▼ このあとのステップ（↑↓で並べ替え・✏️で編集）</h3>
     <div id="upcoming"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn btn-g btn-sm" style="flex:1" onclick="twoTap(this,'ほんとに完了する？',finishAll)">🏁 全スキップで完了</button>
@@ -3354,37 +3381,75 @@ useMixedAudioSession();
 
 /* ============ speech ============ */
 let voiceReady=false;
-const timerVoiceState={serial:0,source:null,gain:null,pending:false,generation:null,scan:0,noticeAt:0};
+const timerVoiceState={serial:0,source:null,gain:null,pending:false,utterance:null,watchdog:null,retry:null,generation:null,scan:0,noticeAt:0};
 const TIMER_VOICE_PREFS={model:'gpt-realtime-2.1-mini',voice:'marin',tone:'日本語で、明るく、はっきり、短いアナウンスとして読み上げてください。'};
 const TIMER_VOICE_TEST='テスト読み上げです。今日もがんばろう！';
 function isTimerAudioMuted(){return typeof run!=='undefined'&&!!(run&&run.muted);}
 function stopSpeech(){
   timerVoiceState.serial++;timerVoiceState.pending=false;
+  clearTimeout(timerVoiceState.watchdog);clearTimeout(timerVoiceState.retry);
+  timerVoiceState.utterance=null;
   const source=timerVoiceState.source;timerVoiceState.source=null;
   if(source){source.onended=null;try{source.stop();source.disconnect();}catch(e){}}
   if(timerVoiceState.gain){timerVoiceState.gain.disconnect();timerVoiceState.gain=null;}
   if('speechSynthesis' in window&&(speechSynthesis.speaking||speechSynthesis.pending))speechSynthesis.cancel();
   return timerVoiceState.serial;
 }
-function isSpeechBusy(){return timerVoiceState.pending||!!timerVoiceState.source||('speechSynthesis' in window&&speechSynthesis.speaking);}
+function isSpeechBusy(){return timerVoiceState.pending||!!timerVoiceState.source||!!timerVoiceState.utterance||('speechSynthesis' in window&&(speechSynthesis.speaking||speechSynthesis.pending));}
+function timerSpeechMode(){return typeof run!=='undefined'&&run&&run.speechMode?run.speechMode:D.settings.youTubeAudio?'audio':'tts';}
 function speakLater(text,delay){
-  const serial=timerVoiceState.serial;
-  setTimeout(()=>{if(serial===timerVoiceState.serial)speak(text);},delay);
+  const serial=timerVoiceState.serial,mode=timerSpeechMode();
+  setTimeout(()=>{if(serial===timerVoiceState.serial)speak(text,null,mode);},delay);
 }
-function speak(text,cb){
+function speak(text,cb,mode=timerSpeechMode()){
   if(isTimerAudioMuted() || (typeof memoryState!=='undefined' && memoryState.playing)){if(cb)cb();return;}
   const serial=stopSpeech();
-  if(D.settings.youTubeAudio){playSavedSpeech(text,cb,serial);return;}
+  if(mode==='audio'){playSavedSpeech(text,cb,serial);return;}
   useMixedAudioSession();
-  try{
-    speechSynthesis.cancel();
+  function play(attempt){
+    if(serial!==timerVoiceState.serial)return;
+    timerVoiceState.pending=false;
     const u=new SpeechSynthesisUtterance(text);
+    let started=false,settled=false;
+    const active=()=>!settled&&serial===timerVoiceState.serial&&timerVoiceState.utterance===u;
+    const finish=message=>{
+      if(!active())return;
+      settled=true;clearTimeout(timerVoiceState.watchdog);timerVoiceState.utterance=null;
+      if(message){
+        if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
+        timerVoiceNotice(message);
+      }
+      if(cb)cb();
+    };
+    const retry=()=>{
+      if(!active())return;
+      settled=true;clearTimeout(timerVoiceState.watchdog);timerVoiceState.utterance=null;
+      if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
+      timerVoiceState.pending=true;
+      timerVoiceState.retry=setTimeout(()=>play(1),120);
+    };
     u.lang='ja-JP';u.rate=D.settings.rate||1;u.volume=Math.min(1,Math.max(.1,+D.settings.voiceVolume||1));
     const vs=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('ja'));
     if(vs.length)u.voice=vs.find(v=>/Kyoko|O-?ren|Google/.test(v.name))||vs[0];
-    if(cb)u.onend=()=>{if(serial===timerVoiceState.serial)cb();};
-    speechSynthesis.speak(u);voiceReady=true;
-  }catch(e){if(cb)cb();}
+    u.onstart=()=>{
+      if(!active())return;
+      started=true;clearTimeout(timerVoiceState.watchdog);
+      timerVoiceState.watchdog=setTimeout(()=>finish(speechSynthesis.speaking||speechSynthesis.pending?'読み上げが停止しました。「ステップ名をもう一度」を押してください。':''),Math.max(20000,Array.from(text).length/u.rate*1200+5000));
+    };
+    u.onend=()=>finish('');
+    u.onerror=e=>{if(!active())return;if(!started&&!attempt&&e.error!=='not-allowed')retry();else finish('読み上げを開始できません。「ステップ名をもう一度」を押してください。');};
+    // Safariで発話参照が失われないよう保持し、タップ内で待機せず開始する。
+    timerVoiceState.utterance=u;
+    timerVoiceState.watchdog=setTimeout(()=>{
+      if(!active()||started)return;
+      if(speechSynthesis.speaking&&!speechSynthesis.paused)u.onstart();
+      else if(!attempt)retry();
+      else finish('読み上げを開始できません。「ステップ名をもう一度」を押してください。');
+    },3000);
+    try{if(speechSynthesis.paused)speechSynthesis.resume();speechSynthesis.speak(u);voiceReady=true;}
+    catch(e){if(!attempt)retry();else finish('読み上げを開始できません。「ステップ名をもう一度」を押してください。');}
+  }
+  try{play(0);}catch(e){timerVoiceNotice('この端末ではTTSを利用できません。保存音声をご利用ください。');if(cb)cb();}
 }
 if('speechSynthesis' in window)speechSynthesis.getVoices();
 
@@ -3421,6 +3486,7 @@ function timerAudioContext(){
 }
 function timerVoiceStatus(message){
   const el=document.getElementById('youTubeAudioStatus');if(el)el.textContent=message;
+  if(typeof run!=='undefined'&&run){const help=document.getElementById('runSpeechHelp');if(help)help.textContent=message;}
 }
 function timerVoiceNotice(message){
   timerVoiceStatus(message);
@@ -3436,13 +3502,16 @@ async function playSavedSpeech(text,cb,serial){
     const resuming=ac.state==='running'?Promise.resolve():Promise.race([
       ac.resume().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,3000))
     ]);
-    const clips=await Promise.all(timerVoiceParts(text).map(async part=>{
+    let missing=false;
+    const clips=(await Promise.all(timerVoiceParts(text).map(async part=>{
       const id=await timerVoiceClipId(part),bytes=timerVoiceClipData(await memoryStore('clips','get',id));
-      if(!bytes)throw Error('音声が未保存です。設定の「YouTubeと併用」から音声を準備してください。');
+      if(!bytes)missing=true;
       return bytes;
-    }));
+    }))).filter(Boolean);
     // 中断済みの読み込みが、次のステップや消音後に遅れて再生されないようにする。
     if(serial!==timerVoiceState.serial)return;
+    if(missing)timerVoiceNotice('音声が未保存の案内があります。設定の「YouTubeと併用」から音声を準備してください。');
+    if(!clips.length){timerVoiceState.pending=false;if(cb)cb();return;}
     await resuming;
     if(serial!==timerVoiceState.serial)return;
     if(ac.state!=='running')throw Error('音声を再生できません。テスト再生をタップし、iPhoneの消音モードも確認してください。');
@@ -5568,16 +5637,20 @@ function addStep(){
 }
 function refreshStepTarget(target){
   if(target==='run'&&run){
+    snapshotRunMessages();refreshRunMessageTargets();
+    if(run.checklistMode){renderRoutineChecklist();updateRemain();return;}
     document.getElementById('runProg').textContent=`ステップ ${run.idx+1} / ${run.r.steps.length}`;
     renderUpcoming();
   }else renderSteps();
 }
 function addRunStep(){
-  if(!run||run.timerMode!=='up')return;
+  if(!run||run.microEntry)return;
   const input=document.getElementById('runNewStepInput');
   const name=input.value.trim();
   if(!name){toast('追加するステップ名を入力してね');input.focus();return;}
-  run.r.steps.push({id:uid(),name,emoji:'✅',sec:60,memo:'',texts:[],checklist:[]});
+  const sec=Number(document.getElementById('runNewStepSec').value);
+  if(!Number.isInteger(sec)||sec<5||sec>86400){toast('時間は5〜86400秒で入力してね');return;}
+  run.r.steps.push({id:uid(),name,emoji:'✅',sec,memo:'',texts:[],checklist:[]});
   input.value='';save();refreshStepTarget('run');sfxDone();
   toast(`＋ 「${name}」をこのあとに追加しました`);input.focus();
 }
@@ -5666,6 +5739,84 @@ document.getElementById('ringFg').style.strokeDasharray=CIRC;
 let run=null,timer=null;
 let runPageScrollY=null;
 
+function updateRunSpeechUi(){
+  if(!run)return;
+  for(const [id,mode] of [['btnRunTts','tts'],['btnRunAudio','audio']]){
+    const button=document.getElementById(id),on=run.speechMode===mode;
+    button.classList.toggle('on',on);button.setAttribute('aria-pressed',String(on));
+  }
+  document.getElementById('runSpeechHelp').textContent=run.speechMode==='audio'
+    ?'保存済みのAI音声を再生します。未保存・編集後の音声は設定の「YouTubeと併用」で事前に準備してください。'
+    :'端末TTSで読み上げます（無料）。実行中も切り替えられます。';
+}
+function setRunSpeechMode(mode){
+  if(!run||!['tts','audio'].includes(mode))return;
+  stopSpeech();run.stepSpeechActive=false;run.halfSpeechActive=false;run.speechMode=mode;
+  D.settings.youTubeAudio=mode==='audio';save();timerVoiceState.noticeAt=0;updateRunSpeechUi();
+  if(!run.paused&&!run.checklistMode)speakCurrentRunStep();
+}
+function snapshotRunMessages(){
+  if(!run)return;
+  if(!run.messageTexts)run.messageTexts=new Map();
+  if(!run.hitokoto)run.hitokoto=[...D.hitokoto];
+  for(const s of run.r.steps)if(!run.messageTexts.has(s.id))run.messageTexts.set(s.id,[...(s.texts||[])]);
+}
+function refreshRunMessageTargets(){
+  if(!run)return;
+  const select=document.getElementById('runMessageTarget'),selected=select.value;
+  select.replaceChildren();
+  for(const s of run.r.steps){const option=document.createElement('option');option.value=s.id;option.textContent=s.name||'名前なしステップ';select.appendChild(option);}
+  const common=document.createElement('option');common.value='__common';common.textContent='共通のひとこと';select.appendChild(common);
+  if([...select.options].some(o=>o.value===selected))select.value=selected;
+}
+function runMessageSource(target){
+  if(!run)return null;
+  if(target==='__common')return {texts:D.hitokoto,step:null};
+  const step=D.routines.find(r=>r.id===run.r.id)?.steps.find(s=>s.id===target);
+  return step?{texts:step.texts||[],step}:null;
+}
+function selectRunMessageTarget(target){
+  if(!run)return;
+  // Keep drafts for each step when switching the selector or advancing the timer.
+  if(!run.messageDrafts)run.messageDrafts=new Map();
+  if(!run.messageDrafts.has(target)){
+    const source=runMessageSource(target);if(!source)return;
+    run.messageDrafts.set(target,{texts:[...source.texts],base:JSON.stringify(source.texts)});
+  }
+  run.messageTarget=target;document.getElementById('runMessageTarget').value=target;
+  document.getElementById('runMessageStatus').textContent='空欄のメッセージは保存時に除きます。';
+  renderRunMessageRows();
+}
+function renderRunMessageRows(){
+  if(!run)return;
+  const draft=run.messageDrafts?.get(run.messageTarget);if(!draft)return;
+  const rows=document.getElementById('runMessageRows');rows.replaceChildren();
+  draft.texts.forEach((text,i)=>{
+    const row=document.createElement('div');row.className='run-message-row';
+    const input=document.createElement('textarea');input.rows=2;input.value=text;input.placeholder='読み上げメッセージ';input.setAttribute('aria-label',`メッセージ ${i+1}`);
+    input.oninput=()=>{draft.texts[i]=input.value;};
+    const remove=document.createElement('button');remove.type='button';remove.className='btn btn-g btn-sm';remove.textContent='削除';
+    remove.onclick=()=>{draft.texts.splice(i,1);renderRunMessageRows();};
+    row.append(input,remove);rows.appendChild(row);
+  });
+}
+function addRunMessageRow(){
+  const draft=run?.messageDrafts?.get(run.messageTarget);if(!draft)return;
+  draft.texts.push('');renderRunMessageRows();document.getElementById('runMessageRows').lastElementChild.querySelector('textarea').focus();
+}
+function saveRunMessages(){
+  const draft=run?.messageDrafts?.get(run.messageTarget),source=runMessageSource(run?.messageTarget);
+  if(!draft||!source){toast('編集対象が見つかりません');return;}
+  if(JSON.stringify(source.texts)!==draft.base){
+    document.getElementById('runMessageStatus').textContent='別の編集で保存内容が変わりました。入力内容を控えてから、対象を開き直してください。';
+    run.messageDrafts.delete(run.messageTarget);return;
+  }
+  const texts=draft.texts.map(t=>t.trim()).filter(Boolean);
+  if(source.step){source.step.texts=texts;syncShared(source.step);}else D.hitokoto=texts;
+  draft.texts=[...texts];draft.base=JSON.stringify(texts);save();renderRunMessageRows();
+  document.getElementById('runMessageStatus').textContent='保存しました。次回の実行から反映します。保存音声モードでは変更した音声の準備も必要です。';
+}
+
 function setRunScreenActive(active){
   const el=document.getElementById('run');
   if(active){
@@ -5674,6 +5825,7 @@ function setRunScreenActive(active){
     document.body.classList.add('run-open');
     el.classList.add('active');el.scrollTop=0;
   }else{
+    document.getElementById('libModal').classList.remove('show');
     el.classList.remove('active');
     document.body.classList.remove('run-open');
     document.body.style.removeProperty('--run-page-top');
@@ -5758,6 +5910,10 @@ function startRun(id,options={}){
   const ready=!!options.paused,journeyId=ready?'':claimJourneyForStart(r.id,options.journeyId||'');
   showScreen('scr-home');
   run={r,idx:startIndex,left:0,leftMs:0,paused:ready,ready,skips:priorSkips,startedAt:ready?0:Date.now(),timerMode:'down',checklistMode:false,muted:!!D.settings.timerMuted,repeatSpeech:!!D.settings.repeatSpeech,repeatText:'',repeatLastAt:0,stepRecords,microEntry:!!options.micro,microEntryDone:false,source:options.source||'normal',journeyId,pendingJourneyId:options.journeyId||''};
+  run.speechMode=D.settings.youTubeAudio?'audio':'tts';
+  snapshotRunMessages();refreshRunMessageTargets();selectRunMessageTarget(r.steps[startIndex].id);updateRunSpeechUi();
+  document.getElementById('runMessageEditor').open=false;
+  document.getElementById('runNewStepInput').value='';document.getElementById('runNewStepSec').value=60;
   D.combo=D.combo||0;
   setRunScreenActive(true);
   document.getElementById('runTitle').textContent=`${r.emoji} ${r.name}`;
@@ -5784,7 +5940,7 @@ function slamIn(){
 function loadStep(speakIt){
   const s=run.r.steps[run.idx];
   run.targetSec=run.microEntry?10:s.sec;run.left=run.targetSec;run.leftMs=run.targetSec*1000;run.stepElapsedMs=0;run.lastTickAt=Date.now();
-  run.lastSignalElapsed=0;run.halfDone=false;run.halfSpeechActive=false;run.currentRecorded=false;run.usedCountUp=run.timerMode==='up';
+  run.lastSignalElapsed=0;run.halfDone=false;run.halfSpeechActive=false;run.stepSpeechActive=false;run.currentRecorded=false;run.usedCountUp=run.timerMode==='up';
   document.getElementById('runEmoji').textContent=s.emoji||'✅';
   document.getElementById('runStep').textContent=s.name;
   document.getElementById('runProg').textContent=run.microEntry?'⚡ 10秒だけの入口':`ステップ ${run.idx+1} / ${run.r.steps.length}`;
@@ -5792,11 +5948,11 @@ function loadStep(speakIt){
   document.getElementById('runNoteInput').value='';
   if(!run.ready)slamIn();
   updateTimerModeUi();updateRing();renderUpcoming();
-  const pool=[...(s.texts||[]),...D.hitokoto];
+  const pool=[...(run.messageTexts?.get(s.id)||s.texts||[]),...(run.hitokoto||D.hitokoto)];
   const moti=pool.length?pool[Math.random()*pool.length|0]:'';
   run.currentMoti=moti;
   run.repeatText=`${s.name}。${D.settings.moti&&moti?moti:''}`.trim();run.repeatLastAt=Date.now();
-  document.getElementById('runMoti').textContent=moti||'（テキスト未登録：編集画面から手動 or 🤖AIで追加できます）';
+  document.getElementById('runMoti').textContent=moti||'（下の「読み上げメッセージを追加・編集」から次回用に登録できます）';
   const memoEl=document.getElementById('runMemo');
   memoEl.style.display='block';
   const renderMemo=()=>{
@@ -5819,11 +5975,17 @@ function loadStep(speakIt){
   if(speakIt)speakCurrentRunStep();
 }
 function speakCurrentRunStep(){
-  if(!run||run.paused)return;
+  if(!run||run.paused||run.muted||run.checklistMode)return;
   const active=run,s=run.r.steps[run.idx],moti=run.currentMoti;
+  const index=run.idx;
   const dur=run.targetSec>=60?`${Math.round(run.targetSec/60)}分`:`${run.targetSec}秒`;
   const modeGuide=run.microEntry?'まず10秒だけです。':run.timerMode==='up'?'実時間計測です。終わったら次へを押してください。':`${dur}です。`;
-  speak(`${s.name}、${modeGuide}`,()=>{if(run===active&&!run.paused&&D.settings.moti&&moti)speak(moti);});
+  run.halfSpeechActive=false;run.stepSpeechActive=true;
+  speak(`${s.name}、${modeGuide}`,()=>{
+    if(run!==active||run.idx!==index)return;
+    run.stepSpeechActive=false;
+    if(!run.paused&&D.settings.moti&&moti)speak(moti);
+  });
 }
 function renderRunCk(s){
   const el=document.getElementById('runCk');
@@ -6003,14 +6165,14 @@ function tick(){
   const elapsed=Math.floor((run.stepElapsedMs||0)/1000);
   // 半分経過アナウンス（短いステップも含め、1回だけ）
   let halfAnnouncedNow=false;
-  if(run.timerMode==='down'&&!run.halfDone&&run.leftMs<=(Number(run.targetSec)||s.sec)*500){
+  if(run.timerMode==='down'&&!run.stepSpeechActive&&!run.halfDone&&run.leftMs>0&&run.leftMs<=(Number(run.targetSec)||s.sec)*500){
     run.halfDone=true;run.halfSpeechActive=true;halfAnnouncedNow=true;
     speak(`${s.name}。あと半分です！`,()=>{if(run)run.halfSpeechActive=false;});
   }
   // ラスト10秒は数字を読み上げ、効果音も重ねる（3秒前からは強め）
   if(run.timerMode==='down'&&run.left!==previousLeft&&run.left<=10&&run.left>0){
     // 半分案内は最後まで読み、終わった次の秒から数字に戻る
-    if(!halfAnnouncedNow&&!run.halfSpeechActive)speak(String(run.left));
+    if(!halfAnnouncedNow&&!run.halfSpeechActive&&!run.stepSpeechActive)speak(String(run.left));
     if(run.left<=3)beep(1175,.09,'square',.14);
     else sfxTick();
   }
@@ -6048,11 +6210,12 @@ function updateRunMuteUi(){
     btn.setAttribute('aria-label',muted?'消音を解除する':'読み上げと効果音をすべて消音する');
   }
   updateVoiceRepeatUi();
+  const replay=document.getElementById('btnRunSpeakAgain');if(replay)replay.disabled=!run||run.paused||run.muted||run.checklistMode;
 }
 function toggleRunMute(){
   if(!run)return;
   run.muted=!run.muted;D.settings.timerMuted=run.muted;
-  if(run.muted){stopTimerAudio();run.halfSpeechActive=false;}
+  if(run.muted){stopTimerAudio();run.halfSpeechActive=false;run.stepSpeechActive=false;}
   run.repeatLastAt=Date.now();
   save();updateRunMuteUi();
   toast(run.muted?'🔇 消音中：画面だけで続けられます':'🔊 消音を解除しました');
@@ -6068,7 +6231,7 @@ function toggleVoiceRepeat(){
   if(!run||run.muted)return;
   run.repeatSpeech=!run.repeatSpeech;D.settings.repeatSpeech=run.repeatSpeech;save();updateVoiceRepeatUi();
   if(run.repeatSpeech){run.repeatLastAt=0;repeatCurrentSpeech(true);toast('🔁 読み上げリピート ON');}
-  else{stopSpeech();toast('🔁 読み上げリピート OFF');}
+  else{if(!run.stepSpeechActive){stopSpeech();run.halfSpeechActive=false;}toast('🔁 読み上げリピート OFF');}
 }
 function updateTimerModeUi(){
   if(!run)return;
@@ -6089,7 +6252,8 @@ function updateTimerModeUi(){
   down.classList.toggle('on',!countUp);up.classList.toggle('on',countUp);
   down.setAttribute('aria-pressed',String(!countUp));up.setAttribute('aria-pressed',String(countUp));
   document.getElementById('btnDoneStep').textContent=run.microEntry?'⚡ 入口できた':countUp?'✅ 次のステップへ':'✅ できた！';
-  document.getElementById('countUpStepTools').style.display=countUp?'block':'none';
+  document.getElementById('countUpStepTools').style.display=run.microEntry?'none':'block';
+  document.getElementById('btnRunSpeakAgain').disabled=run.paused||run.muted||checklist;
 }
 function setTimerMode(mode){
   if(!run||run.microEntry||!['down','up'].includes(mode)||run.timerMode===mode)return;
@@ -6111,7 +6275,9 @@ function togglePause(){
   if(!run.paused){advanceRunClock();run.paused=true;}
   else{run.paused=false;run.lastTickAt=Date.now();}
   document.getElementById('btnPause').textContent=run.paused?'▶ 再開':'⏸ 一時停止';
-  if(run.paused){stopSpeech();run.halfSpeechActive=false;}
+  if(run.paused){stopSpeech();run.halfSpeechActive=false;run.stepSpeechActive=false;}
+  updateTimerModeUi();
+  if(!run.paused&&!run.checklistMode)speakCurrentRunStep();
 }
 function skipStep(){
   run.skips++;D.combo=0;renderCombo();

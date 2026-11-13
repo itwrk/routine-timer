@@ -79,5 +79,10 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   const job=f.ctx.prepareYouTubeAudio();await flush();assert(generating);await f.ctx.prepareYouTubeAudio();f.ctx.cancelYouTubeAudio();await job;
   assert.equal(f.evaluate('timerVoiceState.generation'),null);assert.equal(f.node('youTubeAudioCancel').hidden,true);assert.equal(f.node('youTubeAudioRoutine').disabled,false);
   f=fixture();f.ctx.getOpenAIKey=()=>'';await f.ctx.prepareYouTubeAudio();assert(!f.events.some(e=>e.startsWith('generate:')));assert(f.events.includes('focus'));
+  // Editing duration must not suppress a step name that is already cached.
+  f=fixture();f.cache('水を飲む');f.ctx.speak('水を飲む、45秒です。');await flush();
+  assert.equal(f.sources.length,1);assert.equal(f.buffers[0].length,2);
+  assert(f.events.some(e=>e.startsWith('notice:音声が未保存')));
+  assert(!f.events.some(e=>e.startsWith('tts')||e.startsWith('generate:')));
   console.log('PASS: cached PCM mixing, volume/rate, no TTS/network fallback, missing clips, mute/cancel/races, delayed completion, resume failure, inventory coverage, explicit/deduplicated/cancelable generation');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -19,7 +19,7 @@ function createPlayer(mode='supported'){
   }
   const speechSynthesis={cancel(){output('cancel')},getVoices(){output('voices');return [{lang:'ja-JP',name:'Kyoko'}]},speak(u){output('speech');assert.equal(u.lang,'ja-JP');assert.equal(u.volume,.7);assert.equal(u.rate,1.2);if(u.onend)u.onend()}};
   const navigator=mode==='missing'?{}:mode==='getter-rejected'?{get audioSession(){throw Error('unavailable')}}:{audioSession:session};
-  const ctx={navigator,D:{settings:{sound:true,voiceVolume:.7,sfxVolume:.3,rate:1.2}},speechSynthesis,SpeechSynthesisUtterance:class{constructor(text){this.text=text}},AudioContext};
+  const ctx={navigator,setTimeout,clearTimeout,D:{settings:{sound:true,voiceVolume:.7,sfxVolume:.3,rate:1.2}},speechSynthesis,SpeechSynthesisUtterance:class{constructor(text){this.text=text}},AudioContext};
   ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
   return {ctx,events,resetSession(){type='playback'},get mixRequests(){return mixRequests},get ended(){return ended},onend(){ended++}};
 }
