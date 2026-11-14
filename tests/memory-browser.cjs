@@ -36,7 +36,6 @@ const nodePath = require('node:path');
   await page.locator('[data-scr="scr-memory"]').click();
   await page.waitForFunction(() => memoryState.ready && !document.getElementById('memShell').inert);
   // The official catalogs drive options, compatibility, persistence and native device voices.
-  await page.locator('#memSettings').evaluate((el) => (el.open = true));
   assert.equal(await page.locator('#memModel option').count(), 10);
   assert.equal(await page.locator('#memVoice option').count(), 10);
   const initialTone = '明るく親しみやすく、重要な単語は少し強調する。';
@@ -91,7 +90,6 @@ const nodePath = require('node:path');
   });
   assert.equal(await page.locator('#memTtsVoice option').count(), 2);
   assert.equal(await page.locator('#memTtsVoice').inputValue(), 'synthetic-en-voice');
-  await page.locator('#memSettings').evaluate((el) => (el.open = false));
   await page.locator('#memTitle').fill('日本史の暗記');
   await page.locator('#memNotationPanel').evaluate((el) => (el.open = true));
   await page
@@ -118,7 +116,9 @@ const nodePath = require('node:path');
     memoryCaptureSelection();
     s.removeAllRanges();
   });
-  await page.locator('.mem-green-btn').click();
+  assert.equal(await page.locator('.mem-green-btn').count(), 0);
+  // Legacy green marks remain editable without a green button in the UI.
+  await page.evaluate(() => memoryMark('green'));
   assert.equal(
     await page.locator('.mem-block').first().locator('.mem-mark[data-color="green"]').first().innerText(),
     '日本'
@@ -327,7 +327,6 @@ const nodePath = require('node:path');
   assert.equal(await page.evaluate(()=>qaGenerationCalls),3);
   await page.evaluate(async()=>{memorySetEditorHTML(memoryParseNotation('一行目\n二行目'));memoryChanged();await memoryPrepareAudio();});
   // A new tone needs its own audio; restoring a saved tone reuses the old clips.
-  await page.locator('#memSettings').evaluate((el) => (el.open = true));
   await page.locator('#memTone').fill('低めの声で、落ち着いて穏やかに。');
   assert.equal(await page.evaluate(() => memoryPrepareAudio()), false);
   await page.evaluate(() => memoryGenerate());
@@ -336,7 +335,6 @@ const nodePath = require('node:path');
   assert.equal(await page.evaluate(() => memoryPrepareAudio()), true);
   await page.evaluate(() => memoryGenerate());
   assert.equal(await page.evaluate(() => qaGenerationCalls), 5);
-  await page.locator('#memSettings').evaluate((el) => (el.open = false));
   // Changing gap/speed/check doesn't spend tokens, no timer drives saved playback.
   await page.evaluate(async () => {
     memoryPrefs.gap = 0;

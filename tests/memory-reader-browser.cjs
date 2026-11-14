@@ -74,7 +74,7 @@ const {chromium,webkit}=require('playwright'),assert=require('node:assert/strict
       assert.equal(await page.evaluate(()=>memoryState.readMode),false);
       await page.locator('[data-scr="scr-memory"]').click();
       await page.locator('#memMode').click();await page.getByRole('button',{name:'音声設定を開く',exact:true}).click();
-      assert.equal(await page.evaluate(()=>memoryState.readMode),false);assert.equal(await page.locator('#memSettings').evaluate(el=>el.open),true);
+      assert.equal(await page.evaluate(()=>memoryState.readMode),false);assert.equal(await page.locator('#memSettings').isVisible(),true);
       // A long marked phrase reveals its upper lines while its lower lines stay hidden.
       await page.evaluate(()=>{
         memorySetEditorHTML(memoryParseNotation('《'+('長い赤マーカーの文章をスクロールして確認します。'.repeat(20))+'👩‍💻 e\u0301✓》\n【緑マーカー】'));

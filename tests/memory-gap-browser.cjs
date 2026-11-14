@@ -21,7 +21,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),http=require('n
         memoryResolveLineClip=async()=>({clip:{pcm:qaClip},reused:true});memoryGenerateClip=async()=>{qaGenerations++;throw Error('pause controls must not generate audio')};
         await memoryPrepareAudio();
       });
-      assert.equal(await page.locator('#memSettings').getAttribute('open'),null);
+      assert.equal(await page.locator('#memGap').isVisible(),true);
       await page.locator('#memGapButton').click();assert.equal(await page.locator('#memGapPanel').isVisible(),true);
       assert.equal(await page.locator('#memGapButton').getAttribute('aria-expanded'),'true');
       await page.locator('#memGapPanel [data-gap-preset="3"]').click();

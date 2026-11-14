@@ -1366,17 +1366,9 @@ body.memory-reading #scr-memory { animation: none; }
   top: 8px;
   z-index: 8;
 }
-.mem-settings[open] {
-  max-height: 55dvh;
-  overflow-y: auto;
-}
 .mem-red-btn {
   background: #ffe4e7 !important;
   color: #99233d !important;
-}
-.mem-green-btn {
-  background: #dff6e8 !important;
-  color: #125f3d !important;
 }
 .mem-stage {
   position: relative;
@@ -1681,7 +1673,12 @@ body.memory-reading #scr-memory { animation: none; }
   border-radius: 0;
   padding: 10px 12px;
 }
-.mem-settings summary,
+.mem-settings h3 {
+  margin: 0;
+  padding: 7px 0;
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 700;
+}
 .mem-notation summary {
   padding: 7px 0;
   cursor: pointer;
@@ -1895,7 +1892,6 @@ body.memory-reading #scr-memory { animation: none; }
         <input class="mem-title" id="memTitle" aria-label="暗記ノートのタイトル" placeholder="タイトル（例：英単語・試験対策）" oninput="memoryChanged()">
         <div class="mem-tools" id="memTools">
           <button class="btn btn-g mem-red-btn" type="button" onpointerdown="memoryKeepSelection(event)" onclick="memoryMark('red')">赤マーカー</button>
-          <button class="btn btn-g mem-green-btn" type="button" onpointerdown="memoryKeepSelection(event)" onclick="memoryMark('green')">緑マーカー</button>
           <button class="btn btn-g" type="button" onpointerdown="memoryKeepSelection(event)" onclick="memoryMark('')">色を消す</button>
           <button class="btn btn-g" id="memAutoMark" type="button" onclick="memoryAutoMark()">🤖 自動暗記箇所マップ</button>
           <button class="btn btn-g" id="memAutoMarkCancel" type="button" onclick="memoryCancelAutoMark()" hidden>マップ作成を中止</button>
@@ -1906,7 +1902,7 @@ body.memory-reading #scr-memory { animation: none; }
           <button class="btn btn-g" type="button" onpointerdown="memoryKeepSelection(event)" onclick="document.getElementById('memImage').click()">🖼 画像</button>
           <input id="memImage" type="file" accept="image/*" hidden onchange="memoryInsertImage(this)">
         </div>
-        <p class="mem-help">普通の文章のように入力・改行できます。文字を選んで赤・緑マーカー。行の移動は「並べ替え」から。暗記モードではマーカーをタップして○／✓。</p>
+        <p class="mem-help">普通の文章のように入力・改行できます。文字を選んで赤マーカー。行の移動は「並べ替え」から。暗記モードではマーカーをタップして○／✓。</p>
         <p class="mem-help" id="memAutoMarkStatus" role="status" aria-live="polite">自動暗記箇所マップはSol APIで重要語句に赤マーカーを追加します。本文をOpenAIへ送信し、API料金が発生します。既存マーカーは残します。</p>
         <div class="mem-stage" id="memStage" tabindex="0" role="region" aria-label="暗記する本文。上下にスクロールして答えを確認できます"><div class="mem-editor" id="memEditor" contenteditable="true" role="textbox" aria-label="暗記ノートの本文" aria-multiline="true" tabindex="0" data-placeholder="ここに文章を入力・貼り付けできます。Enterで改行。"></div><div class="mem-sheet" id="memSheet" aria-hidden="true" hidden></div></div>
         <button class="btn mem-study-sheet-toggle" id="memStudySheetToggle" type="button" onclick="memoryToggleSheet()" aria-pressed="true">🔴 シートを外す</button>
@@ -1919,7 +1915,7 @@ body.memory-reading #scr-memory { animation: none; }
           <input id="memImport" type="file" accept=".txt,.json,text/plain,application/json" hidden onchange="memoryImport(this)">
           <button class="btn btn-g" type="button" onclick="twoTap(this,'もう一度で削除',()=>memoryDelete())">削除</button>
         </div>
-        <details class="mem-notation" id="memNotationPanel"><summary>《》記法で入力・AIで編集</summary><p class="mem-help">赤《ことば》／緑【ことば】／確認済み《ことば✓》。画像もコピー・書出に含まれます。記号を文字として使う場合は \《 のように \ を付けます。</p><textarea id="memNotation" aria-label="マーカー記法のテキスト" placeholder="日本の首都は《東京》。\n【大切なこと】を改行して追加できます。"></textarea><div class="mem-tools"><button class="btn btn-p" type="button" onclick="twoTap(this,'もう一度で本文に反映',()=>memoryApplyNotation())">反映</button><button class="btn btn-g" type="button" onclick="memoryFillNotation()">本文を取り込む</button></div></details>
+        <details class="mem-notation" id="memNotationPanel"><summary>《》記法で入力・AIで編集</summary><p class="mem-help">赤《ことば》／確認済み《ことば✓》。画像もコピー・書出に含まれます。記号を文字として使う場合は \《 のように \ を付けます。</p><textarea id="memNotation" aria-label="マーカー記法のテキスト" placeholder="日本の首都は《東京》。\n《大切なこと》を改行して追加できます。"></textarea><div class="mem-tools"><button class="btn btn-p" type="button" onclick="twoTap(this,'もう一度で本文に反映',()=>memoryApplyNotation())">反映</button><button class="btn btn-g" type="button" onclick="memoryFillNotation()">本文を取り込む</button></div></details>
         <p class="mem-help">ノートの件数制限なし（端末の空き容量まで）。この端末・ブラウザに自動保存します。端末移行は全件書出→読込。画像・音声も端末に保存されます。</p>
       </div>
       <div class="card mem-audio-options">
@@ -1936,19 +1932,19 @@ body.memory-reading #scr-memory { animation: none; }
         <p id="memDriveStatus" class="mem-help" role="status" aria-live="polite">生成した音声は共有ドライブの「97_春香／ルーチンタイマー／暗記音声」にWAVで保存します。通信に失敗しても端末に残り、上のボタンから再試行できます。</p>
       </div>
       <div class="card mem-player">
-        <div class="mem-player-buttons"><button class="btn btn-p" type="button" id="memPlay" onclick="memoryPlay()">▶ 再生</button><button class="btn btn-g" type="button" onclick="memoryStop()">⏹ 停止</button><button class="btn btn-g" type="button" id="memLoop" onclick="memoryCycleLoop()">ループ OFF</button><button class="btn btn-g" type="button" id="memSpeed" onclick="memoryCycleSpeed()">1.0×</button><button class="btn btn-g" type="button" id="memGapButton" onclick="memoryToggleGapPanel()" aria-expanded="false" aria-controls="memGapPanel">無音 0秒</button><button class="btn btn-g" type="button" id="memEcho" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button><button class="btn btn-g" type="button" id="memBgmButton" onclick="memoryToggleBgmPanel()" aria-expanded="false" aria-controls="memBgmPanel">BGM OFF</button><button class="btn btn-g" type="button" onclick="document.getElementById('memSettings').open=!document.getElementById('memSettings').open">⚙ 設定</button></div>
+        <div class="mem-player-buttons"><button class="btn btn-p" type="button" id="memPlay" onclick="memoryPlay()">▶ 再生</button><button class="btn btn-g" type="button" onclick="memoryStop()">⏹ 停止</button><button class="btn btn-g" type="button" id="memLoop" onclick="memoryCycleLoop()">ループ OFF</button><button class="btn btn-g" type="button" id="memSpeed" onclick="memoryCycleSpeed()">1.0×</button><button class="btn btn-g" type="button" id="memGapButton" onclick="memoryToggleGapPanel()" aria-expanded="false" aria-controls="memGapPanel">無音 0秒</button><button class="btn btn-g" type="button" id="memEcho" onclick="memoryToggleEcho()" aria-pressed="false">エコー OFF</button><button class="btn btn-g" type="button" id="memBgmButton" onclick="memoryToggleBgmPanel()" aria-expanded="false" aria-controls="memBgmPanel">BGM OFF</button></div>
         <div id="memGapPanel" class="mem-gap-panel" hidden aria-label="1行後の無音時間"></div>
         <div id="memBgmPanel" class="mem-gap-panel mem-bgm-panel" hidden aria-label="暗記のBGM"></div>
         <audio id="memAudio" controls preload="auto" playsinline hidden aria-label="保存した暗記音声"></audio>
         <div id="memStatus" class="mem-status" role="status" aria-live="polite">未生成なら端末TTSで再生。画面オフで聞く場合は音声を生成してからSafariで再生してください。</div>
-        <details class="mem-settings" id="memSettings"><summary>音声・速度・行間・エコー</summary><div class="mem-setting-grid">
+        <section class="mem-settings" id="memSettings" aria-labelledby="memSettingsTitle"><h3 id="memSettingsTitle">音声・速度・行間・エコー</h3><div class="mem-setting-grid">
           <label>速度モード<select id="memSpeedMode" onchange="memorySettingsChanged()"><option value="cycle">ボタンで切替</option><option value="fixed">固定（🔒）</option></select></label>
           <label>固定速度（0.3〜3×）<input id="memFixedRate" type="number" min="0.3" max="3" step="0.1" value="1" onchange="memorySettingsChanged()"></label>
           <label>行間（秒・0なら間を空けず再生）<input id="memGap" type="number" min="0" max="60" step="0.1" value="0" onchange="memorySettingsChanged()"></label>
           <label class="mem-wide">エコーの強さ <output id="memEchoAmountLabel" for="memEchoAmount">30%</output><input id="memEchoAmount" type="range" min="0.1" max="0.6" step="0.05" value="0.3" oninput="document.getElementById('memEchoAmountLabel').textContent=Math.round(this.value*100)+'%'" onchange="memoryEchoAmountChanged(this.value)"><span class="mem-help">「エコー」ボタンでON／OFF。保存音声に端末内でかけるので、再生成・追加のAPI料金は不要です。端末TTSにはかかりません。音声書出にはエコーも含み、Driveには原音を保存します。</span></label>
           <label class="mem-wide" id="memToneField" hidden>OpenAIの話し方・トーン（自由文）<textarea id="memTone" rows="3" maxlength="1000" oninput="memoryToneChanged()" placeholder="例：明るく親しみやすく。落ち着いた先生のように、語尾まで明瞭に。重要な単語は少し強調する。"></textarea><span class="mem-help">感情・抑揚・話す速さなどを指定できます。本文の言葉は変えず、読み方に反映します。空欄は標準の読み方です。</span></label>
           <label class="mem-wide">OpenAI共通キー（AI文章生成と同じ／この端末だけ）<input id="memApiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="OpenAI APIキーを入力" onchange="memorySaveKey(this.value)"></label>
-        </div><p class="mem-help">モデル・声・トーンを選んで「音声生成・Drive保存」を押すと、その設定の音声を作成します。同じ設定の保存音声は再利用します。モデルにより生成料金は異なります。端末TTSはこの端末の声を選べますが、自由文のトーン指定には対応しません。</p><div class="mem-tools"><button class="btn btn-g" type="button" id="memDownloadAudio" onclick="memoryDownloadAudio()" disabled>音声を書出</button><button class="btn btn-g" type="button" onclick="memoryPlay(true)">端末TTS</button></div><p class="mem-help">AI生成音声です。生成時のみAPIを使用し、保存音声の再生は追加消費なし。音声は1行ずつ保存します。行の並べ替え・マーカー・確認状態が変わっても、本文・声・モデル・対応するトーンが同じ行は再利用します。変更した行だけ生成し、速度・行間変更にも再生成は不要です。キーは同期・書出に含みません。旧TTS APIは2027年1月6日終了予定です。音声の書出はWAVです。</p><p class="mem-help">画面オフ中は保存音声を連続再生し、ロック画面の操作にも対応します。iOSやアプリ内ブラウザにより停止する場合はSafariで開くか、音声を書き出して再生してください。端末TTSは画面オフ中の継続を保証できません。</p></details>
+        </div><p class="mem-help">モデル・声・トーンを選んで「音声生成・Drive保存」を押すと、その設定の音声を作成します。同じ設定の保存音声は再利用します。モデルにより生成料金は異なります。端末TTSはこの端末の声を選べますが、自由文のトーン指定には対応しません。</p><div class="mem-tools"><button class="btn btn-g" type="button" id="memDownloadAudio" onclick="memoryDownloadAudio()" disabled>音声を書出</button><button class="btn btn-g" type="button" onclick="memoryPlay(true)">端末TTS</button></div><p class="mem-help">AI生成音声です。生成時のみAPIを使用し、保存音声の再生は追加消費なし。音声は1行ずつ保存します。行の並べ替え・マーカー・確認状態が変わっても、本文・声・モデル・対応するトーンが同じ行は再利用します。変更した行だけ生成し、速度・行間変更にも再生成は不要です。キーは同期・書出に含みません。旧TTS APIは2027年1月6日終了予定です。音声の書出はWAVです。</p><p class="mem-help">画面オフ中は保存音声を連続再生し、ロック画面の操作にも対応します。iOSやアプリ内ブラウザにより停止する場合はSafariで開くか、音声を書き出して再生してください。端末TTSは画面オフ中の継続を保証できません。</p></section>
       </div>
     </div>
   </div>
@@ -9561,7 +9557,6 @@ function memoryToggleMode() {
 }
 function memoryShowAudioSettings() {
   if (memoryState.readMode) memoryToggleMode();
-  document.getElementById('memSettings').open = true;
   document.querySelector('.mem-audio-options').scrollIntoView({ block: 'start' });
 }
 function memoryMoveBlock(row, direction) {
@@ -10627,7 +10622,6 @@ async function memoryGenerate() {
   if (!saved) return;
   const key = getOpenAIKey();
   if (!key) {
-    document.getElementById('memSettings').open = true;
     document.getElementById('memApiKey').focus();
     memorySetStatus('OpenAI APIキーを設定してください。未設定でも端末TTSは使えます。');
     return;
