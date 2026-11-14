@@ -298,6 +298,8 @@ body.meal-waiting #memoFab{bottom:calc(172px + env(safe-area-inset-bottom))}
 .habit-multi-head{display:flex;align-items:center;gap:7px;min-width:0}
 .habit-multi-head .habit-name{flex:1;min-width:0;font-size:calc(14px * var(--text-scale));font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .habit-multi-progress{color:var(--cyan-text);font-size:calc(9px * var(--text-scale));font-weight:800;white-space:nowrap}
+.habit-multi-check{display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;width:18px;height:18px;border:2px solid var(--line2);border-radius:5px;color:transparent;font-size:12px;line-height:1}
+.habit-multi-check.has-progress{border-color:var(--habit-progress-color);background:var(--habit-progress-color);color:#fff}
 .habit-multi-head .habit-link{color:var(--gold);font-size:calc(11px * var(--text-scale));text-decoration:none;white-space:nowrap;flex-shrink:0}
 .habit-slot-list{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 2px 30px}
 .habit-slot-toggle{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:5px 8px;border:1px solid var(--line2);border-radius:999px;background:var(--card2);color:var(--text);font-size:calc(10px * var(--text-scale));font-weight:800;white-space:nowrap;cursor:pointer}
@@ -1101,9 +1103,27 @@ input[type=checkbox]{accent-color:var(--cyan)}
 #habitCard .habit-item.completed :is(.habit-memo-toggle,.habit-time,.habit-link){font-size:calc(9px * var(--text-scale))}
 #habitCard .habit-item.completed .habit-del{min-width:28px;padding:2px}
 #habitCard .habit-item.completed.habit-multi{padding:3px 0}
-#habitCard .habit-item.completed .habit-slot-list{margin:2px 0 0 24px}
 #habitCard .habit-slot-toggle.done{min-height:28px;padding:3px 6px;font-size:calc(9px * var(--text-scale))}
 #habitCard .habit-slot-toggle.done .habit-slot-check{width:14px;height:14px}
+#habitCard .habit-multi-head{gap:5px}
+#habitCard .habit-multi-head .habit-name{flex:1 1 76px;min-width:44px;font-size:calc(11px * var(--text-scale))}
+#habitCard .habit-multi-head .habit-slot-list{flex:0 1 auto;min-width:0;flex-wrap:nowrap;gap:3px;margin:0;overflow-x:auto;overscroll-behavior-x:contain}
+#habitCard .habit-multi-head .habit-slot-toggle{flex:0 0 auto;min-height:30px;padding:3px 5px;gap:3px;font-size:calc(10px * var(--text-scale))}
+#habitCard .habit-multi-head .habit-slot-check{width:13px;height:13px;border-width:1.5px;border-radius:4px}
+#habitCard .habit-multi-head .habit-slot-done-time{display:none}
+#habitCard .habit-item.completed .habit-slot-toggle{min-height:26px;padding:2px 4px;font-size:calc(9px * var(--text-scale))}
+@media(max-width:600px){
+  #habitCard .habit-multi-head{gap:3px}
+  #habitCard .habit-multi-head .habit-name{flex-basis:64px;font-size:11px}
+  #habitCard .habit-multi-head .habit-slot-toggle{padding-left:3px;padding-right:3px}
+  #habitCard .habit-item.habit-multi .habit-memo-toggle{font-size:0;min-width:24px}
+  #habitCard .habit-item.habit-multi .habit-memo-toggle::before{content:'📖';font-size:12px}
+}
+@media(max-width:360px){
+  #habitCard .habit-multi-head .habit-name{flex-basis:44px}
+  #habitCard .habit-item.habit-multi .habit-slot-toggle{padding:2px;gap:2px;font-size:9px}
+  #habitCard .habit-item.habit-multi .habit-slot-check{width:11px;height:11px}
+}
 .habit-score{font-family:inherit;font-size:11px;color:var(--mint-text)}
 .habit-add{padding-top:8px;gap:6px}
 .habit-add input{font-size:12px;padding:8px}
@@ -5046,6 +5066,10 @@ function appendCheckItemMemo(item,entry,isTask=false){
   }
   updateSummary();renderContent();item.querySelector('.habit-row,.habit-multi-head').appendChild(summary);item.appendChild(details);
 }
+function habitMultiIndicator(completed,total){
+  const color=completed===total?'var(--mint)':`hsl(${Math.round(40+100*(completed-1)/Math.max(1,total-1))},65%,30%)`;
+  return `<span class="habit-multi-check${completed?' has-progress':''}" style="--habit-progress-color:${color}" role="img" aria-label="${total}回中${completed}回完了">${completed?'✓':''}</span>`;
+}
 function renderHabits(){
   const list=document.getElementById('habitList');
   if(!list)return;
@@ -5067,7 +5091,7 @@ function renderHabits(){
       const logs=slots.map(slot=>habitLogForToday(habit,new Date(),slot)),completed=logs.filter(Boolean).length;
       const item=document.createElement('div');item.className='habit-item habit-multi';
       const link=safeHabitUrl(habit.link);
-      item.innerHTML=`<div class="habit-multi-head"><span>☑️</span><span class="habit-name">${esc(habit.name)}</span><span class="habit-multi-progress">${completed}/${slots.length}</span>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}</div><div class="habit-slot-list"></div>`;
+      item.innerHTML=`<div class="habit-multi-head">${habitMultiIndicator(completed,slots.length)}<span class="habit-name" title="${esc(habit.name)}">${esc(habit.name)}</span><div class="habit-slot-list" role="group" aria-label="${esc(habit.name)}の時間別チェック"></div><span class="habit-multi-progress">${completed}/${slots.length}</span>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}</div>`;
       const slotList=item.querySelector('.habit-slot-list');
       const orderedSlots=slots.map((slot,index)=>({slot,log:logs[index]})).sort((a,b)=>Number(!!a.log)-Number(!!b.log)||(a.log?.completedAt||0)-(b.log?.completedAt||0));
       orderedSlots.forEach(({slot,log})=>{
@@ -5114,7 +5138,7 @@ function renderRunHabits(){
     if(slots.length){
       const logs=slots.map(slot=>habitLogForToday(habit,new Date(),slot)),completed=logs.filter(Boolean).length;
       const item=document.createElement('div');item.className='habit-item habit-multi';
-      item.innerHTML=`<div class="habit-multi-head"><span>☑️</span><span class="habit-name">${esc(habit.name)}</span><span class="habit-multi-progress">${completed}/${slots.length}</span></div><div class="habit-slot-list"></div>`;
+      item.innerHTML=`<div class="habit-multi-head">${habitMultiIndicator(completed,slots.length)}<span class="habit-name">${esc(habit.name)}</span><span class="habit-multi-progress">${completed}/${slots.length}</span></div><div class="habit-slot-list"></div>`;
       const slotList=item.querySelector('.habit-slot-list');
       slots.forEach((slot,index)=>{
         const log=logs[index],btn=document.createElement('button');btn.type='button';btn.className='habit-slot-toggle'+(log?' done':'');btn.setAttribute('aria-pressed',log?'true':'false');btn.setAttribute('aria-label',`${habit.name} ${slot}を${log?'未完了に戻す':'完了にする'}`);btn.innerHTML=`<span class="habit-slot-check">✓</span><span class="habit-slot-label">${esc(slot)}</span>${log?`<span class="habit-slot-done-time">${esc(log.time)}</span>`:''}`;btn.onclick=()=>toggleHabit(habit,slot);slotList.appendChild(btn);
