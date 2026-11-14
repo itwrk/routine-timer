@@ -8809,7 +8809,7 @@ function memoryPrefsNormalize(raw) {
   p.tone = memoryNormalizeTone(p.tone);
   p.bgmEnabled = p.bgmEnabled === true;
   p.bgmTrack = MEMORY_BGM_TRACKS.some(track=>track.id===p.bgmTrack) ? p.bgmTrack : 'sunset-walk';
-  p.bgmVolume = Number.isFinite(Number(p.bgmVolume)) ? Math.min(.5,Math.max(0,Number(p.bgmVolume))) : .2;
+  p.bgmVolume = Number.isFinite(Number(p.bgmVolume)) ? Math.min(1,Math.max(0,Number(p.bgmVolume))) : .2;
   p.echo = p.echo === true;
   p.echoAmount = Number.isFinite(Number(p.echoAmount)) ? Math.min(.6, Math.max(.1, Number(p.echoAmount))) : .3;
   return p;
@@ -10079,7 +10079,7 @@ function memoryRenderBgmPanels() {
     if (!panel.dataset.ready) {
       panel.innerHTML='<div class="mem-gap-head"><strong>暗記のBGM</strong><button class="btn btn-g btn-sm" type="button" onclick="memoryToggleBgmPanel(false)">閉じる</button></div>'+
         '<div class="mem-setting-grid"><label class="mem-wide">ループする曲<select data-bgm-track onchange="memoryChangeBgmTrack(this.value)">'+MEMORY_BGM_TRACKS.map(track=>`<option value="${track.id}">${esc(track.name)}</option>`).join('')+'</select></label>'+
-        '<label class="mem-wide">BGM音量 <output data-bgm-volume-label></output><input data-bgm-volume type="range" min="0" max="0.5" step="0.01" aria-label="BGM音量" oninput="memorySetBgmVolume(this.value)"></label></div>'+
+        '<label class="mem-wide">BGM音量 <output data-bgm-volume-label></output><input data-bgm-volume type="range" min="0" max="1" step="0.01" aria-label="BGM音量" oninput="memorySetBgmVolume(this.value)"></label></div>'+
         '<button class="btn btn-g btn-sm" type="button" data-bgm-toggle onclick="memoryToggleBgm()">▶ BGMを再生</button><p class="mem-help" data-bgm-status role="status" aria-live="polite"></p>'+
         '<p class="mem-help">選んだ曲を繰り返し流します。ナレーション中は音量を下げます。停止ボタンで音声とBGMを止め、次の再生時にBGMも再開します。画面OFF中のBGMはiOSにより止まる場合があります。</p>'+
         '<details><summary class="mem-help">音源の出典・ライセンス</summary><p class="mem-help">同梱音源はすべてCC0です。'+MEMORY_BGM_TRACKS.map(track=>`<a href="${track.page}" target="_blank" rel="noopener">${esc(track.name.split(' · ')[0])} / ${esc(track.author)}</a>`).join('<br>')+'<br><a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a></p></details>';
@@ -10165,7 +10165,7 @@ function memoryChangeBgmTrack(id) {
 }
 function memorySetBgmVolume(value) {
   const volume=Number(value);if(!Number.isFinite(volume))return;
-  memoryPrefs.bgmVolume=Math.min(.5,Math.max(0,volume));memorySavePrefs();memoryBgmDuck(memoryState.bgm.ducked);memoryRenderBgmPanels();
+  memoryPrefs.bgmVolume=Math.min(1,Math.max(0,volume));memorySavePrefs();memoryBgmDuck(memoryState.bgm.ducked);memoryRenderBgmPanels();
 }
 function memoryToggleGapPanel(force) {
   memoryState.gapPanelOpen = typeof force === 'boolean' ? force : !memoryState.gapPanelOpen;
