@@ -1128,6 +1128,24 @@ input[type=checkbox]{accent-color:var(--cyan)}
 .ringwrap.countup .time{color:var(--text);text-shadow:none}
 .runstats{font-size:11px;gap:16px;margin:10px 0}
 .runstats b{color:var(--text);font-family:inherit}
+.run-timer-overview{display:flex;flex-direction:column;align-items:center;width:100%;max-width:460px}
+.run-timer-details{display:contents}
+.run-step-compact{display:none}
+@media(max-width:959px){
+  .run-timer-overview{display:grid;grid-template-columns:clamp(116px,34vw,140px) minmax(0,1fr);align-items:center;gap:6px 12px;margin:6px 0 2px}
+  #run .run-timer-overview .ringwrap{width:100%;height:auto;aspect-ratio:1;margin:0}
+  #run .run-timer-overview .ringcenter{padding:14px;gap:5px}
+  #run .run-timer-overview .bigem{font-size:28px}
+  #run .run-timer-overview .time{font-size:26px;margin:0;letter-spacing:0}
+  #run .run-timer-overview .stepname{display:none}
+  .run-timer-details{display:flex;flex-direction:column;min-width:0;gap:10px;padding:4px 0}
+  .run-step-compact{display:block;font-size:13px;line-height:1.5;font-weight:800;overflow-wrap:anywhere}
+  .run-timer-details .runstats{display:flex;flex-direction:column;gap:8px;margin:0;font-size:11px}
+  .run-timer-details .runstats>span{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:2px 8px}
+  .run-timer-details .runstats>span>span{white-space:nowrap}
+  .run-timer-details .runstats b{font-size:12px;overflow-wrap:anywhere}
+  .run-timer-overview .nextstep{grid-column:1 / -1;margin:0;min-width:0}
+}
 .runbtns{margin-top:4px}
 .runbtns .btn{font-size:12px;padding:12px 6px}
 .nextstep,.runmemo,.runck,.moti,.run-note-composer,.run-daily-checklist{background:var(--card);border-color:var(--line);box-shadow:none}
@@ -2559,7 +2577,6 @@ body.memory-reading #scr-memory { animation: none; }
     <button class="close" id="runClose" onclick="if(run&&run.checklistMode)finishChecklistRun();else twoTap(this,'もう一度で中断',endRun)">✕ 中断</button>
   </div>
   <div class="stepprog" id="runProg"></div>
-  <div class="nextstep" id="runNext" aria-live="polite"></div>
   <div class="combo" id="combo"></div>
   <div class="timer-mode-switch" aria-label="読み上げの実行モード">
     <button id="btnRunTts" type="button" onclick="setRunSpeechMode('tts')">TTSで実行</button>
@@ -2580,6 +2597,7 @@ body.memory-reading #scr-memory { animation: none; }
     <button id="btnVoiceRepeat" class="voice-repeat-btn" type="button" onclick="toggleVoiceRepeat()" aria-pressed="false">🔁 読み上げリピート OFF</button>
     <button id="btnRunMute" class="voice-repeat-btn run-mute-btn" type="button" onclick="toggleRunMute()" aria-pressed="false">🔊 音声・効果音 ON</button>
   </div>
+  <div class="run-timer-overview">
   <div class="ringwrap">
     <svg viewBox="0 0 100 100">
       <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
@@ -2594,9 +2612,14 @@ body.memory-reading #scr-memory { animation: none; }
       <div class="time" id="runTime">0:00</div>
     </div>
   </div>
+  <div class="run-timer-details">
+  <div class="run-step-compact" id="runStepCompact"></div>
   <div class="runstats">
     <span><span id="runRemainLabel">⏱ 残り</span> <b id="runRemain">-</b></span>
     <span><span id="runFinishLabel">🏁 終了予定</span> <b id="runFinish">-</b></span>
+  </div>
+  </div>
+  <div class="nextstep" id="runNext" aria-live="polite"></div>
   </div>
   <div class="runbtns">
     <button class="btn btn-g" id="btnPause" onclick="togglePause()">⏸ 一時停止</button>
@@ -5857,7 +5880,7 @@ function setRunMode(checklist){
     run.targetSec=run.checklistMinutes*60;run.left=run.targetSec;run.leftMs=run.targetSec*1000;
     run.stepElapsedMs=0;run.lastTickAt=Date.now();run.checklistTimeUp=false;
     document.getElementById('runEmoji').textContent='☑';
-    document.getElementById('runStep').textContent='チェックリスト';
+    setRunStepName('チェックリスト');
     renderRoutineChecklist();updateTimerModeUi();updateRing();updateRemain();
   }else loadStep(false);
 }
@@ -5942,7 +5965,7 @@ function slamIn(){
   flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');
   const runEl=document.getElementById('run');
   runEl.classList.remove('impact');void runEl.offsetWidth;runEl.classList.add('impact');
-  ['runEmoji','runStep','runTime'].forEach(id=>{
+  ['runEmoji','runStep','runStepCompact','runTime'].forEach(id=>{
     const el=document.getElementById(id);
     el.classList.remove('slam');void el.offsetWidth;el.classList.add('slam');
   });
@@ -5950,12 +5973,16 @@ function slamIn(){
   rw.classList.remove('shake');void rw.offsetWidth;rw.classList.add('shake');
   sfxSlam();
 }
+function setRunStepName(name){
+  document.getElementById('runStep').textContent=name;
+  document.getElementById('runStepCompact').textContent=name;
+}
 function loadStep(speakIt){
   const s=run.r.steps[run.idx];
   run.targetSec=run.microEntry?10:s.sec;run.left=run.targetSec;run.leftMs=run.targetSec*1000;run.stepElapsedMs=0;run.lastTickAt=Date.now();
   run.lastSignalElapsed=0;run.halfDone=false;run.halfSpeechActive=false;run.stepSpeechActive=false;run.currentRecorded=false;run.usedCountUp=run.timerMode==='up';
   document.getElementById('runEmoji').textContent=s.emoji||'✅';
-  document.getElementById('runStep').textContent=s.name;
+  setRunStepName(s.name);
   document.getElementById('runProg').textContent=run.microEntry?'⚡ 10秒だけの入口':`ステップ ${run.idx+1} / ${run.r.steps.length}`;
   document.getElementById('runNoteContext').textContent=`${run.r.name} › ${s.name}`;
   document.getElementById('runNoteInput').value='';
