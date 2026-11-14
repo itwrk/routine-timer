@@ -31,7 +31,7 @@ function fixture(){
   };
   ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
   const evaluate=text=>vm.runInContext(text,ctx);
-  return {ctx,events,clips,sources,buffers,gains,nodes,node,pcm,evaluate,routine,cache(text){for(const part of ctx.timerVoiceParts(text))clips.set('timer-voice-v1-clip:'+part,{pcmBytes:bytes()});}};
+  return {ctx,events,clips,sources,buffers,gains,nodes,node,pcm,evaluate,routine,cache(text){for(const part of ctx.timerVoiceParts(text))clips.set('timer-voice-v2-ja-clip:'+part,{pcmBytes:bytes()});}};
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
@@ -54,7 +54,7 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   f.ctx.stopSpeech();release({pcmBytes:await f.pcm().arrayBuffer()});await flush();assert.equal(f.sources.length,0);assert(!f.evaluate('isSpeechBusy()'));
   // Replacing an announcement invalidates an earlier asynchronous read.
   f=fixture();const originalStore=f.ctx.memoryStore;let first;
-  f.cache('新しい案内');f.ctx.memoryStore=(store,method,id)=>id==='timer-voice-v1-clip:古い案内'?new Promise(resolve=>{first=resolve}):originalStore(store,method,id);
+  f.cache('新しい案内');f.ctx.memoryStore=(store,method,id)=>id==='timer-voice-v2-ja-clip:古い案内'?new Promise(resolve=>{first=resolve}):originalStore(store,method,id);
   f.ctx.speak('古い案内');await flush();f.ctx.speak('新しい案内');await flush();first({pcmBytes:await f.pcm().arrayBuffer()});await flush();assert.equal(f.sources.length,1);
   // A late completion announcement must not override a newly started one.
   f.ctx.speakLater('古い完了案内',5);f.ctx.stopSpeech();await new Promise(resolve=>setTimeout(resolve,10));assert.equal(f.sources.length,1);
@@ -63,10 +63,10 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   f.ctx.speak('水を飲む');await flush();assert.equal(f.sources.length,0);assert(!f.evaluate('isSpeechBusy()'));
   // Every timer variant has the same phrase identity as the preparation inventory.
   f=fixture();const plan=new Set(f.ctx.timerVoicePlan(f.routine));
-  for(const text of ['水を飲む、1分です。','歯みがき、30秒です。','水を飲む、まず10秒だけです。','水を飲む、実時間計測です。終わったら次へを押してください。','水を飲む。あと半分です！','水を飲む。まずは一歩。よくできた！','朝のルーチン。チェックリストを始めます。',f.ctx.runCompletionSpeech(f.routine.name,true),f.ctx.runCompletionSpeech(f.routine.name,false)]){
+  for(const text of ['水を飲む、1分です。','歯みがき、30秒です。','水を飲む、まず10秒だけです。','水を飲む、実時間計測です。終わったら次へを押してください。','水を飲む。あと30秒です。','水を飲む。まずは一歩。よくできた！','朝のルーチン。チェックリストを始めます。',f.ctx.runCompletionSpeech(f.routine.name,true),f.ctx.runCompletionSpeech(f.routine.name,false)]){
     for(const part of f.ctx.timerVoiceParts(text))assert(plan.has(part),part);
   }
-  assert.equal(plan.size,f.ctx.timerVoicePlan(f.routine).length);assert(plan.has('10'));assert(plan.has('0'));
+  assert.equal(plan.size,f.ctx.timerVoicePlan(f.routine).length);assert(plan.has('じゅう'));assert(plan.has('ぜろ'));assert(!plan.has('10'));assert(!plan.has('0'));
   f.ctx.D.settings.moti=false;assert(!f.ctx.timerVoicePlan(f.routine).includes('まずは一歩'));assert(!f.ctx.timerVoicePlan(f.routine).includes('できた分だけ前進'));
   // Generation is explicit, retains completed clips, deduplicates and resumes after interruption.
   f=fixture();f.ctx.D.settings.moti=false;f.cache('水を飲む');await f.ctx.prepareYouTubeAudio();
@@ -79,6 +79,22 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   const job=f.ctx.prepareYouTubeAudio();await flush();assert(generating);await f.ctx.prepareYouTubeAudio();f.ctx.cancelYouTubeAudio();await job;
   assert.equal(f.evaluate('timerVoiceState.generation'),null);assert.equal(f.node('youTubeAudioCancel').hidden,true);assert.equal(f.node('youTubeAudioRoutine').disabled,false);
   f=fixture();f.ctx.getOpenAIKey=()=>'';await f.ctx.prepareYouTubeAudio();assert(!f.events.some(e=>e.startsWith('generate:')));assert(f.events.includes('focus'));
+  // Old English-prone audio is never reused. Rebuilding is explicit and replaces clips only after success.
+  f=fixture();f.clips.set('timer-voice-v1-clip:じゅう',{pcmBytes:await f.pcm().arrayBuffer()});
+  f.ctx.speak('じゅう');await flush();assert.equal(f.sources.length,0);
+  f=fixture();await f.ctx.prepareYouTubeAudio();const firstPass=f.events.filter(e=>e.startsWith('generate:')).length;
+  await f.ctx.prepareYouTubeAudio(true);assert.equal(f.events.filter(e=>e.startsWith('generate:')).length,firstPass*2);
+  const preserved=f.clips.get('timer-voice-v2-ja-clip:テスト読み上げです');
+  f.ctx.memoryGenerateClip=async()=>{throw Error('generation failed')};await f.ctx.prepareYouTubeAudio(true);
+  assert.equal(f.clips.get('timer-voice-v2-ja-clip:テスト読み上げです'),preserved);
+  assert.equal(f.node('youTubeAudioRebuild').disabled,false);
+  // Every full and half duration required for normal ticks is prepared exactly, without rounding minutes.
+  for(const sec of [5,31,60,90,121,180,301,3600]){
+    const routine={name:'試験',steps:[{name:'準備',sec,texts:[]}]},inventory=new Set(f.ctx.timerVoicePlan(routine));
+    assert(inventory.has(f.ctx.timerDurationSpeech(sec)+'です'));
+    for(const half of f.ctx.timerHalfSeconds(sec))assert(inventory.has('あと'+f.ctx.timerDurationSpeech(half)+'です'));
+  }
+  assert.equal(f.ctx.timerDurationSpeech(90),'1分30秒');assert.equal(f.ctx.timerDurationSpeech(121),'2分1秒');
   // Editing duration must not suppress a step name that is already cached.
   f=fixture();f.cache('水を飲む');f.ctx.speak('水を飲む、45秒です。');await flush();
   assert.equal(f.sources.length,1);assert.equal(f.buffers[0].length,2);

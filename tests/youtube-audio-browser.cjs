@@ -44,6 +44,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),http=require('n
       assert.equal(await page.evaluate(()=>AC.state),'running');
       assert.equal(await page.evaluate(()=>qaSpeechCount),0);await page.evaluate(()=>stopSpeech());
       await page.evaluate(()=>prepareYouTubeAudio());assert.equal(await page.evaluate(()=>qaGenerateCount),generated);
+      // Rebuilding requires two explicit taps and replaces already saved clips.
+      await page.locator('#youTubeAudioRebuild').click();assert.equal(await page.evaluate(()=>qaGenerateCount),generated);
+      assert.equal(await page.locator('#youTubeAudioRebuild').evaluate(el=>el.scrollWidth<=el.clientWidth+2),true);
+      await page.locator('#youTubeAudioRebuild').click();
+      await page.waitForFunction(n=>!timerVoiceState.generation&&qaGenerateCount===n*2,generated);
+      assert.equal(await page.locator('#youTubeAudioRebuild').isDisabled(),false);
       const overflow=await page.evaluate(()=>[...document.querySelectorAll('#youTubeAudioTools button,#youTubeAudioTools select')].filter(el=>el.scrollWidth>el.clientWidth+2).map(el=>el.id));
       assert.deepEqual(overflow,[],'new controls must fit at '+width+'px');
       await page.locator('#youTubeAudioTools').screenshot({path:'/private/tmp/rvt-youtube-'+process.env.RVT_BROWSER+'-'+width+'.png'});

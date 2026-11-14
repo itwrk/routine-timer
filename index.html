@@ -2450,9 +2450,11 @@ body.memory-reading #scr-memory { animation: none; }
         <p class="muted" id="youTubeAudioStatus" role="status" aria-live="polite"></p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
           <button class="btn btn-c btn-sm" type="button" id="youTubeAudioPrepare" onclick="prepareYouTubeAudio()" style="white-space:nowrap">音声を準備</button>
+          <button class="btn btn-g btn-sm" type="button" id="youTubeAudioRebuild" onclick="twoTap(this,'もう一度で再生成（有料）',()=>prepareYouTubeAudio(true))" style="white-space:nowrap">音声を作り直す</button>
           <button class="btn btn-g btn-sm" type="button" id="youTubeAudioCancel" onclick="cancelYouTubeAudio()" hidden style="white-space:nowrap">生成を中止</button>
         </div>
         <p class="muted">AI生成音声（Marin）。準備時は共通OpenAIキーを使い、未保存の文章をOpenAIへ送信します。生成料金が発生します。保存済みの音声は再利用し、再生は追加消費なし。音声は端末ごとに準備してください。</p>
+        <p class="muted">日本語の新しい案内を使うには、対象ルーチンを選んで「音声を準備」を押してください。「音声を作り直す」は対象ルーチンと共通案内を再生成します（生成料金が発生）。名前が抜ける・無音・読み違いがある場合に使えます。</p>
         <p class="muted">YouTubeを流し、下の「テスト再生」で確認してください。iPhoneの消音モードは解除し、タイマーの画面を表示して使ってください。同時再生はiOSの動作に左右されます。YouTubeの自動再開は操作できません。</p>
       </div>
       <div class="field"><label>読み上げ速度</label><input type="number" id="setRate" min="0.5" max="2" step="0.1" onchange="saveSettings()"></div>
@@ -3382,7 +3384,8 @@ useMixedAudioSession();
 /* ============ speech ============ */
 let voiceReady=false;
 const timerVoiceState={serial:0,source:null,gain:null,pending:false,utterance:null,watchdog:null,retry:null,generation:null,scan:0,noticeAt:0};
-const TIMER_VOICE_PREFS={model:'gpt-realtime-2.1-mini',voice:'marin',tone:'日本語で、明るく、はっきり、短いアナウンスとして読み上げてください。'};
+const TIMER_VOICE_PREFS={model:'gpt-realtime-2.1-mini',voice:'marin',tone:'日本語のみで、明るく、はっきり読み上げてください。入力された語句を省略・翻訳・言い換えせず、そのまま発音してください。短いステップ名も必ず読み、説明や前置きは加えないでください。数字と時間の単位も日本語で発音してください。ひらがなのカウントダウンはその読み方を守り、短く発音してください。'};
+const TIMER_COUNTDOWN_JA=['ぜろ','いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう'];
 const TIMER_VOICE_TEST='テスト読み上げです。今日もがんばろう！';
 function isTimerAudioMuted(){return typeof run!=='undefined'&&!!(run&&run.muted);}
 function stopSpeech(){
@@ -3457,22 +3460,31 @@ if('speechSynthesis' in window)speechSynthesis.getVoices();
 function timerVoiceParts(text){
   return String(text||'').split(/[、。！？!?\n]+/u).map(t=>t.trim()).filter(Boolean);
 }
-async function timerVoiceClipId(text){return 'timer-voice-v1-'+await memoryClipId({text},TIMER_VOICE_PREFS);}
+// v1の数字だけで生成した英語読みや、旧指示による欠落音声は再利用しない。
+async function timerVoiceClipId(text){return 'timer-voice-v2-ja-'+await memoryClipId({text},TIMER_VOICE_PREFS);}
+function timerDurationSpeech(sec){
+  const total=Math.max(0,Math.ceil(Number(sec)||0)),minutes=Math.floor(total/60),seconds=total%60;
+  return `${minutes?minutes+'分':''}${seconds||!minutes?seconds+'秒':''}`;
+}
+function timerHalfSeconds(sec){
+  // 奇数秒と通常のtickの揺れを含める。大幅に遅れた半分通知は再生しない。
+  const half=Math.max(0,Number(sec)||0)/2;
+  return [...new Set([Math.ceil(half),Math.floor(half),Math.floor(half)-1])].filter(n=>n>0);
+}
 function timerVoiceClipData(clip){
   const bytes=clip?.pcmBytes;
   return bytes instanceof ArrayBuffer&&bytes.byteLength>0&&bytes.byteLength%2===0?bytes:null;
 }
 function timerVoicePlan(routine){
-  const texts=[TIMER_VOICE_TEST,'まず10秒だけです。','実時間計測です。終わったら次へを押してください。','あと半分です！','10秒できた！','時間です！',
+  const texts=[TIMER_VOICE_TEST,'まず10秒だけです。','実時間計測です。終わったら次へを押してください。','10秒できた！','時間です！',
     '時間です。チェックを続けるか、終了を押してください。',
     '10分たちました。今はどうですか。必要なら追加して大丈夫です。',
     '5分たちました。いま、どのくらい食べたい気持ちですか。','10分たちました。いま、どのくらい食べたい気持ちですか。',
-    ...Array.from({length:11},(_,i)=>String(i))];
+    ...TIMER_COUNTDOWN_JA,...timerHalfSeconds(10).map(sec=>`あと${timerDurationSpeech(sec)}です。`)];
   if(routine){
     texts.push(`${routine.name}。チェックリストを始めます。`,runCompletionSpeech(routine.name,true),runCompletionSpeech(routine.name,false));
     for(const step of routine.steps){
-      const dur=step.sec>=60?`${Math.round(step.sec/60)}分`:`${step.sec}秒`;
-      texts.push(step.name,`${dur}です。`);
+      texts.push(step.name,`${timerDurationSpeech(step.sec)}です。`,...timerHalfSeconds(step.sec).map(sec=>`あと${timerDurationSpeech(sec)}です。`));
       if(D.settings.moti)texts.push(...(step.texts||[]));
     }
     if(D.settings.moti)texts.push(...D.hitokoto);
@@ -3502,15 +3514,15 @@ async function playSavedSpeech(text,cb,serial){
     const resuming=ac.state==='running'?Promise.resolve():Promise.race([
       ac.resume().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,3000))
     ]);
-    let missing=false;
+    const missing=[];
     const clips=(await Promise.all(timerVoiceParts(text).map(async part=>{
       const id=await timerVoiceClipId(part),bytes=timerVoiceClipData(await memoryStore('clips','get',id));
-      if(!bytes)missing=true;
+      if(!bytes)missing.push(part);
       return bytes;
     }))).filter(Boolean);
     // 中断済みの読み込みが、次のステップや消音後に遅れて再生されないようにする。
     if(serial!==timerVoiceState.serial)return;
-    if(missing)timerVoiceNotice('音声が未保存の案内があります。設定の「YouTubeと併用」から音声を準備してください。');
+    if(missing.length)timerVoiceNotice(`音声が未保存です：「${missing.slice(0,2).map(t=>t.slice(0,40)).join('」「')}」${missing.length>2?'ほか':''}。設定の「YouTubeと併用」から音声を準備してください。`);
     if(!clips.length){timerVoiceState.pending=false;if(cb)cb();return;}
     await resuming;
     if(serial!==timerVoiceState.serial)return;
@@ -3576,14 +3588,15 @@ async function refreshYouTubeAudio(){
     button.disabled=!missing;
   }catch(e){if(scan===timerVoiceState.scan)timerVoiceStatus(memoryError(e));}
 }
-async function prepareYouTubeAudio(){
+async function prepareYouTubeAudio(rebuild=false){
   if(timerVoiceState.generation)return;
   const key=getOpenAIKey();
   if(!key){timerVoiceStatus('下の「AI設定」に共通OpenAIキーを設定してください。');document.getElementById('setApiKey').focus();return;}
   const routine=D.routines.find(r=>r.id===document.getElementById('youTubeAudioRoutine').value),parts=timerVoicePlan(routine);
   if(parts.some(text=>text.length>400)){timerVoiceStatus('400文字を超える案内があります。文章を「。」で区切ってから準備してください。');return;}
   const controller=new AbortController();timerVoiceState.generation=controller;timerVoiceState.scan++;
-  const button=document.getElementById('youTubeAudioPrepare'),cancel=document.getElementById('youTubeAudioCancel'),select=document.getElementById('youTubeAudioRoutine');
+  const button=document.getElementById('youTubeAudioPrepare'),rebuildButton=document.getElementById('youTubeAudioRebuild'),cancel=document.getElementById('youTubeAudioCancel'),select=document.getElementById('youTubeAudioRoutine');
+  rebuildButton.disabled=true;
   button.disabled=true;button.setAttribute('aria-busy','true');cancel.hidden=false;select.disabled=true;
   let created=0,reused=0;
   try{
@@ -3591,7 +3604,7 @@ async function prepareYouTubeAudio(){
       if(controller.signal.aborted)throw new DOMException('中止','AbortError');
       const text=parts[i],id=await timerVoiceClipId(text),clip=await memoryStore('clips','get',id);
       if(controller.signal.aborted)throw new DOMException('中止','AbortError');
-      if(timerVoiceClipData(clip)){reused++;continue;}
+      if(!rebuild&&timerVoiceClipData(clip)){reused++;continue;}
       timerVoiceStatus(`音声を準備中 ${i+1}/${parts.length}（再利用 ${reused}）。画面を開いたままお待ちください。`);
       const timeout=setTimeout(()=>controller.abort(),150000);
       let pcm;
@@ -3606,7 +3619,7 @@ async function prepareYouTubeAudio(){
     timerVoiceStatus(`✅ 音声を保存しました（新規 ${created}・再利用 ${reused}）。YouTubeを流して「テスト再生」を押してください。`);
   }catch(e){timerVoiceStatus(memoryError(e));}
   finally{
-    timerVoiceState.generation=null;button.disabled=false;button.removeAttribute('aria-busy');cancel.hidden=true;select.disabled=false;
+    timerVoiceState.generation=null;button.disabled=false;rebuildButton.disabled=false;button.removeAttribute('aria-busy');cancel.hidden=true;select.disabled=false;
   }
 }
 function cancelYouTubeAudio(){if(timerVoiceState.generation)timerVoiceState.generation.abort();}
@@ -5978,7 +5991,7 @@ function speakCurrentRunStep(){
   if(!run||run.paused||run.muted||run.checklistMode)return;
   const active=run,s=run.r.steps[run.idx],moti=run.currentMoti;
   const index=run.idx;
-  const dur=run.targetSec>=60?`${Math.round(run.targetSec/60)}分`:`${run.targetSec}秒`;
+  const dur=timerDurationSpeech(run.targetSec);
   const modeGuide=run.microEntry?'まず10秒だけです。':run.timerMode==='up'?'実時間計測です。終わったら次へを押してください。':`${dur}です。`;
   run.halfSpeechActive=false;run.stepSpeechActive=true;
   speak(`${s.name}、${modeGuide}`,()=>{
@@ -6166,13 +6179,18 @@ function tick(){
   // 半分経過アナウンス（短いステップも含め、1回だけ）
   let halfAnnouncedNow=false;
   if(run.timerMode==='down'&&!run.stepSpeechActive&&!run.halfDone&&run.leftMs>0&&run.leftMs<=(Number(run.targetSec)||s.sec)*500){
-    run.halfDone=true;run.halfSpeechActive=true;halfAnnouncedNow=true;
-    speak(`${s.name}。あと半分です！`,()=>{if(run)run.halfSpeechActive=false;});
+    run.halfDone=true;
+    // バックグラウンド復帰や長い開始案内の後に、古い半分通知を追いかけない。
+    if(timerHalfSeconds(Number(run.targetSec)||s.sec).includes(run.left)){
+      const active=run,index=run.idx;
+      run.halfSpeechActive=true;halfAnnouncedNow=true;
+      speak(`${s.name}。あと${timerDurationSpeech(run.left)}です。`,()=>{if(run===active&&run.idx===index)run.halfSpeechActive=false;});
+    }
   }
   // ラスト10秒は数字を読み上げ、効果音も重ねる（3秒前からは強め）
   if(run.timerMode==='down'&&run.left!==previousLeft&&run.left<=10&&run.left>0){
     // 半分案内は最後まで読み、終わった次の秒から数字に戻る
-    if(!halfAnnouncedNow&&!run.halfSpeechActive&&!run.stepSpeechActive)speak(String(run.left));
+    if(!halfAnnouncedNow&&!run.halfSpeechActive&&!run.stepSpeechActive)speak(TIMER_COUNTDOWN_JA[run.left]);
     if(run.left<=3)beep(1175,.09,'square',.14);
     else sfxTick();
   }
