@@ -1517,7 +1517,7 @@ body.memory-reading #scr-memory { animation: none; }
   top: 54dvh;
   bottom: 0;
   background: var(--mem-sheet-tint);
-  border-top: 3px solid var(--mem-sheet-color);
+  border-top: 1px solid var(--mem-sheet-color);
   pointer-events: none;
 }
 .mem-stage.mem-sheet-active .mem-mark[data-color="red"] {
@@ -1529,19 +1529,6 @@ body.memory-reading #scr-memory { animation: none; }
 }
 .mem-sheet-active .mem-mark[data-color="red"][data-mem-mask="partial"] .mem-red-ink[data-mem-mask="hidden"] {
   color: transparent;
-}
-.mem-sheet-label {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translate(-50%, -100%);
-  background: var(--mem-sheet-color);
-  color: white;
-  border-radius: 12px 12px 0 0;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 8px 22px;
-  white-space: nowrap;
 }
 .mem-study-toolbar,
 .mem-study-sheet-toggle {
@@ -1921,7 +1908,7 @@ body.memory-reading #scr-memory { animation: none; }
         </div>
         <p class="mem-help">普通の文章のように入力・改行できます。文字を選んで赤・緑マーカー。行の移動は「並べ替え」から。暗記モードではマーカーをタップして○／✓。</p>
         <p class="mem-help" id="memAutoMarkStatus" role="status" aria-live="polite">自動暗記箇所マップはSol APIで重要語句に赤マーカーを追加します。本文をOpenAIへ送信し、API料金が発生します。既存マーカーは残します。</p>
-        <div class="mem-stage" id="memStage" tabindex="0" role="region" aria-label="暗記する本文。上下にスクロールして答えを確認できます"><div class="mem-editor" id="memEditor" contenteditable="true" role="textbox" aria-label="暗記ノートの本文" aria-multiline="true" tabindex="0" data-placeholder="ここに文章を入力・貼り付けできます。Enterで改行。"></div><div class="mem-sheet" id="memSheet" aria-hidden="true" hidden><div class="mem-sheet-label">━ 赤シート</div></div></div>
+        <div class="mem-stage" id="memStage" tabindex="0" role="region" aria-label="暗記する本文。上下にスクロールして答えを確認できます"><div class="mem-editor" id="memEditor" contenteditable="true" role="textbox" aria-label="暗記ノートの本文" aria-multiline="true" tabindex="0" data-placeholder="ここに文章を入力・貼り付けできます。Enterで改行。"></div><div class="mem-sheet" id="memSheet" aria-hidden="true" hidden></div></div>
         <button class="btn mem-study-sheet-toggle" id="memStudySheetToggle" type="button" onclick="memoryToggleSheet()" aria-pressed="true">🔴 シートを外す</button>
         <div class="mem-block-panel" id="memBlockPanel" hidden aria-label="行ごとの並べ替え"></div>
         <div class="mem-tools">
