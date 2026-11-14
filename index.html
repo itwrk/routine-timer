@@ -1094,6 +1094,16 @@ input[type=checkbox]{accent-color:var(--cyan)}
 .habit-row .habit-name{font-size:12px;line-height:1.6}
 .habit-row .habit-check{width:22px;height:22px;border-color:var(--line2);border-radius:6px}
 .habit-row.done .habit-check{background:var(--mint);border-color:var(--mint);color:#fff;box-shadow:none}
+#habitCard .habit-item.completed .habit-row{padding:2px 0}
+#habitCard .habit-item.completed .habit-name{font-size:calc(10px * var(--text-scale));font-weight:600;color:var(--dim);text-decoration:line-through}
+#habitCard .habit-item.completed .habit-check{width:18px;height:18px;border-radius:5px}
+#habitCard .habit-item.completed :is(.habit-toggle-area,.habit-memo-toggle,.habit-del){min-height:28px}
+#habitCard .habit-item.completed :is(.habit-memo-toggle,.habit-time,.habit-link){font-size:calc(9px * var(--text-scale))}
+#habitCard .habit-item.completed .habit-del{min-width:28px;padding:2px}
+#habitCard .habit-item.completed.habit-multi{padding:3px 0}
+#habitCard .habit-item.completed .habit-slot-list{margin:2px 0 0 24px}
+#habitCard .habit-slot-toggle.done{min-height:28px;padding:3px 6px;font-size:calc(9px * var(--text-scale))}
+#habitCard .habit-slot-toggle.done .habit-slot-check{width:14px;height:14px}
 .habit-score{font-family:inherit;font-size:11px;color:var(--mint-text)}
 .habit-add{padding-top:8px;gap:6px}
 .habit-add input{font-size:12px;padding:8px}
@@ -1809,6 +1819,7 @@ body.memory-reading #scr-memory { animation: none; }
         <div class="habit-bar"><div id="habitBarFill" style="width:0%"></div></div>
         <div id="habitList"></div>
         <div id="todayTaskList"></div>
+        <div id="completedHabitList"></div>
         <div class="habit-add">
           <input type="text" id="todayTaskInput" maxlength="60" placeholder="今日だけやることを追加">
           <button class="btn btn-c btn-sm" type="button" onclick="addTodayTask()">＋ 今日だけ</button>
@@ -5040,6 +5051,12 @@ function renderHabits(){
   if(!list)return;
   list.innerHTML='';
   const taskList=document.getElementById('todayTaskList');taskList.innerHTML='';
+  const completedList=document.getElementById('completedHabitList');completedList.innerHTML='';
+  const completedItems=[];
+  const appendItem=(item,parent,completedAt=null)=>{
+    if(completedAt!==null){item.classList.add('completed');completedItems.push({item,completedAt});}
+    else parent.appendChild(item);
+  };
   const {visibleHabits,todays,done,total}=todayChecklistState();
   document.getElementById('habitScore').textContent=`${done} / ${total}`;
   document.getElementById('habitBarFill').style.width=(total?done/total*100:0)+'%';
@@ -5050,31 +5067,33 @@ function renderHabits(){
       const logs=slots.map(slot=>habitLogForToday(habit,new Date(),slot)),completed=logs.filter(Boolean).length;
       const item=document.createElement('div');item.className='habit-item habit-multi';
       const link=safeHabitUrl(habit.link);
-      item.innerHTML=`<div class="habit-multi-head"><span>☑️</span><span class="habit-name">${esc(habit.name)}</span><span class="habit-condition day">📅 ${esc(habitDayLabel(habit))}</span><span class="habit-multi-progress">${completed}/${slots.length}</span>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}</div><div class="habit-slot-list"></div>`;
+      item.innerHTML=`<div class="habit-multi-head"><span>☑️</span><span class="habit-name">${esc(habit.name)}</span><span class="habit-multi-progress">${completed}/${slots.length}</span>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}</div><div class="habit-slot-list"></div>`;
       const slotList=item.querySelector('.habit-slot-list');
-      slots.forEach((slot,index)=>{
-        const log=logs[index],btn=document.createElement('button');btn.type='button';btn.className='habit-slot-toggle'+(log?' done':'');btn.setAttribute('aria-pressed',log?'true':'false');btn.setAttribute('aria-label',`${habit.name} ${slot}を${log?'未完了に戻す':'完了にする'}`);btn.innerHTML=`<span class="habit-slot-check">✓</span><span class="habit-slot-label">${esc(slot)}</span>${log?`<span class="habit-slot-done-time">${esc(log.time)}</span>`:''}`;btn.onclick=()=>toggleHabit(habit,slot);slotList.appendChild(btn);
+      const orderedSlots=slots.map((slot,index)=>({slot,log:logs[index]})).sort((a,b)=>Number(!!a.log)-Number(!!b.log)||(a.log?.completedAt||0)-(b.log?.completedAt||0));
+      orderedSlots.forEach(({slot,log})=>{
+        const btn=document.createElement('button');btn.type='button';btn.className='habit-slot-toggle'+(log?' done':'');btn.setAttribute('aria-pressed',log?'true':'false');btn.setAttribute('aria-label',`${habit.name} ${slot}を${log?'未完了に戻す':'完了にする'}`);btn.innerHTML=`<span class="habit-slot-check">✓</span><span class="habit-slot-label">${esc(slot)}</span>${log?`<span class="habit-slot-done-time">${esc(log.time)}</span>`:''}`;btn.onclick=()=>toggleHabit(habit,slot);slotList.appendChild(btn);
       });
       appendCheckItemMemo(item,habit);
-      list.appendChild(item);continue;
+      appendItem(item,list,completed===slots.length?Math.max(...logs.map(log=>Number(log.completedAt)||0)):null);continue;
     }
     const log=habitLogForToday(habit);
     const item=document.createElement('div');item.className='habit-item';
-    const link=safeHabitUrl(habit.link),windowLabel=habitWindowLabel(habit)||'終日';
-    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(habit.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-main"><span class="habit-name">${esc(habit.name)}</span><span class="habit-schedule"><span class="habit-condition day">📅 ${esc(habitDayLabel(habit))}</span><span class="habit-condition time">🕒 ${esc(windowLabel)}</span></span></span></button>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>`;
+    const link=safeHabitUrl(habit.link);
+    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(habit.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-main"><span class="habit-name">${esc(habit.name)}</span></span></button>${link?`<a class="habit-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(habit.name)}の関連リンクを開く">🔗</a>`:''}${log?`<span class="habit-time">${esc(log.time)}</span>`:''}</div>`;
     item.querySelector('.habit-toggle-area').onclick=()=>toggleHabit(habit);
-    appendCheckItemMemo(item,habit);list.appendChild(item);
+    appendCheckItemMemo(item,habit);appendItem(item,list,log?Number(log.completedAt)||0:null);
   }
   for(const task of todays){
     const log=todayTaskLog(task.id),key=`task:${task.id}`;
     const item=document.createElement('div');item.className='habit-item';
-    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(task.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-name">${esc(task.name)}</span></button><span class="today-badge">今日だけ</span>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}<button class="habit-del" type="button" title="今日の項目を削除" aria-label="${esc(task.name)}を削除">✕</button></div>`;
+    item.innerHTML=`<div class="habit-row${log?' done':''}"><button class="habit-toggle-area" type="button" aria-pressed="${log?'true':'false'}" aria-label="${esc(task.name)}を${log?'未完了に戻す':'完了にする'}"><span class="habit-check">✓</span><span class="habit-name">${esc(task.name)}</span></button>${log?`<span class="habit-time">${esc(log.time)}</span>`:''}<button class="habit-del" type="button" title="今日の項目を削除" aria-label="${esc(task.name)}を削除">✕</button></div>`;
     item.querySelector('.habit-toggle-area').onclick=()=>toggleTodayTask(task);
     item.querySelector('.habit-del').onclick=e=>twoTap(e.currentTarget,'削除？',()=>{
       D.todayTasks=D.todayTasks.filter(t=>t.id!==task.id);checkItemMemoOpen.delete(key);checkItemMemoDrafts.delete(key);save();renderHabits();toast('🗑 今日の項目を削除しました');
     });
-    appendCheckItemMemo(item,task,true);taskList.appendChild(item);
+    appendCheckItemMemo(item,task,true);appendItem(item,taskList,log?Number(log.completedAt)||0:null);
   }
+  completedItems.sort((a,b)=>a.completedAt-b.completedAt).forEach(({item})=>completedList.appendChild(item));
 }
 function todayChecklistState(now=new Date()){
   const visibleHabits=D.habits.filter(h=>habitVisibleAt(h,now));
